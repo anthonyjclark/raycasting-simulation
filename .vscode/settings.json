@@ -1,3 +1,7 @@
 {
-    "python.pythonPath": "/Users/ajcd2020/.miniconda3/envs/raycasting/bin/python"
+    "python.pythonPath": "/Users/ajcd2020/.miniconda3/envs/raycasting/bin/python",
+    "files.associations": {
+        "*.mdeep": "markdown",
+        "iosfwd": "cpp"
+    }
 }

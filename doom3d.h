@@ -3,6 +3,8 @@
 
 // TODO:
 // 1. check for TODO
+// 2. remove casts? might not need them for non-pointer types
+// 3. switch from array to vector or Array
 
 // Doom 3D engine ver: 1.000
 // Originally by: Spektre on stackoverflow
@@ -19,16 +21,18 @@ using std::string;
 using std::ifstream;
 using std::ofstream;
 
+#include <iostream>
+using std::cerr;
+
 using uint = unsigned int;
 
+constexpr long double deg2rad(long double deg)
+{
+    return deg * 3.141592 / 180;
+}
 constexpr long double operator"" _deg(long double deg)
 {
     return deg2rad(deg);
-}
-
-long double deg2rad(long double deg)
-{
-    return deg * 3.141592 / 180;
 }
 
 const uint _Doom3D_cell_size = 10;  // 2D map cell size
@@ -41,8 +45,10 @@ public:
     uint mxs, mys, **pmap; // 2D map   // txr + height<<16
     uint sxs, sys, **pscr; // pseudo 3D screen
     // Graphics::TBitmap *scr;
+    uint8_t *canvas;
     uint txs, tys, **ptxr, tn; // 2D textures
     // Graphics::TBitmap *txr, *txr2;  // textures, texture mipmaps resolution: /2 and /4
+    uint8_t *texture;
     double plrx, plry, plrz, plra; // player position [x,y,z,angle]
     double view_ang;               // [rad] view angle
     double focus;                  // [cells] view focal length
@@ -146,16 +152,18 @@ Doom3D::Doom3D()
 {
     mxs = 0;
     mys = 0;
-    pmap = NULL;
+    pmap = nullptr;
     sxs = 0;
     sys = 0;
     // scr = new Graphics::TBitmap;
-    pscr = NULL;
-    ray = NULL;
+    canvas = nullptr;
+    pscr = nullptr;
+    ray = nullptr;
     txs = 0;
     tys = 0;
     // txr = new Graphics::TBitmap;
-    ptxr = NULL;
+    texture = nullptr;
+    ptxr = nullptr;
     tn = 0;
     // txr2 = new Graphics::TBitmap;
     plrx = 0.0;
@@ -167,7 +175,7 @@ Doom3D::Doom3D()
     txr_sel = 0;
     cell_h = _Doom3D_wall_size;
 
-    txr_load("textures128x128.jpg");
+    txr_load("textures/textures128x128.ppm");
     map_resize(16, 16);
     map_load("Doom3D_map.dat");
 }
@@ -181,30 +189,40 @@ Doom3D::~Doom3D()
         for (y = 0; y < mys; y++)
             delete[] pmap[y];
         delete[] pmap;
-        pmap = NULL;
+        pmap = nullptr;
     }
     if (ray)
         delete[] ray;
-    ray = NULL;
+    ray = nullptr;
     if (pscr)
     {
         delete[] pscr;
-        pscr = NULL;
+        pscr = nullptr;
     }
     // if (scr)
     //     delete scr;
-    // scr = NULL;
+    // scr = nullptr;
+    if (canvas)
+    {
+        delete[] canvas;
+    }
+    canvas = nullptr;
     if (ptxr)
     {
         delete[] ptxr;
-        ptxr = NULL;
+        ptxr = nullptr;
     }
     // if (txr)
     //     delete txr;
-    // txr = NULL;
+    // txr = nullptr;
+    if (texture)
+    {
+        delete[] texture;
+    }
+    texture = nullptr;
     // if (txr2)
     //     delete txr2;
-    // txr2 = NULL;
+    // txr2 = nullptr;
 }
 //---------------------------------------------------------------------------
 void Doom3D::map_resize(uint xs, uint ys)
@@ -215,7 +233,7 @@ void Doom3D::map_resize(uint xs, uint ys)
         for (y = 0; y < mys; y++)
             delete[] pmap[y];
         delete[] pmap;
-        pmap = NULL;
+        pmap = nullptr;
     }
     mys = ys;
     mxs = xs;
@@ -265,6 +283,7 @@ void Doom3D::map_save(string name)
     ofstream map_outfile(name, std::ios::binary);
     if (!map_outfile.is_open())
     {
+        cerr << "Could not open file: " << name << "\n";
         return;
     }
     uint y;
@@ -303,6 +322,7 @@ void Doom3D::map_load(string name)
     ifstream map_infile(name, std::ios::binary);
     if (!map_infile.is_open())
     {
+        cerr << "Could not open file: " << name << "\n";
         return;
     }
     uint x, y;
@@ -347,11 +367,19 @@ void Doom3D::scr_resize(uint xs, uint ys)
     // scr->SetSize(xs, ys);
     // sxs = scr->Width;
     // sys = scr->Height;
+
+    // width BY height BY channels (RGB)
+    canvas = new uint8_t[xs * ys * 3];
+    sxs = xs;
+    sys = ys;
+
     delete[] pscr;
     pscr = new uint *[sys];
     for (uint y = 0; y < sys; y++)
     {
         // pscr[y] = (uint *)scr->ScanLine[y];
+        // TODO: is this valid?
+        pscr[y] = reinterpret_cast<uint *>(canvas + y * sxs);
     }
     if (ray)
     {
@@ -373,7 +401,7 @@ void Doom3D::txr_load(string name)
     //     if (ext == ".jpg")
     //     {
     //         TJPEGImage *jpg = new TJPEGImage;
-    //         if (jpg == NULL)
+    //         if (jpg == nullptr)
     //             return;
     //         jpg->LoadFromFile(name);
     //         txr->Assign(jpg);
@@ -387,16 +415,43 @@ void Doom3D::txr_load(string name)
     // txr->PixelFormat = pf32bit;
     // txs = txr->Width;
     // tys = txr->Height;
+
+    // Open file, seek to the end, read the size, seek to beggining
+    ifstream texture_file(name, std::ios::binary | std::ios::ate);
+    std::streamsize texture_size = texture_file.tellg();
+    texture_file.seekg(0, std::ios::beg);
+
+    // Read PPM header
+    string header;
+    int sizex, sizey, sizec;
+    texture_file >> header >> sizex >> sizey >> sizec;
+
+    std::cout << "Texture size : " << sizex * sizey * 3 << " (" << sizex << "x" << sizey << "x3)\n";
+    std::cout << "Expecting    : " << 128 * 128 * 48 * 3 << "\n";
+
+    texture = new uint8_t[texture_size];
+    if (!texture_file.read(reinterpret_cast<char *>(texture), texture_size))
+    {
+        cerr << "Could not read texture file.\n";
+    }
+
+    txs = sizex;
+    tys = sizey;
+
     // // mip map
     // txr2->SetSize(txs >> 1, (tys >> 1) + (tys >> 2));
     // txr2->Canvas->StretchDraw(TRect(0, 0, txs >> 1, tys >> 1), txr);
     // txr2->Canvas->StretchDraw(TRect(0, tys >> 1, txs >> 2, (tys >> 1) + (tys >> 2)), txr);
-    // tn = txs / tys;
-    // txs = tys;
-    // delete[] ptxr;
-    // ptxr = new uint *[tys];
+    tn = txs / tys;
+    txs = tys;
+    delete[] ptxr;
+    ptxr = new uint *[tys];
     // for (y = 0; y < tys; y++)
     //     ptxr[y] = (uint *)txr->ScanLine[y];
+    for (int y = 0; y < tys; y++)
+    {
+        ptxr[y] = reinterpret_cast<uint *>(texture + y * txs);
+    }
 }
 //---------------------------------------------------------------------------
 void Doom3D::draw()
@@ -778,11 +833,40 @@ void Doom3D::draw()
         x = double(plrx * mx); // view rays
         y = double(plry * mx);
         // scr->Canvas->Pen->Color = 0x00005050;
+        uint8_t r = 0, g = 0x50, b = 0x50;
         // scr->Canvas->Pen->Mode = pmMerge;
         for (c = 0; c < sxs; c++)
         {
             // scr->Canvas->MoveTo(x, y);
             // scr->Canvas->LineTo(uint(ray[c].x * mx), uint(ray[c].y * mx));
+            // Grid Walking: https://www.redblobgames.com/grids/line-drawing.html#stepping
+            // int dx = uint(ray[c].x * mx) - x;
+            // int dy = uint(ray[c].y * mx) - y;
+            // int nx = dx > 0 ? dx : -dx;
+            // int ny = dy > 0 ? dy : -dy;
+            // int sign_x = dx > 0 ? 1 : -1;
+            // int sign_y = dy > 0 ? 1 : -1;
+            // int current_x = x;
+            // int current_y = y;
+            // for (int ix = 0, iy = 0; ix < nx || iy < ny;)
+            // {
+            //     if ((0.5 + ix) / nx < (0.5 + iy) / ny)
+            //     {
+            //         // next step is horizontal
+            //         current_x += sign_x;
+            //         ix++;
+            //     }
+            //     else
+            //     {
+            //         // next step is vertical
+            //         current_y += sign_y;
+            //         iy++;
+            //     }
+            //     canvas[current_x + current_y * sxs + 0] = r;
+            //     canvas[current_x + current_y * sxs + 1] = g;
+            //     canvas[current_x + current_y * sxs + 2] = b;
+            //     std::cout << current_x << ", " << current_y << "\n";
+            // }
         }
         // scr->Canvas->Pen->Mode = pmCopy;
         c = focus * m; // player and view direction
