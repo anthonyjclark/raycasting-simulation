@@ -15,3 +15,9 @@ https://stackoverflow.com/questions/47239797/ray-casting-with-different-height-s
 https://pybind11.readthedocs.io/en/stable/intro.html
 
 https://github.com/mitsuba-renderer/mitsuba2
+
+
+for each vertical line
+- cast ray
+- fill from bottom until height
+- repeat until full screen height
