@@ -106,7 +106,14 @@ public:
     };
 
     // uint32_t buffer[screenHeight][screenWidth]; // y-coordinate first because it works per scanline
-    std::vector<uint32_t> buffer;
+    std::vector<uint8_t> buffer;
+
+    void writeColor(int x, int y, int c)
+    {
+        buffer[(x * 3 + 0) + y * screenWidth * 3] = (c & 0xFF0000) >> 16;
+        buffer[(x * 3 + 1) + y * screenWidth * 3] = (c & 0xFF00) >> 8;
+        buffer[(x * 3 + 2) + y * screenWidth * 3] = (c & 0xFF);
+    }
 
     //1D Zbuffer
     double ZBuffer[screenWidth];
@@ -119,7 +126,7 @@ public:
     Caster(/* args */);
 };
 
-Caster::Caster(/* args */) : buffer(screenWidth * screenHeight)
+Caster::Caster(/* args */) : buffer(screenWidth * screenHeight * 3)
 {
     double posX = 22.0, posY = 11.5;    //x and y start position
     double dirX = -1.0, dirY = 1.0;     //initial direction vector
@@ -233,7 +240,8 @@ Caster::Caster(/* args */) : buffer(screenWidth * screenHeight)
                 color = texture[floorTexture][texWidth * ty + tx];
                 color = (color >> 1) & 8355711; // make a bit darker
                 // buffer[y][x] = color;
-                buffer[x + y * screenWidth] = color;
+                // buffer[x + y * screenWidth] = color;
+                writeColor(x, y, color);
             }
             else
             {
@@ -241,7 +249,8 @@ Caster::Caster(/* args */) : buffer(screenWidth * screenHeight)
                 color = texture[ceilingTexture][texWidth * ty + tx];
                 color = (color >> 1) & 8355711; // make a bit darker
                 // buffer[y][x] = color;
-                buffer[x + y * screenWidth] = color;
+                // buffer[x + y * screenWidth] = color;
+                writeColor(x, y, color);
             }
         }
     }
@@ -366,7 +375,8 @@ Caster::Caster(/* args */) : buffer(screenWidth * screenHeight)
             if (side == 1)
                 color = (color >> 1) & 8355711;
             // buffer[y][x] = color;
-            buffer[x + y * screenWidth] = color;
+            // buffer[x + y * screenWidth] = color;
+            writeColor(x, y, color);
         }
 
         //SET THE ZBUFFER FOR THE SPRITE CASTING
@@ -439,7 +449,8 @@ Caster::Caster(/* args */) : buffer(screenWidth * screenHeight)
                     uint32_t color = texture[sprite[spriteOrder[i]].texture][texWidth * texY + texX]; //get current color from the texture
                     if ((color & 0x00FFFFFF) != 0)
                         // buffer[y][stripe] = color; //paint pixel if it isn't black, black is the invisible color
-                        buffer[stripe + y * screenWidth] = color;
+                        // buffer[stripe + y * screenWidth] = color;
+                        writeColor(stripe, y, color);
                 }
         }
     }
