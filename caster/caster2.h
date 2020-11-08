@@ -105,7 +105,8 @@ public:
             {10.5, 15.8, 8},
     };
 
-    uint32_t buffer[screenHeight][screenWidth]; // y-coordinate first because it works per scanline
+    // uint32_t buffer[screenHeight][screenWidth]; // y-coordinate first because it works per scanline
+    std::vector<uint32_t> buffer;
 
     //1D Zbuffer
     double ZBuffer[screenWidth];
@@ -118,7 +119,7 @@ public:
     Caster(/* args */);
 };
 
-Caster::Caster(/* args */)
+Caster::Caster(/* args */) : buffer(screenWidth * screenHeight)
 {
     double posX = 22.0, posY = 11.5;    //x and y start position
     double dirX = -1.0, dirY = 1.0;     //initial direction vector
@@ -132,14 +133,14 @@ Caster::Caster(/* args */)
 
     //load some textures
     unsigned long tw, th, error = 0;
-    error |= loadImage(texture[0], tw, th, "textures/eagle.png");
-    error |= loadImage(texture[1], tw, th, "textures/redbrick.png");
-    error |= loadImage(texture[2], tw, th, "textures/purplestone.png");
-    error |= loadImage(texture[3], tw, th, "textures/greystone.png");
-    error |= loadImage(texture[4], tw, th, "textures/bluestone.png");
-    error |= loadImage(texture[5], tw, th, "textures/mossy.png");
-    error |= loadImage(texture[6], tw, th, "textures/wood.png");
-    error |= loadImage(texture[7], tw, th, "textures/colorstone.png");
+    error |= loadImage(texture[0], tw, th, "../textures/eagle.png");
+    error |= loadImage(texture[1], tw, th, "../textures/redbrick.png");
+    error |= loadImage(texture[2], tw, th, "../textures/purplestone.png");
+    error |= loadImage(texture[3], tw, th, "../textures/greystone.png");
+    error |= loadImage(texture[4], tw, th, "../textures/bluestone.png");
+    error |= loadImage(texture[5], tw, th, "../textures/mossy.png");
+    error |= loadImage(texture[6], tw, th, "../textures/wood.png");
+    error |= loadImage(texture[7], tw, th, "../textures/colorstone.png");
     if (error)
     {
         std::cerr << "error loading images" << std::endl;
@@ -147,9 +148,9 @@ Caster::Caster(/* args */)
     }
 
     //load some sprite textures
-    error |= loadImage(texture[8], tw, th, "textures/barrel.png");
-    error |= loadImage(texture[9], tw, th, "textures/pillar.png");
-    error |= loadImage(texture[10], tw, th, "textures/greenlight.png");
+    error |= loadImage(texture[8], tw, th, "../textures/barrel.png");
+    error |= loadImage(texture[9], tw, th, "../textures/pillar.png");
+    error |= loadImage(texture[10], tw, th, "../textures/greenlight.png");
     if (error)
     {
         std::cerr << "error loading images" << std::endl;
@@ -231,14 +232,16 @@ Caster::Caster(/* args */)
                 // floor
                 color = texture[floorTexture][texWidth * ty + tx];
                 color = (color >> 1) & 8355711; // make a bit darker
-                buffer[y][x] = color;
+                // buffer[y][x] = color;
+                buffer[x + y * screenWidth] = color;
             }
             else
             {
                 //ceiling
                 color = texture[ceilingTexture][texWidth * ty + tx];
                 color = (color >> 1) & 8355711; // make a bit darker
-                buffer[y][x] = color;
+                // buffer[y][x] = color;
+                buffer[x + y * screenWidth] = color;
             }
         }
     }
@@ -362,7 +365,8 @@ Caster::Caster(/* args */)
             //make color darker for y-sides: R, G and B byte each divided through two with a "shift" and an "and"
             if (side == 1)
                 color = (color >> 1) & 8355711;
-            buffer[y][x] = color;
+            // buffer[y][x] = color;
+            buffer[x + y * screenWidth] = color;
         }
 
         //SET THE ZBUFFER FOR THE SPRITE CASTING
@@ -434,7 +438,8 @@ Caster::Caster(/* args */)
                     int texY = ((d * texHeight) / spriteHeight) / 256;
                     uint32_t color = texture[sprite[spriteOrder[i]].texture][texWidth * texY + texX]; //get current color from the texture
                     if ((color & 0x00FFFFFF) != 0)
-                        buffer[y][stripe] = color; //paint pixel if it isn't black, black is the invisible color
+                        // buffer[y][stripe] = color; //paint pixel if it isn't black, black is the invisible color
+                        buffer[stripe + y * screenWidth] = color;
                 }
         }
     }

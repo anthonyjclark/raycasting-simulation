@@ -13,7 +13,8 @@ int main(/*int argc, char const *argv[]*/)
     {
         for (int x = 0; x < screenWidth; x++)
         {
-            auto bc = caster.buffer[y][x];
+            // auto bc = caster.buffer[y][x];
+            auto bc = caster.buffer[x + y * screenWidth];
             ColorRGB8bit c;
             c.r = (bc & 0xFF0000) >> 16;
             c.g = (bc & 0xFF00) >> 8;

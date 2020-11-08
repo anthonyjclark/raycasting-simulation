@@ -4,6 +4,7 @@ Things to do:
 - add lighting
 - add levels (e.g., three levels of cast rays)
 - agent height
+- skybox
 
 
 https://stackoverflow.com/questions/21815839/simple-java-2d-array-maze-sample
@@ -21,3 +22,12 @@ for each vertical line
 - cast ray
 - fill from bottom until height
 - repeat until full screen height
+
+
+
+We can use the raycast distances to label pixels for getting depth
+
+
+1. Working with Python and C++
+2. Add features
+3. Compile to JS and work with JS
