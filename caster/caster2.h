@@ -123,14 +123,16 @@ public:
     double spriteDistance[numSprites];
 
 public:
-    Caster(/* args */);
+    Caster(double x, double y);
 };
 
-Caster::Caster(/* args */) : buffer(screenWidth * screenHeight * 3)
+Caster::Caster(double x, double y) : buffer(screenWidth * screenHeight * 3)
 {
-    double posX = 22.0, posY = 11.5;    //x and y start position
-    double dirX = -1.0, dirY = 1.0;     //initial direction vector
-    double planeX = 1.0, planeY = 0.66; //the 2d raycaster version of camera plane
+
+    // double posX = 22.0, posY = 11.5;    // x and y start position
+    double posX = x, posY = y;
+    double dirX = -1.0, dirY = 1.0;     // initial direction vector
+    double planeX = 1.0, planeY = 0.66; // the 2d raycaster version of camera plane
     double pitch = 0;                   // looking up/down, expressed in screen pixels the horizon shifts
     double posZ = 0;                    // vertical camera strafing up/down, for jumping/crouching. 0 means standard height. Expressed in screen pixels a wall at distance 1 shifts
 
