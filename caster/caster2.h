@@ -443,7 +443,7 @@ void Caster::render(double x, double y)
         int spriteWidth = abs(int(screenHeight / (transformY))) / uDiv;
 
         uint32_t drawStartX = std::max(-spriteWidth / 2 + spriteScreenX, 0);
-        uint32_t drawEndX = std::min(spriteWidth / 2 + spriteScreenX, static_cast<int>(screenWidth) - 1);
+        uint32_t drawEndX = std::max(std::min(spriteWidth / 2 + spriteScreenX, static_cast<int>(screenWidth) - 1), 0);
 
         // Loop through every vertical stripe of the sprite on screen
         for (uint32_t stripe = drawStartX; stripe < drawEndX; stripe++)
