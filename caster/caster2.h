@@ -1,5 +1,7 @@
 // TODO:
-// - add enum for type of hit (side)
+// - pass in texture info
+// - pass in images
+// - pass in map
 
 #if !defined(_CASTER_H_)
 #define _CASTER_H_
@@ -137,6 +139,10 @@ private:
     int spriteOrder[numSprites];
     double spriteDistance[numSprites];
 
+    void renderFloorCeiling(double posX, double posY, double posZ, double dirX, double dirY, double planeX, double planeY, double pitch);
+    void renderWalls(double posX, double posY, double posZ, double dirX, double dirY, double planeX, double planeY, double pitch);
+    void renderSprites(double posX, double posY, double posZ, double dirX, double dirY, double planeX, double planeY, double pitch);
+
 public:
     Caster(uint32_t width, uint32_t height);
     void render(double x, double y);
@@ -195,9 +201,18 @@ void Caster::render(double x, double y)
     // The 2d raycaster version of camera plane
     double planeX = 1.0, planeY = 0.66;
 
-    // ----------------------------------------------------------------
     // FLOOR CASTING
-    // ----------------------------------------------------------------
+    renderFloorCeiling(posX, posY, posZ, dirX, dirY, planeX, planeY, pitch);
+
+    // WALL CASTING
+    renderWalls(posX, posY, posZ, dirX, dirY, planeX, planeY, pitch);
+
+    // SPRITE CASTING
+    renderSprites(posX, posY, posZ, dirX, dirY, planeX, planeY, pitch);
+}
+
+void Caster::renderFloorCeiling(double posX, double posY, double posZ, double dirX, double dirY, double planeX, double planeY, double pitch)
+{
     for (auto y = 0u; y < screenHeight; ++y)
     {
         // Whether this section is floor or ceiling
@@ -273,10 +288,10 @@ void Caster::render(double x, double y)
             writeColor(x, y, color);
         }
     }
+}
 
-    // ----------------------------------------------------------------
-    // WALL CASTING
-    // ----------------------------------------------------------------
+void Caster::renderWalls(double posX, double posY, double posZ, double dirX, double dirY, double planeX, double planeY, double pitch)
+{
     for (auto x = 0u; x < screenWidth; x++)
     {
         // x-coordinate in camera space
@@ -390,18 +405,19 @@ void Caster::render(double x, double y)
         // Set zbuffer as distance to wall for sprite casting
         ZBuffer[x] = perpWallDist;
     }
+}
 
-    // ----------------------------------------------------------------
-    // SPRITE CASTING
-    // ----------------------------------------------------------------
-
+void Caster::renderSprites(double posX, double posY, double posZ, double dirX, double dirY, double planeX, double planeY, double pitch)
+{
     // Sort sprites from far to close
     for (int i = 0; i < numSprites; i++)
     {
         spriteOrder[i] = i;
+
         // sqrt not needed for ordering
         spriteDistance[i] = ((posX - sprite[i].x) * (posX - sprite[i].x) + (posY - sprite[i].y) * (posY - sprite[i].y));
     }
+
     sortSprites(spriteOrder, spriteDistance, numSprites);
 
     // Project and draw sprites
@@ -412,9 +428,9 @@ void Caster::render(double x, double y)
         double spriteY = sprite[spriteOrder[i]].y - posY;
 
         // Transform sprite with the inverse camera matrix
-        // [ planeX   dirX ] -1                                       [ dirY      -dirX ]
-        // [               ]       =  1/(planeX*dirY-dirX*planeY) *   [                 ]
-        // [ planeY   dirY ]                                          [ -planeY  planeX ]
+        // [ planeX   dirX ] -1                                  [ dirY      -dirX ]
+        // [               ]    =  1/(planeX*dirY-dirX*planeY) * [                 ]
+        // [ planeY   dirY ]                                     [ -planeY  planeX ]
 
         // Required for correct matrix multiplication
         double invDet = 1.0 / (planeX * dirY - dirX * planeY);
@@ -474,5 +490,4 @@ void Caster::render(double x, double y)
         }
     }
 }
-
 #endif // _CASTER_H_
