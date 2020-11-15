@@ -10,8 +10,11 @@
 
 #define screenWidth 640
 #define screenHeight 480
-#define texWidth 64  // must be power of two
-#define texHeight 64 // must be power of two
+
+// Texture dimensions must be power of two
+#define texWidth 64
+#define texHeight 64
+
 #define mapWidth 24
 #define mapHeight 24
 
@@ -29,7 +32,7 @@ struct Sprite
     int texture;
 };
 
-//sort the sprites based on distance
+// Sort the sprites based on distance
 void sortSprites(int *order, double *dist, int amount)
 {
     std::vector<std::pair<double, int>> sprites(amount);
@@ -49,9 +52,7 @@ void sortSprites(int *order, double *dist, int amount)
 
 class Caster
 {
-    // TODO: private
-    // private:
-public:
+private:
     int worldMap[mapWidth][mapHeight] =
         {{8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 4, 4, 6, 4, 4, 6, 4, 6, 4, 4, 4, 6, 4},
          {8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4},
@@ -77,10 +78,13 @@ public:
          {2, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 2, 5, 0, 5, 0, 5, 0, 5, 0, 5},
          {2, 2, 0, 0, 0, 0, 0, 2, 2, 2, 0, 0, 0, 2, 2, 0, 5, 0, 5, 0, 0, 0, 5, 5},
          {2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 5, 5, 5, 5, 5, 5, 5, 5, 5}};
+
     Sprite sprite[numSprites] =
         {
-            {20.5, 11.5, 10}, //green light in front of playerstart
-            //green lights in every room
+            // Green light in front of playerstart
+            {20.5, 11.5, 10},
+
+            // Green lights in every room
             {18.5, 4.5, 10},
             {10.0, 4.5, 10},
             {10.0, 12.5, 10},
@@ -89,12 +93,12 @@ public:
             {3.5, 14.5, 10},
             {14.5, 20.5, 10},
 
-            //row of pillars in front of wall: fisheye test
+            // Row of pillars in front of wall: fisheye test
             {18.5, 10.5, 9},
             {18.5, 11.5, 9},
             {18.5, 12.5, 9},
 
-            //some barrels around the map
+            // Some barrels around the map
             {21.5, 1.5, 8},
             {15.5, 1.5, 8},
             {16.0, 1.8, 8},
@@ -105,42 +109,40 @@ public:
             {10.5, 15.8, 8},
     };
 
-    // uint32_t buffer[screenHeight][screenWidth]; // y-coordinate first because it works per scanline
+    // Render buffer
     std::vector<uint8_t> buffer;
 
-    void writeColor(int x, int y, int c)
+    inline void writeColor(int x, int y, int c)
     {
         buffer[(x * 3 + 0) + y * screenWidth * 3] = (c & 0xFF0000) >> 16;
         buffer[(x * 3 + 1) + y * screenWidth * 3] = (c & 0xFF00) >> 8;
         buffer[(x * 3 + 2) + y * screenWidth * 3] = (c & 0xFF);
     }
 
-    //1D Zbuffer
+    // Texture buffers
+    std::vector<uint32_t> texture[11];
+
+    // 1D Zbuffer
     double ZBuffer[screenWidth];
 
-    //arrays used to sort the sprites
+    // Arrays used to sort the sprites
     int spriteOrder[numSprites];
     double spriteDistance[numSprites];
 
 public:
-    Caster(double x, double y);
+    Caster();
+    void render(double x, double y);
+    auto getBuffer() { return buffer.data(); }
 };
 
-Caster::Caster(double x, double y) : buffer(screenWidth * screenHeight * 3)
+Caster::Caster() : buffer(screenWidth * screenHeight * 3)
 {
-
-    // double posX = 22.0, posY = 11.5;    // x and y start position
-    double posX = x, posY = y;
-    double dirX = -1.0, dirY = 1.0;     // initial direction vector
-    double planeX = 1.0, planeY = 0.66; // the 2d raycaster version of camera plane
-    double pitch = 0;                   // looking up/down, expressed in screen pixels the horizon shifts
-    double posZ = 0;                    // vertical camera strafing up/down, for jumping/crouching. 0 means standard height. Expressed in screen pixels a wall at distance 1 shifts
-
-    std::vector<uint32_t> texture[11];
     for (int i = 0; i < 11; i++)
+    {
         texture[i].resize(texWidth * texHeight);
+    }
 
-    //load some textures
+    // Load some textures
     unsigned long tw, th, error = 0;
     error |= loadImage(texture[0], tw, th, "../textures/eagle.png");
     error |= loadImage(texture[1], tw, th, "../textures/redbrick.png");
@@ -150,26 +152,44 @@ Caster::Caster(double x, double y) : buffer(screenWidth * screenHeight * 3)
     error |= loadImage(texture[5], tw, th, "../textures/mossy.png");
     error |= loadImage(texture[6], tw, th, "../textures/wood.png");
     error |= loadImage(texture[7], tw, th, "../textures/colorstone.png");
-    if (error)
-    {
-        std::cerr << "error loading images" << std::endl;
-        return;
-    }
 
-    //load some sprite textures
+    // Load some sprite textures
     error |= loadImage(texture[8], tw, th, "../textures/barrel.png");
     error |= loadImage(texture[9], tw, th, "../textures/pillar.png");
     error |= loadImage(texture[10], tw, th, "../textures/greenlight.png");
+
     if (error)
     {
-        std::cerr << "error loading images" << std::endl;
+        std::cerr << "Error loading images." << std::endl;
         return;
     }
+}
 
-    //FLOOR CASTING
+void Caster::render(double x, double y)
+{
+    // x and y position (default to x=22.0, y=11.5)
+    double posX = x, posY = y;
+
+    // Vertical camera strafing up/down, for jumping/crouching.
+    // 0 means standard height.
+    // Expressed in screen pixels a wall at distance 1 shifts
+    double posZ = 0;
+
+    // Looking up/down, expressed in screen pixels the horizon shifts
+    double pitch = 0;
+
+    // Direction vector
+    double dirX = -1.0, dirY = 1.0;
+
+    // The 2d raycaster version of camera plane
+    double planeX = 1.0, planeY = 0.66;
+
+    // ----------------
+    // FLOOR CASTING
+    // ----------------
     for (int y = 0; y < screenHeight; ++y)
     {
-        // whether this section is floor or ceiling
+        // Whether this section is floor or ceiling
         bool is_floor = y > screenHeight / 2 + pitch;
 
         // rayDir for leftmost ray (x = 0) and rightmost ray (x = screenWidth)
@@ -215,9 +235,9 @@ Caster::Caster(double x, double y) : buffer(screenWidth * screenHeight * 3)
 
         for (int x = 0; x < screenWidth; ++x)
         {
-            // the cell coord is simply got from the integer parts of floorX and floorY
-            int cellX = (int)(floorX);
-            int cellY = (int)(floorY);
+            // The cell coord is simply got from the integer parts of floorX and floorY
+            int cellX = floorX;
+            int cellY = floorY;
 
             // get the texture coordinate from the fractional part
             int tx = (int)(texWidth * (floorX - cellX)) & (texWidth - 1);
@@ -234,26 +254,12 @@ Caster::Caster(double x, double y) : buffer(screenWidth * screenHeight * 3)
             else
                 floorTexture = 4;
             int ceilingTexture = 6;
-            uint32_t color;
 
-            if (is_floor)
-            {
-                // floor
-                color = texture[floorTexture][texWidth * ty + tx];
-                color = (color >> 1) & 8355711; // make a bit darker
-                // buffer[y][x] = color;
-                // buffer[x + y * screenWidth] = color;
-                writeColor(x, y, color);
-            }
-            else
-            {
-                //ceiling
-                color = texture[ceilingTexture][texWidth * ty + tx];
-                color = (color >> 1) & 8355711; // make a bit darker
-                // buffer[y][x] = color;
-                // buffer[x + y * screenWidth] = color;
-                writeColor(x, y, color);
-            }
+            // Floor or ceiling (and make it a bit darker)
+            int textureNum = is_floor ? floorTexture : ceilingTexture;
+            uint32_t color = texture[textureNum][texWidth * ty + tx];
+            color = (color >> 1) & 8355711;
+            writeColor(x, y, color);
         }
     }
 
@@ -376,8 +382,6 @@ Caster::Caster(double x, double y) : buffer(screenWidth * screenHeight * 3)
             //make color darker for y-sides: R, G and B byte each divided through two with a "shift" and an "and"
             if (side == 1)
                 color = (color >> 1) & 8355711;
-            // buffer[y][x] = color;
-            // buffer[x + y * screenWidth] = color;
             writeColor(x, y, color);
         }
 

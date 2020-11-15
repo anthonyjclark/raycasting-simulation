@@ -7,10 +7,11 @@ namespace py = pybind11;
 PYBIND11_MODULE(pycaster, m)
 {
     py::class_<Caster>(m, "Caster", py::buffer_protocol())
-        .def(py::init<double, double>())
+        .def(py::init<>())
+        .def("render", &Caster::render)
         .def_buffer([](Caster &caster) -> py::buffer_info {
             return py::buffer_info(
-                caster.buffer.data(),                     // Pointer to data
+                caster.getBuffer(),                       // Pointer to data
                 sizeof(uint8_t),                          // Size of data type
                 py::format_descriptor<uint8_t>::format(), // Data type for messages
                 3,                                        // Number of dimensions
