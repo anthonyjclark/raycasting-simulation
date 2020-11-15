@@ -184,9 +184,9 @@ void Caster::render(double x, double y)
     // The 2d raycaster version of camera plane
     double planeX = 1.0, planeY = 0.66;
 
-    // ----------------
+    // ----------------------------------------------------------------
     // FLOOR CASTING
-    // ----------------
+    // ----------------------------------------------------------------
     for (int y = 0; y < screenHeight; ++y)
     {
         // Whether this section is floor or ceiling
@@ -239,14 +239,14 @@ void Caster::render(double x, double y)
             int cellX = floorX;
             int cellY = floorY;
 
-            // get the texture coordinate from the fractional part
+            // Get the texture coordinate from the fractional part
             int tx = (int)(texWidth * (floorX - cellX)) & (texWidth - 1);
             int ty = (int)(texHeight * (floorY - cellY)) & (texHeight - 1);
 
             floorX += floorStepX;
             floorY += floorStepY;
 
-            // choose texture and draw the pixel
+            // Choose texture and draw the pixel
             int checkerBoardPattern = (int(cellX + cellY)) & 1;
             int floorTexture;
             if (checkerBoardPattern == 0)
@@ -263,57 +263,66 @@ void Caster::render(double x, double y)
         }
     }
 
+    // ----------------------------------------------------------------
     // WALL CASTING
+    // ----------------------------------------------------------------
     for (int x = 0; x < screenWidth; x++)
     {
-        //calculate ray position and direction
-        double cameraX = 2 * x / double(screenWidth) - 1; //x-coordinate in camera space
+        // x-coordinate in camera space
+        double cameraX = 2 * x / double(screenWidth) - 1;
+
+        // Calculate ray position and direction
         double rayDirX = dirX + planeX * cameraX;
         double rayDirY = dirY + planeY * cameraX;
 
-        //which box of the map we're in
-        int mapX = int(posX);
-        int mapY = int(posY);
+        // Which box of the map we're in
+        int mapX = posX;
+        int mapY = posY;
 
-        //length of ray from current position to next x or y-side
-        double sideDistX;
-        double sideDistY;
-
-        //length of ray from one x or y-side to next x or y-side
+        // Length of ray from one x or y-side to next x or y-side
         double deltaDistX = std::abs(1 / rayDirX);
         double deltaDistY = std::abs(1 / rayDirY);
         double perpWallDist;
 
-        //what direction to step in x or y-direction (either +1 or -1)
-        int stepX;
-        int stepY;
+        // What direction to step in x or y-direction (either +1 or -1)
+        int stepX = rayDirX < 0 ? -1 : 1;
+        int stepY = rayDirY < 0 ? -1 : 1;
 
-        int hit = 0; //was there a wall hit?
-        int side;    //was a NS or a EW wall hit?
+        // Length of ray from current position to next x or y-side
+        double sideDistX = rayDirX < 0 ? (posX - mapX) * deltaDistX : (mapX + 1.0 - posX) * deltaDistX;
+        double sideDistY = rayDirY < 0 ? (posY - mapY) * deltaDistY : (mapY + 1.0 - posY) * deltaDistY;
 
-        //calculate step and initial sideDist
-        if (rayDirX < 0)
-        {
-            stepX = -1;
-            sideDistX = (posX - mapX) * deltaDistX;
-        }
-        else
-        {
-            stepX = 1;
-            sideDistX = (mapX + 1.0 - posX) * deltaDistX;
-        }
-        if (rayDirY < 0)
-        {
-            stepY = -1;
-            sideDistY = (posY - mapY) * deltaDistY;
-        }
-        else
-        {
-            stepY = 1;
-            sideDistY = (mapY + 1.0 - posY) * deltaDistY;
-        }
+        // Was there a wall hit?
+        bool hit = false;
+
+        // Was a NS or a EW wall hit?
+        int side;
+
+        // // Calculate step and initial sideDist
+
+        // if (rayDirX < 0)
+        // {
+        //     stepX = -1;
+        //     sideDistX = (posX - mapX) * deltaDistX;
+        // }
+        // else
+        // {
+        //     stepX = 1;
+        //     sideDistX = (mapX + 1.0 - posX) * deltaDistX;
+        // }
+        // if (rayDirY < 0)
+        // {
+        //     stepY = -1;
+        //     sideDistY = (posY - mapY) * deltaDistY;
+        // }
+        // else
+        // {
+        //     stepY = 1;
+        //     sideDistY = (mapY + 1.0 - posY) * deltaDistY;
+        // }
+
         //perform DDA
-        while (hit == 0)
+        while (hit == false)
         {
             //jump to next map square, OR in x-direction, OR in y-direction
             if (sideDistX < sideDistY)
@@ -328,9 +337,12 @@ void Caster::render(double x, double y)
                 mapY += stepY;
                 side = 1;
             }
-            //Check if ray has hit a wall
+
+            // Check if ray has hit a wall
             if (worldMap[mapX][mapY] > 0)
-                hit = 1;
+            {
+                hit = true;
+            }
         }
 
         //Calculate distance of perpendicular ray (Euclidean distance will give fisheye effect!)
