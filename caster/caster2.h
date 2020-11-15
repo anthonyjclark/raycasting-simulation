@@ -1,3 +1,6 @@
+// TODO:
+// - add enum for type of hit (side)
+
 #if !defined(_CASTER_H_)
 #define _CASTER_H_
 
@@ -256,8 +259,8 @@ void Caster::render(double x, double y)
             int ceilingTexture = 6;
 
             // Floor or ceiling (and make it a bit darker)
-            int textureNum = is_floor ? floorTexture : ceilingTexture;
-            uint32_t color = texture[textureNum][texWidth * ty + tx];
+            int texNum = is_floor ? floorTexture : ceilingTexture;
+            uint32_t color = texture[texNum][texWidth * ty + tx];
             color = (color >> 1) & 8355711;
             writeColor(x, y, color);
         }
@@ -292,39 +295,14 @@ void Caster::render(double x, double y)
         double sideDistX = rayDirX < 0 ? (posX - mapX) * deltaDistX : (mapX + 1.0 - posX) * deltaDistX;
         double sideDistY = rayDirY < 0 ? (posY - mapY) * deltaDistY : (mapY + 1.0 - posY) * deltaDistY;
 
-        // Was there a wall hit?
-        bool hit = false;
-
         // Was a NS or a EW wall hit?
         int side;
 
-        // // Calculate step and initial sideDist
-
-        // if (rayDirX < 0)
-        // {
-        //     stepX = -1;
-        //     sideDistX = (posX - mapX) * deltaDistX;
-        // }
-        // else
-        // {
-        //     stepX = 1;
-        //     sideDistX = (mapX + 1.0 - posX) * deltaDistX;
-        // }
-        // if (rayDirY < 0)
-        // {
-        //     stepY = -1;
-        //     sideDistY = (posY - mapY) * deltaDistY;
-        // }
-        // else
-        // {
-        //     stepY = 1;
-        //     sideDistY = (mapY + 1.0 - posY) * deltaDistY;
-        // }
-
-        //perform DDA
+        // Perform DDA
+        bool hit = false;
         while (hit == false)
         {
-            //jump to next map square, OR in x-direction, OR in y-direction
+            // Jump to next map square, OR in x-direction, OR in y-direction
             if (sideDistX < sideDistY)
             {
                 sideDistX += deltaDistX;
@@ -339,38 +317,35 @@ void Caster::render(double x, double y)
             }
 
             // Check if ray has hit a wall
-            if (worldMap[mapX][mapY] > 0)
-            {
-                hit = true;
-            }
+            hit = worldMap[mapX][mapY] > 0;
         }
 
-        //Calculate distance of perpendicular ray (Euclidean distance will give fisheye effect!)
+        // Calculate distance of perpendicular ray (Euclidean distance will give fisheye effect!)
         if (side == 0)
+        {
             perpWallDist = (mapX - posX + (1 - stepX) / 2) / rayDirX;
+        }
         else
+        {
             perpWallDist = (mapY - posY + (1 - stepY) / 2) / rayDirY;
+        }
 
-        //Calculate height of line to draw on screen
-        int lineHeight = (int)(screenHeight / perpWallDist);
+        // Calculate height of line to draw on screen
+        int lineHeight = screenHeight / perpWallDist;
 
-        //calculate lowest and highest pixel to fill in current stripe
+        // Calculate lowest and highest pixel to fill in current stripe
         int drawStart = -lineHeight / 2 + screenHeight / 2 + pitch + (posZ / perpWallDist);
-        if (drawStart < 0)
-            drawStart = 0;
-        int drawEnd = lineHeight / 2 + screenHeight / 2 + pitch + (posZ / perpWallDist);
-        if (drawEnd >= screenHeight)
-            drawEnd = screenHeight - 1;
-        //texturing calculations
-        int texNum = worldMap[mapX][mapY] - 1; //1 subtracted from it so that texture 0 can be used!
+        drawStart = drawStart < 0 ? 0 : drawStart;
 
-        //calculate value of wallX
-        double wallX; //where exactly the wall was hit
-        if (side == 0)
-            wallX = posY + perpWallDist * rayDirY;
-        else
-            wallX = posX + perpWallDist * rayDirX;
-        wallX -= floor((wallX));
+        int drawEnd = lineHeight / 2 + screenHeight / 2 + pitch + (posZ / perpWallDist);
+        drawEnd = drawEnd >= screenHeight ? screenHeight - 1 : drawEnd;
+
+        // Texturing calculations (1 subtracted from it so that texture 0 can be used!)
+        int texNum = worldMap[mapX][mapY] - 1;
+
+        // Calculate value of wallX (where exactly the wall was hit)
+        double wallX = side == 0 ? posY + perpWallDist * rayDirY : posX + perpWallDist * rayDirX;
+        wallX -= floor(wallX);
 
         //x coordinate on the texture
         int texX = int(wallX * double(texWidth));
