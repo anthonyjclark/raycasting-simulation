@@ -7,7 +7,7 @@ namespace py = pybind11;
 PYBIND11_MODULE(pycaster, m)
 {
     py::class_<Caster>(m, "Caster", py::buffer_protocol())
-        .def(py::init<uint32_t, uint32_t>())
+        .def(py::init<uint32_t, uint32_t, std::vector<std::vector<int>>>())
         .def("render", &Caster::render)
         .def_buffer([](Caster &caster) -> py::buffer_info {
             return py::buffer_info(
