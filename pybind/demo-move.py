@@ -12,7 +12,10 @@ def display_frame(caster: Caster, x: float, y: float) -> None:
     plt.show()
 
 
-caster = Caster()
+width = 640
+height = 480
+caster = Caster(width, height)
+
 display_frame(caster, 21.0, 11.5)
 display_frame(caster, 21.5, 11.5)
 display_frame(caster, 22.0, 11.5)

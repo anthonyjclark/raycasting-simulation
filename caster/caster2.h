@@ -11,9 +11,6 @@
 
 #include "utilities.h"
 
-#define screenWidth 640
-#define screenHeight 480
-
 // Texture dimensions must be power of two
 #define texWidth 64
 #define texHeight 64
@@ -27,6 +24,12 @@
 #define uDiv 1
 #define vDiv 1
 #define vMove 0.0
+
+enum class Hit
+{
+    X,
+    Y
+};
 
 struct Sprite
 {
@@ -113,6 +116,8 @@ private:
     };
 
     // Render buffer
+    uint32_t screenWidth;
+    uint32_t screenHeight;
     std::vector<uint8_t> buffer;
 
     inline void writeColor(int x, int y, int c)
@@ -126,19 +131,22 @@ private:
     std::vector<uint32_t> texture[11];
 
     // 1D Zbuffer
-    double ZBuffer[screenWidth];
+    std::vector<double> ZBuffer;
 
     // Arrays used to sort the sprites
     int spriteOrder[numSprites];
     double spriteDistance[numSprites];
 
 public:
-    Caster();
+    Caster(uint32_t width, uint32_t height);
     void render(double x, double y);
     auto getBuffer() { return buffer.data(); }
+    auto width() { return screenWidth; }
+    auto height() { return screenHeight; }
 };
 
-Caster::Caster() : buffer(screenWidth * screenHeight * 3)
+Caster::Caster(uint32_t width, uint32_t height)
+    : screenWidth(width), screenHeight(height), buffer(width * height * 3), ZBuffer(width)
 {
     for (int i = 0; i < 11; i++)
     {
@@ -190,7 +198,7 @@ void Caster::render(double x, double y)
     // ----------------------------------------------------------------
     // FLOOR CASTING
     // ----------------------------------------------------------------
-    for (int y = 0; y < screenHeight; ++y)
+    for (auto y = 0u; y < screenHeight; ++y)
     {
         // Whether this section is floor or ceiling
         bool is_floor = y > screenHeight / 2 + pitch;
@@ -236,7 +244,7 @@ void Caster::render(double x, double y)
         float floorX = posX + rowDistance * rayDirX0;
         float floorY = posY + rowDistance * rayDirY0;
 
-        for (int x = 0; x < screenWidth; ++x)
+        for (auto x = 0u; x < screenWidth; ++x)
         {
             // The cell coord is simply got from the integer parts of floorX and floorY
             int cellX = floorX;
@@ -261,7 +269,7 @@ void Caster::render(double x, double y)
             // Floor or ceiling (and make it a bit darker)
             int texNum = is_floor ? floorTexture : ceilingTexture;
             uint32_t color = texture[texNum][texWidth * ty + tx];
-            color = (color >> 1) & 8355711;
+            color = (color >> 1) & 0x7F7F7F;
             writeColor(x, y, color);
         }
     }
@@ -269,7 +277,7 @@ void Caster::render(double x, double y)
     // ----------------------------------------------------------------
     // WALL CASTING
     // ----------------------------------------------------------------
-    for (int x = 0; x < screenWidth; x++)
+    for (auto x = 0u; x < screenWidth; x++)
     {
         // x-coordinate in camera space
         double cameraX = 2 * x / double(screenWidth) - 1;
@@ -296,7 +304,7 @@ void Caster::render(double x, double y)
         double sideDistY = rayDirY < 0 ? (posY - mapY) * deltaDistY : (mapY + 1.0 - posY) * deltaDistY;
 
         // Was a NS or a EW wall hit?
-        int side;
+        Hit side;
 
         // Perform DDA
         bool hit = false;
@@ -307,13 +315,13 @@ void Caster::render(double x, double y)
             {
                 sideDistX += deltaDistX;
                 mapX += stepX;
-                side = 0;
+                side = Hit::X;
             }
             else
             {
                 sideDistY += deltaDistY;
                 mapY += stepY;
-                side = 1;
+                side = Hit::Y;
             }
 
             // Check if ray has hit a wall
@@ -321,7 +329,7 @@ void Caster::render(double x, double y)
         }
 
         // Calculate distance of perpendicular ray (Euclidean distance will give fisheye effect!)
-        if (side == 0)
+        if (side == Hit::X)
         {
             perpWallDist = (mapX - posX + (1 - stepX) / 2) / rayDirX;
         }
@@ -335,28 +343,30 @@ void Caster::render(double x, double y)
 
         // Calculate lowest and highest pixel to fill in current stripe
         int drawStart = -lineHeight / 2 + screenHeight / 2 + pitch + (posZ / perpWallDist);
-        drawStart = drawStart < 0 ? 0 : drawStart;
+        drawStart = std::max(drawStart, 0);
 
         int drawEnd = lineHeight / 2 + screenHeight / 2 + pitch + (posZ / perpWallDist);
-        drawEnd = drawEnd >= screenHeight ? screenHeight - 1 : drawEnd;
+        drawEnd = std::min(drawEnd, static_cast<int>(screenHeight) - 1);
 
         // Texturing calculations (1 subtracted from it so that texture 0 can be used!)
         int texNum = worldMap[mapX][mapY] - 1;
 
         // Calculate value of wallX (where exactly the wall was hit)
-        double wallX = side == 0 ? posY + perpWallDist * rayDirY : posX + perpWallDist * rayDirX;
+        double wallX = side == Hit::X ? posY + perpWallDist * rayDirY : posX + perpWallDist * rayDirX;
         wallX -= floor(wallX);
 
-        //x coordinate on the texture
+        // x-coordinate on the texture
         int texX = int(wallX * double(texWidth));
-        if (side == 0 && rayDirX > 0)
+        if ((side == Hit::X && rayDirX > 0) || (side == Hit::Y && rayDirY < 0))
+        {
             texX = texWidth - texX - 1;
-        if (side == 1 && rayDirY < 0)
-            texX = texWidth - texX - 1;
+        }
 
         // TODO: an integer-only bresenham or DDA like algorithm could make the texture coordinate stepping faster
+
         // How much to increase the texture coordinate per screen pixel
         double step = 1.0 * texHeight / lineHeight;
+
         // Starting texture coordinate
         double texPos = (drawStart - pitch - (posZ / perpWallDist) - screenHeight / 2 + lineHeight / 2) * step;
 
@@ -365,85 +375,101 @@ void Caster::render(double x, double y)
             // Cast the texture coordinate to integer, and mask with (texHeight - 1) in case of overflow
             int texY = (int)texPos & (texHeight - 1);
             texPos += step;
+
             uint32_t color = texture[texNum][texHeight * texY + texX];
-            //make color darker for y-sides: R, G and B byte each divided through two with a "shift" and an "and"
-            if (side == 1)
-                color = (color >> 1) & 8355711;
+
+            // Darken
+            if (side == Hit::Y)
+            {
+                color = (color >> 1) & 0x7F7F7F;
+            }
+
             writeColor(x, y, color);
         }
 
-        //SET THE ZBUFFER FOR THE SPRITE CASTING
-        ZBuffer[x] = perpWallDist; //perpendicular distance is used
+        // Set zbuffer as distance to wall for sprite casting
+        ZBuffer[x] = perpWallDist;
     }
 
-    //SPRITE CASTING
-    //sort sprites from far to close
+    // ----------------------------------------------------------------
+    // SPRITE CASTING
+    // ----------------------------------------------------------------
+
+    // Sort sprites from far to close
     for (int i = 0; i < numSprites; i++)
     {
         spriteOrder[i] = i;
-        spriteDistance[i] = ((posX - sprite[i].x) * (posX - sprite[i].x) + (posY - sprite[i].y) * (posY - sprite[i].y)); //sqrt not taken, unneeded
+        // sqrt not needed for ordering
+        spriteDistance[i] = ((posX - sprite[i].x) * (posX - sprite[i].x) + (posY - sprite[i].y) * (posY - sprite[i].y));
     }
     sortSprites(spriteOrder, spriteDistance, numSprites);
 
-    //after sorting the sprites, do the projection and draw them
+    // Project and draw sprites
     for (int i = 0; i < numSprites; i++)
     {
-        //translate sprite position to relative to camera
+        // Translate sprite position to relative to camera
         double spriteX = sprite[spriteOrder[i]].x - posX;
         double spriteY = sprite[spriteOrder[i]].y - posY;
 
-        //transform sprite with the inverse camera matrix
+        // Transform sprite with the inverse camera matrix
         // [ planeX   dirX ] -1                                       [ dirY      -dirX ]
         // [               ]       =  1/(planeX*dirY-dirX*planeY) *   [                 ]
         // [ planeY   dirY ]                                          [ -planeY  planeX ]
 
-        double invDet = 1.0 / (planeX * dirY - dirX * planeY); //required for correct matrix multiplication
+        // Required for correct matrix multiplication
+        double invDet = 1.0 / (planeX * dirY - dirX * planeY);
 
         double transformX = invDet * (dirY * spriteX - dirX * spriteY);
-        double transformY = invDet * (-planeY * spriteX + planeX * spriteY); //this is actually the depth inside the screen, that what Z is in 3D, the distance of sprite to player, matching sqrt(spriteDistance[i])
+        // This is actually the depth inside the screen, that what Z is in 3D, the distance of
+        // sprite to player, matching sqrt(spriteDistance[i])
+        double transformY = invDet * (-planeY * spriteX + planeX * spriteY);
 
-        int spriteScreenX = int((screenWidth / 2) * (1 + transformX / transformY));
+        int spriteScreenX = (screenWidth / 2) * (1 + transformX / transformY);
 
         int vMoveScreen = int(vMove / transformY) + pitch + posZ / transformY;
 
-        //calculate height of the sprite on screen
-        int spriteHeight = abs(int(screenHeight / (transformY))) / vDiv; //using "transformY" instead of the real distance prevents fisheye
-        //calculate lowest and highest pixel to fill in current stripe
+        // Calculate height of the sprite on screen
+        // Using "transformY" instead of the real distance prevents fisheye
+        int spriteHeight = abs(int(screenHeight / (transformY))) / vDiv;
+
+        // Calculate lowest and highest pixel to fill in current stripe
         int drawStartY = -spriteHeight / 2 + screenHeight / 2 + vMoveScreen;
-        if (drawStartY < 0)
-            drawStartY = 0;
+        drawStartY = std::max(drawStartY, 0);
+
         int drawEndY = spriteHeight / 2 + screenHeight / 2 + vMoveScreen;
-        if (drawEndY >= screenHeight)
-            drawEndY = screenHeight - 1;
+        drawEndY = std::min(drawEndY, static_cast<int>(screenHeight) - 1);
 
-        //calculate width of the sprite
+        // Calculate width of the sprite
         int spriteWidth = abs(int(screenHeight / (transformY))) / uDiv;
-        int drawStartX = -spriteWidth / 2 + spriteScreenX;
-        if (drawStartX < 0)
-            drawStartX = 0;
-        int drawEndX = spriteWidth / 2 + spriteScreenX;
-        if (drawEndX >= screenWidth)
-            drawEndX = screenWidth - 1;
 
-        //loop through every vertical stripe of the sprite on screen
-        for (int stripe = drawStartX; stripe < drawEndX; stripe++)
+        uint32_t drawStartX = std::max(-spriteWidth / 2 + spriteScreenX, 0);
+        uint32_t drawEndX = std::min(spriteWidth / 2 + spriteScreenX, static_cast<int>(screenWidth) - 1);
+
+        // Loop through every vertical stripe of the sprite on screen
+        for (uint32_t stripe = drawStartX; stripe < drawEndX; stripe++)
         {
             int texX = int(256 * (stripe - (-spriteWidth / 2 + spriteScreenX)) * texWidth / spriteWidth) / 256;
+
             //the conditions in the if are:
             //1) it's in front of camera plane so you don't see things behind you
             //2) it's on the screen (left)
             //3) it's on the screen (right)
             //4) ZBuffer, with perpendicular distance
             if (transformY > 0 && stripe > 0 && stripe < screenWidth && transformY < ZBuffer[stripe])
-                for (int y = drawStartY; y < drawEndY; y++) //for every pixel of the current stripe
+                for (int y = drawStartY; y < drawEndY; y++)
                 {
-                    int d = (y - vMoveScreen) * 256 - screenHeight * 128 + spriteHeight * 128; //256 and 128 factors to avoid floats
+                    // 256 and 128 factors to avoid floats
+                    int d = (y - vMoveScreen) * 256 - screenHeight * 128 + spriteHeight * 128;
                     int texY = ((d * texHeight) / spriteHeight) / 256;
-                    uint32_t color = texture[sprite[spriteOrder[i]].texture][texWidth * texY + texX]; //get current color from the texture
+
+                    // Get color from the texture
+                    uint32_t color = texture[sprite[spriteOrder[i]].texture][texWidth * texY + texX];
+
+                    // Paint pixel if it isn't black, black is the invisible color
                     if ((color & 0x00FFFFFF) != 0)
-                        // buffer[y][stripe] = color; //paint pixel if it isn't black, black is the invisible color
-                        // buffer[stripe + y * screenWidth] = color;
+                    {
                         writeColor(stripe, y, color);
+                    }
                 }
         }
     }
