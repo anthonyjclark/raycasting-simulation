@@ -1,6 +1,7 @@
 // TODO:
 // - pass in texture info
 // - pass in images
+// - put and sort sprites in vector
 
 #if !defined(_CASTER_H_)
 #define _CASTER_H_
@@ -18,7 +19,7 @@
 
 #define numSprites 19
 
-//parameters for scaling and moving the sprites
+// Parameters for scaling and moving the sprites
 #define uDiv 1
 #define vDiv 1
 #define vMove 0.0
@@ -35,24 +36,6 @@ struct Sprite
     double y;
     int texture;
 };
-
-// Sort the sprites based on distance
-void sortSprites(int *order, double *dist, int amount)
-{
-    std::vector<std::pair<double, int>> sprites(amount);
-    for (int i = 0; i < amount; i++)
-    {
-        sprites[i].first = dist[i];
-        sprites[i].second = order[i];
-    }
-    std::sort(sprites.begin(), sprites.end());
-    // restore in reverse order to go from farthest to nearest
-    for (int i = 0; i < amount; i++)
-    {
-        dist[i] = sprites[amount - i - 1].first;
-        order[i] = sprites[amount - i - 1].second;
-    }
-}
 
 class Caster
 {
@@ -119,7 +102,7 @@ private:
 
 public:
     Caster(uint32_t width, uint32_t height, std::vector<std::vector<int>> world);
-    void render(double x, double y);
+    void render(double posX, double posY, double dirX, double dirY, double planeX, double planeY);
     auto getBuffer() { return buffer.data(); }
     auto width() { return screenWidth; }
     auto height() { return screenHeight; }
@@ -159,11 +142,8 @@ Caster::Caster(uint32_t width, uint32_t height, std::vector<std::vector<int>> wo
     }
 }
 
-void Caster::render(double x, double y)
+void Caster::render(double posX, double posY, double dirX, double dirY, double planeX, double planeY)
 {
-    // x and y position (default to x=22.0, y=11.5)
-    double posX = x, posY = y;
-
     // Vertical camera strafing up/down, for jumping/crouching.
     // 0 means standard height.
     // Expressed in screen pixels a wall at distance 1 shifts
@@ -172,11 +152,11 @@ void Caster::render(double x, double y)
     // Looking up/down, expressed in screen pixels the horizon shifts
     double pitch = 0;
 
-    // Direction vector
-    double dirX = -1.0, dirY = 1.0;
+    // // Direction vector
+    // double dirX = -1.0, dirY = 1.0;
 
-    // The 2d raycaster version of camera plane
-    double planeX = 1.0, planeY = 0.66;
+    // // The 2d raycaster version of camera plane
+    // double planeX = 1.0, planeY = 0.66;
 
     // FLOOR CASTING
     renderFloorCeiling(posX, posY, posZ, dirX, dirY, planeX, planeY, pitch);
@@ -185,7 +165,7 @@ void Caster::render(double x, double y)
     renderWalls(posX, posY, posZ, dirX, dirY, planeX, planeY, pitch);
 
     // SPRITE CASTING
-    renderSprites(posX, posY, posZ, dirX, dirY, planeX, planeY, pitch);
+    // renderSprites(posX, posY, posZ, dirX, dirY, planeX, planeY, pitch);
 }
 
 void Caster::renderFloorCeiling(double posX, double posY, double posZ, double dirX, double dirY, double planeX, double planeY, double pitch)
@@ -261,7 +241,12 @@ void Caster::renderFloorCeiling(double posX, double posY, double posZ, double di
             // Floor or ceiling (and make it a bit darker)
             int texNum = is_floor ? floorTexture : ceilingTexture;
             uint32_t color = texture[texNum][texWidth * ty + tx];
+
+            // TODO: temporary hack
+            color = is_floor ? (checkerBoardPattern == 0 ? 0x666666 : 0xEEEEEE) : color;
+
             color = (color >> 1) & 0x7F7F7F;
+
             writeColor(x, y, color);
         }
     }
@@ -395,7 +380,22 @@ void Caster::renderSprites(double posX, double posY, double posZ, double dirX, d
         spriteDistance[i] = ((posX - sprite[i].x) * (posX - sprite[i].x) + (posY - sprite[i].y) * (posY - sprite[i].y));
     }
 
-    sortSprites(spriteOrder, spriteDistance, numSprites);
+    // Sort the sprites based on distance
+    std::vector<std::pair<double, int>> sprites(numSprites);
+    for (int i = 0; i < numSprites; i++)
+    {
+        sprites[i].first = spriteDistance[i];
+        sprites[i].second = spriteOrder[i];
+    }
+
+    std::sort(sprites.begin(), sprites.end());
+
+    // Restore in reverse order to go from farthest to nearest
+    for (int i = 0; i < numSprites; i++)
+    {
+        spriteDistance[i] = sprites[numSprites - i - 1].first;
+        spriteOrder[i] = sprites[numSprites - i - 1].second;
+    }
 
     // Project and draw sprites
     for (int i = 0; i < numSprites; i++)

@@ -5,6 +5,7 @@ Things to do:
 - add levels (e.g., three levels of cast rays)
 - agent height
 - skybox
+- https://github.com/sizmailov/pybind11-stubgen
 
 
 https://stackoverflow.com/questions/21815839/simple-java-2d-array-maze-sample
@@ -31,3 +32,11 @@ We can use the raycast distances to label pixels for getting depth
 1. Working with Python and C++
 2. Add features
 3. Compile to JS and work with JS
+4. Switch to Julia? (pyjulia, juliaimages)
+
+Resources:
+
+- https://old.reddit.com/r/DearPyGui/comments/jp0upr/load_image_from_numpy/
+- https://stackoverflow.com/questions/47239797/ray-casting-with-different-height-size/
+- https://lodev.org/cgtutor/files/raycaster_pitch.cpp
+-
