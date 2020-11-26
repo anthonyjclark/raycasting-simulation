@@ -1,29 +1,42 @@
 #include "pybind11/pybind11.h"
 #include "pybind11/stl.h"
-#include "../caster/caster2.h"
+#include "../RaycastWorld/RaycastWorld.h"
 
 namespace py = pybind11;
 
 PYBIND11_MODULE(pycaster, m)
 {
-    py::class_<Caster>(m, "Caster", py::buffer_protocol())
+    py::enum_<Turn>(m, "Turn", py::arithmetic(), "Turning enumeration")
+        .value("Left", LEFT)
+        .value("Stop", STOP)
+        .value("Right", RIGHT);
+
+    py::enum_<Walk>(m, "Walk", py::arithmetic(), "Walking enumeration")
+        .value("Backward", BACKWARD)
+        .value("Stopped", STOPPED)
+        .value("Forward", FORWARD);
+
+    py::class_<RaycastWorld>(m, "RaycastWorld", py::buffer_protocol())
         .def(py::init<uint32_t, uint32_t, std::vector<std::vector<int>>>())
-        .def("render", &Caster::render)
-        .def_buffer([](Caster &caster) -> py::buffer_info {
+        .def("turn", &RaycastWorld::setTurn)
+        .def("walk", &RaycastWorld::setWalk)
+        .def("update", &RaycastWorld::updatePose)
+        .def("render", &RaycastWorld::renderView)
+        .def_buffer([](RaycastWorld &caster) -> py::buffer_info {
             return py::buffer_info(
                 caster.getBuffer(),                       // Pointer to data
                 sizeof(uint8_t),                          // Size of data type
                 py::format_descriptor<uint8_t>::format(), // Data type for messages
                 3,                                        // Number of dimensions
                 {
-                    static_cast<int>(caster.height()), // Height of buffer
-                    static_cast<int>(caster.width()),  // Width of buffer
-                    3                                  // Number of color channels
+                    static_cast<int>(caster.getHeight()), // Height of buffer
+                    static_cast<int>(caster.getWidth()),  // Width of buffer
+                    3                                     // Number of color channels
                 },
                 {
-                    sizeof(uint8_t) * caster.width() * 3, // Stride for height
-                    sizeof(uint8_t) * 3,                  // Stride for width
-                    sizeof(uint8_t)                       // Stride for pixels
+                    sizeof(uint8_t) * caster.getWidth() * 3, // Stride for height
+                    sizeof(uint8_t) * 3,                     // Stride for width
+                    sizeof(uint8_t)                          // Stride for pixels
                 });
         });
 }
