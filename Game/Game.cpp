@@ -30,6 +30,11 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
     {
         static_cast<RaycastWorld *>(glfwGetWindowUserPointer(window))->setTurn(LEFT);
     }
+    else if (key == GLFW_KEY_P && action == GLFW_PRESS)
+    {
+        auto world = static_cast<RaycastWorld *>(glfwGetWindowUserPointer(window));
+        std::cout << world->getX() << ", " << world->getY() << std::endl;
+    }
     else if ((key == GLFW_KEY_LEFT || key == GLFW_KEY_RIGHT) && action == GLFW_RELEASE)
     {
         static_cast<RaycastWorld *>(glfwGetWindowUserPointer(window))->setTurn(STOP);
@@ -43,21 +48,34 @@ int main()
     const unsigned int WINDOW_HEIGHT = 480;
 
     std::vector<std::vector<int>> WORLD_MAP = {
-        {2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2},
-        {2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 2},
-        {2, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 2, 0, 2},
-        {2, 2, 2, 2, 0, 0, 0, 0, 0, 0, 2, 0, 2, 0, 2},
-        {2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 2, 0, 2},
-        {2, 0, 0, 0, 0, 0, 0, 0, 2, 2, 2, 2, 2, 0, 2},
-        {2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2},
-        {2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2},
-        {2, 2, 2, 2, 2, 2, 0, 0, 0, 2, 2, 2, 2, 0, 2},
-        {2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2},
-        {2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2},
+        {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+        {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 0, 1, 0, 1},
+        {1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 1, 0, 1, 0, 1},
+        {1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0, 1, 0, 0, 0, 1},
+        {1, 1, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 1},
+        {1, 0, 0, 0, 1, 0, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 3},
+        {1, 1, 1, 1, 1, 0, 1, 0, 1, 0, 1, 2, 1, 1, 1, 0, 1},
+        {1, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 2, 0, 0, 0, 1},
+        {1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 3, 1},
+        {1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 3},
+        {1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 1, 0, 1, 2, 1, 0, 1},
+        {1, 0, 1, 0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1},
+        {1, 0, 1, 1, 1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 1, 0, 1},
+        {1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, 0, 0, 0, 0, 0, 1},
+        {1, 0, 1, 0, 1, 1, 1, 1, 1, 0, 1, 0, 1, 1, 1, 3, 1},
+        {1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1},
+        {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1},
+    };
+
+    TexDict TEX_FNAMES = {
+        {0, "../textures/wood.png"},
+        {1, "../textures/redbrick.png"},
+        {2, "../textures/redbrick-left.png"},
+        {3, "../textures/redbrick-right.png"},
     };
 
     DisplayArray displayer(WINDOW_WIDTH, WINDOW_HEIGHT, keyCallback);
-    RaycastWorld world(WINDOW_WIDTH, WINDOW_HEIGHT, WORLD_MAP);
+    RaycastWorld world(WINDOW_WIDTH, WINDOW_HEIGHT, WORLD_MAP, TEX_FNAMES);
     glfwSetWindowUserPointer(displayer.window, &world);
 
     //double t = glfwGetTime();

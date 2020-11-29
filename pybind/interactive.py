@@ -18,25 +18,38 @@ import time
 inside = time.time()
 outside1, outisde2 = time.time(), time.time()
 
-WORLD = [
-    [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2],
-    [2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 2],
-    [2, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 2, 0, 2],
-    [2, 2, 2, 2, 0, 0, 0, 0, 0, 0, 2, 0, 2, 0, 2],
-    [2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 2, 0, 2],
-    [2, 0, 0, 0, 0, 0, 0, 0, 2, 2, 2, 2, 2, 0, 2],
-    [2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2],
-    [2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2],
-    [2, 2, 2, 2, 2, 2, 0, 0, 0, 2, 2, 2, 2, 0, 2],
-    [2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2],
-    [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2],
+WORLD_MAP = [
+    [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+    [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 0, 1, 0, 1],
+    [1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 1, 0, 1, 0, 1],
+    [1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0, 1, 0, 0, 0, 1],
+    [1, 1, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 1],
+    [1, 0, 0, 0, 1, 0, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 3],
+    [1, 1, 1, 1, 1, 0, 1, 0, 1, 0, 1, 2, 1, 1, 1, 0, 1],
+    [1, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 2, 0, 0, 0, 1],
+    [1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 3, 1],
+    [1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 3],
+    [1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 1, 0, 1, 2, 1, 0, 1],
+    [1, 0, 1, 0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1],
+    [1, 0, 1, 1, 1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 1, 0, 1],
+    [1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, 0, 0, 0, 0, 0, 1],
+    [1, 0, 1, 0, 1, 1, 1, 1, 1, 0, 1, 0, 1, 1, 1, 3, 1],
+    [1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1],
+    [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1],
 ]
 
-NUM_ROWS = len(WORLD)
-NUM_COLS = len(WORLD[0])
+TEX_FNAMES = {
+    0: "../textures/wood.png",
+    1: "../textures/redbrick.png",
+    2: "../textures/redbrick-left.png",
+    3: "../textures/redbrick-right.png",
+}
+
+NUM_ROWS = len(WORLD_MAP)
+NUM_COLS = len(WORLD_MAP[0])
 TILE_SIZE = 64
-WIDTH = 640 #NUM_COLS * TILE_SIZE
-HEIGHT = 480 #NUM_ROWS * TILE_SIZE
+WIDTH = 640  # NUM_COLS * TILE_SIZE
+HEIGHT = 480  # NUM_ROWS * TILE_SIZE
 
 MINIMAP_SCALE = 0.2
 AGENT_RADIUS = 64
@@ -46,9 +59,9 @@ VIEW_MINIMAP = False
 
 
 def init(data, canvas):
-    data.world = RaycastWorld(WIDTH, HEIGHT, WORLD)
-    data.mapWidth = len(WORLD[0])
-    data.mapHeight = len(WORLD)
+    data.world = RaycastWorld(WIDTH, HEIGHT, WORLD_MAP, TEX_FNAMES)
+    data.mapWidth = len(WORLD_MAP[0])
+    data.mapHeight = len(WORLD_MAP)
     data.screenWidth = WIDTH
     data.screenHeight = HEIGHT
 

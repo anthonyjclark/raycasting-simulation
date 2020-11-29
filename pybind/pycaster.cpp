@@ -17,11 +17,13 @@ PYBIND11_MODULE(pycaster, m)
         .value("Forward", FORWARD);
 
     py::class_<RaycastWorld>(m, "RaycastWorld", py::buffer_protocol())
-        .def(py::init<uint32_t, uint32_t, std::vector<std::vector<int>>>())
+        .def(py::init<uint32_t, uint32_t, World, TexDict>())
         .def("turn", &RaycastWorld::setTurn)
         .def("walk", &RaycastWorld::setWalk)
         .def("update", &RaycastWorld::updatePose)
         .def("render", &RaycastWorld::renderView)
+        .def("position", &RaycastWorld::setPosition)
+        .def("direction", &RaycastWorld::setDirection)
         .def_buffer([](RaycastWorld &caster) -> py::buffer_info {
             return py::buffer_info(
                 caster.getBuffer(),                       // Pointer to data

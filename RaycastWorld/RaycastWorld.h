@@ -5,13 +5,16 @@
 // - add functions for directly setting pose and camera
 // - second constructor that additionally takes pose and camera settings
 // - use gpu?
+// - automatically call renderview when getBuffer is called?
 
 #if !defined(_RAYCAST_WORLD_H_)
 #define _RAYCAST_WORLD_H_
 
 #include <cmath>
-#include <vector>
 #include <iostream>
+#include <string>
+#include <vector>
+#include <unordered_map>
 
 #include "utilities.h"
 
@@ -24,12 +27,18 @@
 #define vDiv 1
 #define vMove 0.0
 
+using usize = uint32_t;
+using World = std::vector<std::vector<int>>;
+using Tex = std::vector<usize>;
+using TexDict = std::unordered_map<usize, std::string>;
+using TexMap = std::unordered_map<usize, Tex>;
+
 struct Sprite
 {
     double x;
     double y;
-    int texture;
-    int order;
+    usize texture;
+    usize order;
     double distance2;
 };
 
@@ -57,13 +66,13 @@ class RaycastWorld
 {
 private:
     // World map
-    uint32_t mapWidth;
-    uint32_t mapHeight;
-    std::vector<std::vector<int>> worldMap;
+    usize mapWidth;
+    usize mapHeight;
+    World worldMap;
 
     // Render buffer
-    uint32_t screenWidth;
-    uint32_t screenHeight;
+    usize screenWidth;
+    usize screenHeight;
     std::vector<uint8_t> buffer;
 
     // Write a single color pixel to the buffer
@@ -75,7 +84,7 @@ private:
     }
 
     // Texture buffers
-    std::vector<uint32_t> texture[11];
+    TexMap textures;
 
     // 1D Zbuffer for sprites
     std::vector<double> ZBuffer;
@@ -94,23 +103,23 @@ private:
     double planeX, planeY;
 
     // Motion
-    Turn turn_direction;
-    double turn_speed;
+    Turn turnDirection;
+    double turnSpeed;
 
-    Walk walk_direction;
-    double walk_speed;
+    Walk walkDirection;
+    double walkSpeed;
 
     bool needToRender;
 
 public:
     RaycastWorld() = delete;
-    RaycastWorld(uint32_t width, uint32_t height, std::vector<std::vector<int>> world);
+    RaycastWorld(usize width, usize height, World world, TexDict texInfo);
 
     // void setPosition(double x, double y, double z = 0.0);
     // void setAngle(double a);
 
-    void setTurn(Turn turn) { turn_direction = turn; }
-    void setWalk(Walk walk) { walk_direction = walk; }
+    void setTurn(Turn turn) { turnDirection = turn; }
+    void setWalk(Walk walk) { walkDirection = walk; }
 
     void updatePose();
     void renderView();
@@ -118,34 +127,53 @@ public:
     auto getBuffer() { return buffer.data(); }
     auto getWidth() { return screenWidth; }
     auto getHeight() { return screenHeight; }
+
+    auto getX() { return posX; }
+    auto getY() { return posY; }
+
+    void setPosition(double x, double y, double z = 0)
+    {
+        posX = x;
+        posY = y;
+        posZ = z;
+        needToRender = true;
+    }
+    void setDirection(double x, double y)
+    {
+        dirX = x;
+        dirY = y;
+        needToRender = true;
+    }
 };
 
-RaycastWorld::RaycastWorld(uint32_t width, uint32_t height, std::vector<std::vector<int>> world)
+RaycastWorld::RaycastWorld(usize width, usize height, World world, TexDict texInfo)
     : worldMap(world), screenWidth(width), screenHeight(height), buffer(width * height * 3), ZBuffer(width)
 {
     mapHeight = worldMap.size();
     mapWidth = worldMap[0].size();
 
-    for (int i = 0; i < 11; i++)
+    // Loop through given texture files
+    unsigned long tw, th, error = 0;
+    for (auto const &[texNum, texFilename] : texInfo)
     {
-        texture[i].resize(texWidth * texHeight);
+        Tex texture(texWidth * texHeight);
+        error |= loadImage(texture, tw, th, texFilename);
+        textures[texNum] = texture;
     }
 
-    // Load some textures
-    unsigned long tw, th, error = 0;
-    error |= loadImage(texture[0], tw, th, "../textures/eagle.png");
-    error |= loadImage(texture[1], tw, th, "../textures/redbrick.png");
-    error |= loadImage(texture[2], tw, th, "../textures/purplestone.png");
-    error |= loadImage(texture[3], tw, th, "../textures/greystone.png");
-    error |= loadImage(texture[4], tw, th, "../textures/bluestone.png");
-    error |= loadImage(texture[5], tw, th, "../textures/mossy.png");
-    error |= loadImage(texture[6], tw, th, "../textures/wood.png");
-    error |= loadImage(texture[7], tw, th, "../textures/colorstone.png");
+    // for (int i = 0; i < 11; i++)
+    // {
+    //     texture[i].resize(texWidth * texHeight);
+    // }
 
-    // Load some sprite textures
-    error |= loadImage(texture[8], tw, th, "../textures/barrel.png");
-    error |= loadImage(texture[9], tw, th, "../textures/pillar.png");
-    error |= loadImage(texture[10], tw, th, "../textures/greenlight.png");
+    // // Load some textures
+    // error |= loadImage(texture[0], tw, th, "../textures/wood.png");
+    // error |= loadImage(texture[1], tw, th, "../textures/redbrick.png");
+    // error |= loadImage(texture[2], tw, th, "../textures/redbrick-left.png");
+    // error |= loadImage(texture[3], tw, th, "../textures/redbrick-right.png");
+
+    // // Load some sprite textures
+    // error |= loadImage(texture[8], tw, th, "../textures/barrel.png");
 
     if (error)
     {
@@ -154,8 +182,8 @@ RaycastWorld::RaycastWorld(uint32_t width, uint32_t height, std::vector<std::vec
     }
 
     // Location on the map
-    posX = mapWidth / 2;
-    posY = mapHeight / 2;
+    posX = 1.5;
+    posY = 1.5;
 
     // Vertical camera strafing up/down, for jumping/crouching.
     // 0 means standard height.
@@ -174,10 +202,10 @@ RaycastWorld::RaycastWorld(uint32_t width, uint32_t height, std::vector<std::vec
     planeY = 0.66;
 
     // Motion and rendering
-    turn_direction = STOP;
-    turn_speed = 5 * (3.1415926 / 180);
-    walk_direction = STOPPED;
-    walk_speed = 0.1;
+    turnDirection = STOP;
+    turnSpeed = 2.5 * (3.1415926 / 180);
+    walkDirection = STOPPED;
+    walkSpeed = 0.05;
 
     needToRender = true;
     renderView();
@@ -185,23 +213,23 @@ RaycastWorld::RaycastWorld(uint32_t width, uint32_t height, std::vector<std::vec
 
 void RaycastWorld::updatePose()
 {
-    if (turn_direction != STOP)
+    if (turnDirection != STOP)
     {
-        double rot_speed = turn_direction * turn_speed;
+        double rotSpeed = turnDirection * turnSpeed;
         double oldDirX = dirX;
-        dirX = oldDirX * cos(-rot_speed) - dirY * sin(-rot_speed);
-        dirY = oldDirX * sin(-rot_speed) + dirY * cos(-rot_speed);
+        dirX = oldDirX * cos(-rotSpeed) - dirY * sin(-rotSpeed);
+        dirY = oldDirX * sin(-rotSpeed) + dirY * cos(-rotSpeed);
 
         double oldPlaneX = planeX;
-        planeX = oldPlaneX * cos(-rot_speed) - planeY * sin(-rot_speed);
-        planeY = oldPlaneX * sin(-rot_speed) + planeY * cos(-rot_speed);
+        planeX = oldPlaneX * cos(-rotSpeed) - planeY * sin(-rotSpeed);
+        planeY = oldPlaneX * sin(-rotSpeed) + planeY * cos(-rotSpeed);
 
         needToRender = true;
     }
 
-    if (walk_direction != STOPPED)
+    if (walkDirection != STOPPED)
     {
-        double step = walk_direction * walk_speed;
+        double step = walkDirection * walkSpeed;
         double newX = posX + dirX * step;
         double newY = posY + dirY * step;
 
@@ -296,14 +324,14 @@ void RaycastWorld::renderFloorCeiling()
             int checkerBoardPattern = (int(cellX + cellY)) & 1;
             int floorTexture;
             if (checkerBoardPattern == 0)
-                floorTexture = 3;
+                floorTexture = 1;
             else
-                floorTexture = 4;
-            int ceilingTexture = 6;
+                floorTexture = 2;
+            int ceilingTexture = 0;
 
             // Floor or ceiling (and make it a bit darker)
             int texNum = isFloor ? floorTexture : ceilingTexture;
-            uint32_t color = texture[texNum][texWidth * ty + tx];
+            usize color = textures[texNum][texWidth * ty + tx];
 
             // TODO: temporary hack
             color = isFloor ? (checkerBoardPattern == 0 ? 0x666666 : 0xEEEEEE) : color;
@@ -389,7 +417,7 @@ void RaycastWorld::renderWalls()
         drawEnd = std::min(drawEnd, static_cast<int>(screenHeight) - 1);
 
         // Texturing calculations (1 subtracted from it so that texture 0 can be used!)
-        int texNum = worldMap[mapX][mapY] - 1;
+        int texNum = worldMap[mapX][mapY];
 
         // Calculate value of wallX (where exactly the wall was hit)
         double wallX = side == Hit::X ? posY + perpWallDist * rayDirY : posX + perpWallDist * rayDirX;
@@ -416,7 +444,7 @@ void RaycastWorld::renderWalls()
             int texY = (int)texPos & (texHeight - 1);
             texPos += step;
 
-            uint32_t color = texture[texNum][texHeight * texY + texX];
+            usize color = textures[texNum][texHeight * texY + texX];
 
             // Darken
             if (side == Hit::Y)
@@ -484,11 +512,11 @@ void RaycastWorld::renderSprites()
         // Calculate width of the sprite
         int spriteWidth = abs(int(screenHeight / (transformY))) / uDiv;
 
-        uint32_t drawStartX = std::max(-spriteWidth / 2 + spriteScreenX, 0);
-        uint32_t drawEndX = std::max(std::min(spriteWidth / 2 + spriteScreenX, static_cast<int>(screenWidth) - 1), 0);
+        usize drawStartX = std::max(-spriteWidth / 2 + spriteScreenX, 0);
+        usize drawEndX = std::max(std::min(spriteWidth / 2 + spriteScreenX, static_cast<int>(screenWidth) - 1), 0);
 
         // Loop through every vertical stripe of the sprite on screen
-        for (uint32_t stripe = drawStartX; stripe < drawEndX; stripe++)
+        for (usize stripe = drawStartX; stripe < drawEndX; stripe++)
         {
             int texX = int(256 * (stripe - (-spriteWidth / 2 + spriteScreenX)) * texWidth / spriteWidth) / 256;
 
@@ -506,7 +534,7 @@ void RaycastWorld::renderSprites()
                     int texY = ((d * texHeight) / spriteHeight) / 256;
 
                     // Get color from the texture
-                    uint32_t color = texture[sprite.texture][texWidth * texY + texX];
+                    usize color = textures[sprite.texture][texWidth * texY + texX];
 
                     // Paint pixel if it isn't black, black is the invisible color
                     if ((color & 0x00FFFFFF) != 0)
