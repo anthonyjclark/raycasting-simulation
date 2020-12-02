@@ -40,7 +40,8 @@ void errorCallback(int error, const char *message)
     std::cerr << "Error: " << message << " (" << error << ")\n";
 }
 
-void resizeCallback(GLFWwindow *window, int width, int height)
+// void resizeCallback(GLFWwindow *window, int width, int height)
+void resizeCallback(GLFWwindow *, int width, int height)
 {
     // make sure the viewport matches the new window dimensions; note that width and
     // height will be significantly larger than specified on retina displays.

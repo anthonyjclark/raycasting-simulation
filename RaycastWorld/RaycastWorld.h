@@ -1,11 +1,12 @@
 // TODO:
-// - pass in texture info
-// - pass in images
 // - take into account dt
 // - add functions for directly setting pose and camera
 // - second constructor that additionally takes pose and camera settings
 // - use gpu?
 // - automatically call renderview when getBuffer is called?
+// - set ceiling and floor textures
+// - license
+// - flip scene left and right?
 
 #if !defined(_RAYCAST_WORLD_H_)
 #define _RAYCAST_WORLD_H_
@@ -17,10 +18,7 @@
 #include <unordered_map>
 
 #include "utilities.h"
-
-// Texture dimensions must be power of two
-#define texWidth 64
-#define texHeight 64
+// #include "lodepng.h"
 
 // Parameters for scaling and moving the sprites
 #define uDiv 1
@@ -32,6 +30,10 @@ using World = std::vector<std::vector<int>>;
 using Tex = std::vector<usize>;
 using TexDict = std::unordered_map<usize, std::string>;
 using TexMap = std::unordered_map<usize, Tex>;
+
+// Texture dimensions must be power of two
+const usize texWidth = 64;
+const usize texHeight = 64;
 
 struct Sprite
 {
@@ -95,6 +97,7 @@ private:
     void renderFloorCeiling();
     void renderWalls();
     void renderSprites();
+    void renderMiniMap();
 
     // View and camera pose
     double posX, posY, posZ;
@@ -115,34 +118,76 @@ public:
     RaycastWorld() = delete;
     RaycastWorld(usize width, usize height, World world, TexDict texInfo);
 
-    // void setPosition(double x, double y, double z = 0.0);
-    // void setAngle(double a);
+    void updatePose();
+    void renderView();
 
     void setTurn(Turn turn) { turnDirection = turn; }
     void setWalk(Walk walk) { walkDirection = walk; }
 
-    void updatePose();
-    void renderView();
-
-    auto getBuffer() { return buffer.data(); }
     auto getWidth() { return screenWidth; }
     auto getHeight() { return screenHeight; }
 
     auto getX() { return posX; }
     auto getY() { return posY; }
 
-    void setPosition(double x, double y, double z = 0)
+    void setX(double x)
+    {
+        posX = x;
+        needToRender = true;
+    }
+
+    void setY(double y)
+    {
+        posY = y;
+        needToRender = true;
+    }
+
+    void setZ(double z)
+    {
+        posZ = z;
+        needToRender = true;
+    }
+
+    void setPosition(double x, double y, double z = 0.0)
     {
         posX = x;
         posY = y;
         posZ = z;
         needToRender = true;
     }
-    void setDirection(double x, double y)
+
+    void setDirection(double radians, double fov = 1.152)
     {
-        dirX = x;
-        dirY = y;
+        dirX = cos(radians);
+        dirY = sin(radians);
+
+        // 2 * atan(L/1.0) = fov
+        // L = tan(fov/2)
+        double planeLength = tan(fov / 2);
+        planeX = planeLength * sin(radians);
+        planeY = -planeLength * cos(radians);
+
         needToRender = true;
+    }
+
+    auto getBuffer()
+    {
+        if (needToRender)
+        {
+            renderView();
+        }
+        return buffer.data();
+    }
+
+    void addSprite(double x, double y, usize texID)
+    {
+        Sprite sp{x, y, texID, 1, 0.0};
+        sprites.push_back(sp);
+        // double x;
+        // double y;
+        // usize texture;
+        // usize order;
+        // double distance2;
     }
 };
 
@@ -160,20 +205,6 @@ RaycastWorld::RaycastWorld(usize width, usize height, World world, TexDict texIn
         error |= loadImage(texture, tw, th, texFilename);
         textures[texNum] = texture;
     }
-
-    // for (int i = 0; i < 11; i++)
-    // {
-    //     texture[i].resize(texWidth * texHeight);
-    // }
-
-    // // Load some textures
-    // error |= loadImage(texture[0], tw, th, "../textures/wood.png");
-    // error |= loadImage(texture[1], tw, th, "../textures/redbrick.png");
-    // error |= loadImage(texture[2], tw, th, "../textures/redbrick-left.png");
-    // error |= loadImage(texture[3], tw, th, "../textures/redbrick-right.png");
-
-    // // Load some sprite textures
-    // error |= loadImage(texture[8], tw, th, "../textures/barrel.png");
 
     if (error)
     {
@@ -233,9 +264,16 @@ void RaycastWorld::updatePose()
         double newX = posX + dirX * step;
         double newY = posY + dirY * step;
 
-        if (worldMap[int(newX)][int(newY)] == 0)
+        // TODO: x vs y?
+
+        if (worldMap[int(posY)][int(newX)] == 0)
         {
             posX = newX;
+            needToRender = true;
+        }
+
+        if (worldMap[int(newY)][int(posX)] == 0)
+        {
             posY = newY;
             needToRender = true;
         }
@@ -246,15 +284,16 @@ void RaycastWorld::renderView()
 {
     if (needToRender)
     {
-        // Floor casting
+        std::cout << "posX=" << posX << ", "
+                  << "posY=" << posY << ", "
+                  << "dirX=" << dirX << ", "
+                  << "dirY=" << dirY << ", "
+                  << "planeX=" << planeX << ", "
+                  << "planeY=" << planeY << "\n";
         renderFloorCeiling();
-
-        // Wall casting
         renderWalls();
-
-        // Sprite casting
-        // renderSprites();
-
+        renderSprites();
+        renderMiniMap();
         needToRender = false;
     }
 }
@@ -322,11 +361,7 @@ void RaycastWorld::renderFloorCeiling()
 
             // Choose texture and draw the pixel
             int checkerBoardPattern = (int(cellX + cellY)) & 1;
-            int floorTexture;
-            if (checkerBoardPattern == 0)
-                floorTexture = 1;
-            else
-                floorTexture = 2;
+            int floorTexture = checkerBoardPattern == 0 ? 1 : 2;
             int ceilingTexture = 0;
 
             // Floor or ceiling (and make it a bit darker)
@@ -393,7 +428,7 @@ void RaycastWorld::renderWalls()
             }
 
             // Check if ray has hit a wall
-            hit = worldMap[mapX][mapY] > 0;
+            hit = worldMap[mapY][mapX] > 0;
         }
 
         // Calculate distance of perpendicular ray (Euclidean distance will give fisheye effect!)
@@ -417,7 +452,7 @@ void RaycastWorld::renderWalls()
         drawEnd = std::min(drawEnd, static_cast<int>(screenHeight) - 1);
 
         // Texturing calculations (1 subtracted from it so that texture 0 can be used!)
-        int texNum = worldMap[mapX][mapY];
+        int texNum = worldMap[mapY][mapX];
 
         // Calculate value of wallX (where exactly the wall was hit)
         double wallX = side == Hit::X ? posY + perpWallDist * rayDirY : posX + perpWallDist * rayDirX;
@@ -468,7 +503,7 @@ void RaycastWorld::renderSprites()
         sprite.distance2 = (posX - sprite.x) * (posX - sprite.x) + (posY - sprite.y) * (posY - sprite.y);
     }
 
-    // Sort by distance (TODO: reverse order?)
+    // Sort by distance
     std::sort(sprites.begin(), sprites.end(), [](auto a, auto b) {
         return a.distance2 > b.distance2;
     });
@@ -546,4 +581,56 @@ void RaycastWorld::renderSprites()
         }
     }
 }
+
+void RaycastWorld::renderMiniMap()
+{
+    // TODO: make this a setting
+    usize cellSize = 10;
+
+    // Flip the y-axis when drawing the minimap
+    usize originY = cellSize * mapHeight;
+
+    // TODO: make this a setting
+    usize x0 = 1, y0 = 1;
+    usize xf = mapWidth - 2, yf = mapHeight - 2;
+
+    for (usize y = 0; y < mapHeight; y++)
+    {
+        for (usize x = 0; x < mapWidth; x++)
+        {
+            auto cell = worldMap[y][x];
+            usize color;
+            if (x == x0 && y == y0)
+            {
+                color = 0x00FF00;
+            }
+            else if (x == xf && y == yf)
+            {
+                color = 0x0000FF;
+            }
+            else
+            {
+                color = cell == 0 ? 0xAAAAAA : 0x222222;
+            }
+            for (usize sy = y * cellSize; sy < y * cellSize + cellSize; ++sy)
+            {
+                for (usize sx = x * cellSize; sx < x * cellSize + cellSize; ++sx)
+                {
+                    writeColor(sx, originY - sy, color);
+                }
+            }
+        }
+    }
+
+    usize ar = 2;
+
+    for (int y = posY * cellSize - ar; y < posY * cellSize + ar; y++)
+    {
+        for (int x = posX * cellSize - ar; x < posX * cellSize + ar; x++)
+        {
+            writeColor(x, originY - y, 0xFF0000);
+        }
+    }
+}
+
 #endif // _RAYCAST_WORLD_H_

@@ -31,9 +31,6 @@ TEX_FNAMES = {
 
 code = """
 world = RaycastWorld(WINDOW_WIDTH, WINDOW_HEIGHT, WORLD_MAP, TEX_FNAMES)
-world.position(1.5, 1.5, 0.0)
-world.direction(1, 0)
-world.render()
 """
 
 num_trials = 1
