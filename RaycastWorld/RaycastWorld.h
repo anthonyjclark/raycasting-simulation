@@ -1,14 +1,10 @@
 // TODO:
 // - take into account dt
-// - add functions for directly setting pose and camera
-// - second constructor that additionally takes pose and camera settings
 // - use gpu?
-// - automatically call renderview when getBuffer is called?
 // - set ceiling and floor textures
 // - license
 // - generalize floor, ceiling, and checkerboard
 // - allow solid colors (use something other than int for each cell?)
-// - fix darken
 
 #if !defined(_RAYCAST_WORLD_H_)
 #define _RAYCAST_WORLD_H_
@@ -94,19 +90,19 @@ private:
     std::vector<uintrgb> buffer;
 
     // Write a single color pixel to the buffer
-    inline void writeColorHex(int x, int y, usize c)
+    inline void writeColorHex(int x, int y, usize c, bool darken = false)
     {
+        c = darken ? (c >> 1) & 0x7F : c;
         buffer[(x * 3 + 0) + y * screenWidth * 3] = (c & 0xFF0000) >> 16;
         buffer[(x * 3 + 1) + y * screenWidth * 3] = (c & 0xFF00) >> 8;
         buffer[(x * 3 + 2) + y * screenWidth * 3] = (c & 0xFF);
     }
 
-    inline void writeColorRGB(int x, int y, uintrgb *c)
+    inline void writeColorRGB(int x, int y, uintrgb *c, bool darken = false)
     {
-        // TODO: std::copy?
-        buffer[(x * 3 + 0) + y * screenWidth * 3] = c[0];
-        buffer[(x * 3 + 1) + y * screenWidth * 3] = c[1];
-        buffer[(x * 3 + 2) + y * screenWidth * 3] = c[2];
+        buffer[(x * 3 + 0) + y * screenWidth * 3] = darken ? (c[0] >> 1) & 0x7F : c[0];
+        buffer[(x * 3 + 1) + y * screenWidth * 3] = darken ? (c[1] >> 1) & 0x7F : c[1];
+        buffer[(x * 3 + 2) + y * screenWidth * 3] = darken ? (c[2] >> 1) & 0x7F : c[2];
     }
 
     // Texture buffers
@@ -342,12 +338,6 @@ void RaycastWorld::renderView()
 {
     if (needToRender)
     {
-        // std::cout << "posX=" << posX << ", "
-        //           << "posY=" << posY << ", "
-        //           << "dirX=" << dirX << ", "
-        //           << "dirY=" << dirY << ", "
-        //           << "planeX=" << planeX << ", "
-        //           << "planeY=" << planeY << "\n";
         renderFloorCeiling();
         renderWalls();
         renderSprites();
@@ -541,19 +531,7 @@ void RaycastWorld::renderWalls()
             // Cast the texture coordinate to integer, and mask with (texHeight - 1) in case of overflow
             int texY = (int)texPos & (texHeight - 1);
             texPos += step;
-
-            // usize color = textures[texNum][texHeight * texY + texX]; // TODO: fix color
-            // auto color = textures[texNum][texWidth * texY + texX * 3];
-            // auto color = textures[texNum][texWidth * texY + texX];
-
-            // // Darken
-            // if (side == Hit::Y)
-            // {
-            //     color = (color >> 1) & 0x7F7F7F;
-            // }
-
-            // writeColorRGB(x, y, &color);
-            writeColorRGB(x, y, &textures[texNum][(texX + texWidth * texY) * 3]);
+            writeColorRGB(x, y, &textures[texNum][(texX + texWidth * texY) * 3], side == Hit::Y);
         }
 
         // Set zbuffer as distance to wall for sprite casting
@@ -697,7 +675,6 @@ void RaycastWorld::renderMiniMap()
     {
         for (int x = posX * cellSize - ar; x < posX * cellSize + ar; x++)
         {
-            // std::cout << "AGENT: " << x << "," << y << std::endl;
             writeColorHex(x, originY - y, 0xFF0000);
         }
     }
