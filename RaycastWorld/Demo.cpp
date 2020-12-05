@@ -1,42 +1,20 @@
 #include "RaycastWorld.h"
 
-// rm frame.ppm && make && ./world && open frame.ppm
-
 int main(/*int argc, char const *argv[]*/)
 {
+    const unsigned int IMAGE_WIDTH = 640;
+    const unsigned int IMAGE_HEIGHT = 480;
 
-    const unsigned int WINDOW_WIDTH = 640;
-    const unsigned int WINDOW_HEIGHT = 480;
+    RaycastWorld world(IMAGE_WIDTH, IMAGE_HEIGHT, "../Mazes/maze.txt");
 
-    const std::vector<std::vector<int>> WORLD_MAP = {
-        {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
-        {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1},
-        {1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 1},
-        {1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 1},
-        {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 1},
-        {1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 1},
-        {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-        {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-        {1, 1, 1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 0, 1},
-        {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-        {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
-    };
-
-    TexDict TEX_FNAMES = {
-        {0, "../textures/wood.png"},
-        {1, "../textures/redbrick.png"},
-    };
-
-    RaycastWorld world(WINDOW_WIDTH, WINDOW_HEIGHT, WORLD_MAP, TEX_FNAMES);
+    world.toggleMiniMap();
     world.setPosition(1.5, 1.5);
-    world.setDirection(1, 0);
 
-    std::ofstream ofs("frame.ppm", std::ios::out | std::ios::binary);
-    ofs << "P6\n"
-        << world.getWidth() << ' ' << world.getHeight() << '\n'
-        << "255\n";
+    world.setDirection(0);
+    world.savePNG("frame0deg.png");
 
-    ofs.write(reinterpret_cast<char *>(world.getBuffer()), sizeof(uint8_t) * world.getWidth() * world.getHeight() * 3);
+    world.setDirection(1.57);
+    world.savePNG("frame90deg.png");
 
-    return 0;
+    return EXIT_SUCCESS;
 }

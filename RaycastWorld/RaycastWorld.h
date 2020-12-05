@@ -6,19 +6,22 @@
 // - automatically call renderview when getBuffer is called?
 // - set ceiling and floor textures
 // - license
-// - flip scene left and right?
+// - generalize floor, ceiling, and checkerboard
+// - allow solid colors (use something other than int for each cell?)
+// - fix darken
 
 #if !defined(_RAYCAST_WORLD_H_)
 #define _RAYCAST_WORLD_H_
 
+#include <algorithm>
 #include <cmath>
+#include <fstream>
 #include <iostream>
 #include <string>
 #include <vector>
 #include <unordered_map>
 
-#include "utilities.h"
-// #include "lodepng.h"
+#include <lodepng.h>
 
 // Parameters for scaling and moving the sprites
 #define uDiv 1
@@ -26,9 +29,10 @@
 #define vMove 0.0
 
 using usize = uint32_t;
+using uintrgb = uint8_t;
+
 using World = std::vector<std::vector<int>>;
-using Tex = std::vector<usize>;
-using TexDict = std::unordered_map<usize, std::string>;
+using Tex = std::vector<uintrgb>;
 using TexMap = std::unordered_map<usize, Tex>;
 
 // Texture dimensions must be power of two
@@ -64,6 +68,17 @@ enum Walk
     FORWARD = 1,
 };
 
+void readPNG(std::vector<uintrgb> &out, const std::string &filename)
+{
+    unsigned width, height;
+    unsigned error = lodepng::decode(out, width, height, filename, LCT_RGB, 8);
+
+    if (error)
+    {
+        std::cerr << "Error reading PNG " << error << ": " << lodepng_error_text(error) << std::endl;
+    }
+}
+
 class RaycastWorld
 {
 private:
@@ -71,18 +86,27 @@ private:
     usize mapWidth;
     usize mapHeight;
     World worldMap;
+    bool showMiniMap;
 
     // Render buffer
     usize screenWidth;
     usize screenHeight;
-    std::vector<uint8_t> buffer;
+    std::vector<uintrgb> buffer;
 
     // Write a single color pixel to the buffer
-    inline void writeColor(int x, int y, int c)
+    inline void writeColorHex(int x, int y, usize c)
     {
         buffer[(x * 3 + 0) + y * screenWidth * 3] = (c & 0xFF0000) >> 16;
         buffer[(x * 3 + 1) + y * screenWidth * 3] = (c & 0xFF00) >> 8;
         buffer[(x * 3 + 2) + y * screenWidth * 3] = (c & 0xFF);
+    }
+
+    inline void writeColorRGB(int x, int y, uintrgb *c)
+    {
+        // TODO: std::copy?
+        buffer[(x * 3 + 0) + y * screenWidth * 3] = c[0];
+        buffer[(x * 3 + 1) + y * screenWidth * 3] = c[1];
+        buffer[(x * 3 + 2) + y * screenWidth * 3] = c[2];
     }
 
     // Texture buffers
@@ -116,7 +140,7 @@ private:
 
 public:
     RaycastWorld() = delete;
-    RaycastWorld(usize width, usize height, World world, TexDict texInfo);
+    RaycastWorld(usize width, usize height, std::string mazeFilePath);
 
     void updatePose();
     void renderView();
@@ -170,47 +194,81 @@ public:
         needToRender = true;
     }
 
+    void toggleMiniMap()
+    {
+        showMiniMap = !showMiniMap;
+        needToRender = true;
+    }
+
     auto getBuffer()
     {
-        if (needToRender)
-        {
-            renderView();
-        }
+        renderView();
         return buffer.data();
+    }
+
+    void savePNG(std::string filename)
+    {
+        renderView();
+        auto error = lodepng::encode(filename, buffer, screenWidth, screenHeight, LCT_RGB, 8);
+        if (error)
+        {
+            std::cerr << "Error writing PNG " << error << ": " << lodepng_error_text(error) << std::endl;
+        }
     }
 
     void addSprite(double x, double y, usize texID)
     {
         Sprite sp{x, y, texID, 1, 0.0};
         sprites.push_back(sp);
-        // double x;
-        // double y;
-        // usize texture;
-        // usize order;
-        // double distance2;
     }
 };
 
-RaycastWorld::RaycastWorld(usize width, usize height, World world, TexDict texInfo)
-    : worldMap(world), screenWidth(width), screenHeight(height), buffer(width * height * 3), ZBuffer(width)
+RaycastWorld::RaycastWorld(usize width, usize height, std::string mazeFilePath)
+    : screenWidth(width), screenHeight(height), buffer(width * height * 3), ZBuffer(width)
 {
-    mapHeight = worldMap.size();
-    mapWidth = worldMap[0].size();
+    std::ifstream mazeFile(mazeFilePath);
+    if (!mazeFile.is_open())
+    {
+        std::cerr << "Error opening maze file." << std::endl;
+        return;
+    }
+
+    usize numTextures = 0;
+    mazeFile >> numTextures;
+    std::cout << "Number of texture: " << numTextures << std::endl;
 
     // Loop through given texture files
-    unsigned long tw, th, error = 0;
-    for (auto const &[texNum, texFilename] : texInfo)
+    for (usize texNum = 0; texNum < numTextures; ++texNum)
     {
-        Tex texture(texWidth * texHeight);
-        error |= loadImage(texture, tw, th, texFilename);
+        std::string texFilename;
+        mazeFile >> texFilename;
+        std::cout << "Texture filename: " << texFilename << std::endl;
+
+        // Tex texture(texWidth * texHeight * 3);
+        Tex texture; // TODO: does this need to be pre-sized
+        readPNG(texture, texFilename);
         textures[texNum] = texture;
     }
 
-    if (error)
+    mazeFile >> mapWidth >> mapHeight;
+    std::cout << "Map is " << mapWidth << " by " << mapHeight << std::endl;
+
+    for (usize row = 0; row < mapHeight; ++row)
     {
-        std::cerr << "Error loading images." << std::endl;
-        return;
+        std::vector<int> mapRow;
+        for (usize col = 0; col < mapWidth; ++col)
+        {
+            int cell_value;
+            mazeFile >> cell_value;
+            mapRow.push_back(cell_value);
+        }
+        worldMap.emplace_back(mapRow);
     }
+
+    // Map needs to be reversed so that the bottom left is 0,0
+    std::reverse(worldMap.begin(), worldMap.end());
+
+    showMiniMap = false;
 
     // Location on the map
     posX = 1.5;
@@ -284,16 +342,20 @@ void RaycastWorld::renderView()
 {
     if (needToRender)
     {
-        std::cout << "posX=" << posX << ", "
-                  << "posY=" << posY << ", "
-                  << "dirX=" << dirX << ", "
-                  << "dirY=" << dirY << ", "
-                  << "planeX=" << planeX << ", "
-                  << "planeY=" << planeY << "\n";
+        // std::cout << "posX=" << posX << ", "
+        //           << "posY=" << posY << ", "
+        //           << "dirX=" << dirX << ", "
+        //           << "dirY=" << dirY << ", "
+        //           << "planeX=" << planeX << ", "
+        //           << "planeY=" << planeY << "\n";
         renderFloorCeiling();
         renderWalls();
         renderSprites();
-        renderMiniMap();
+
+        if (showMiniMap)
+        {
+            renderMiniMap();
+        }
         needToRender = false;
     }
 }
@@ -353,27 +415,28 @@ void RaycastWorld::renderFloorCeiling()
             int cellY = floorY;
 
             // Get the texture coordinate from the fractional part
-            int tx = (int)(texWidth * (floorX - cellX)) & (texWidth - 1);
-            int ty = (int)(texHeight * (floorY - cellY)) & (texHeight - 1);
+            int texX = (int)(texWidth * (floorX - cellX)) & (texWidth - 1);
+            int texY = (int)(texHeight * (floorY - cellY)) & (texHeight - 1);
 
             floorX += floorStepX;
             floorY += floorStepY;
 
             // Choose texture and draw the pixel
             int checkerBoardPattern = (int(cellX + cellY)) & 1;
-            int floorTexture = checkerBoardPattern == 0 ? 1 : 2;
+            // int floorTexture = checkerBoardPattern == 0 ? 1 : 2;
             int ceilingTexture = 0;
 
             // Floor or ceiling (and make it a bit darker)
-            int texNum = isFloor ? floorTexture : ceilingTexture;
-            usize color = textures[texNum][texWidth * ty + tx];
-
-            // TODO: temporary hack
-            color = isFloor ? (checkerBoardPattern == 0 ? 0x666666 : 0xEEEEEE) : color;
-
-            color = (color >> 1) & 0x7F7F7F;
-
-            writeColor(x, y, color);
+            if (isFloor)
+            {
+                auto color = checkerBoardPattern == 0 ? 0x666666 : 0xEEEEEE;
+                writeColorHex(x, y, (color >> 1) & 0x7F7F7F);
+            }
+            else
+            {
+                int texNum = ceilingTexture;
+                writeColorRGB(x, y, &textures[texNum][(texX + texWidth * texY) * 3]);
+            }
         }
     }
 }
@@ -479,15 +542,18 @@ void RaycastWorld::renderWalls()
             int texY = (int)texPos & (texHeight - 1);
             texPos += step;
 
-            usize color = textures[texNum][texHeight * texY + texX];
+            // usize color = textures[texNum][texHeight * texY + texX]; // TODO: fix color
+            // auto color = textures[texNum][texWidth * texY + texX * 3];
+            // auto color = textures[texNum][texWidth * texY + texX];
 
-            // Darken
-            if (side == Hit::Y)
-            {
-                color = (color >> 1) & 0x7F7F7F;
-            }
+            // // Darken
+            // if (side == Hit::Y)
+            // {
+            //     color = (color >> 1) & 0x7F7F7F;
+            // }
 
-            writeColor(x, y, color);
+            // writeColorRGB(x, y, &color);
+            writeColorRGB(x, y, &textures[texNum][(texX + texWidth * texY) * 3]);
         }
 
         // Set zbuffer as distance to wall for sprite casting
@@ -569,12 +635,12 @@ void RaycastWorld::renderSprites()
                     int texY = ((d * texHeight) / spriteHeight) / 256;
 
                     // Get color from the texture
-                    usize color = textures[sprite.texture][texWidth * texY + texX];
+                    usize color = textures[sprite.texture][texWidth * texY + texX]; // TODO: fix color
 
                     // Paint pixel if it isn't black, black is the invisible color
                     if ((color & 0x00FFFFFF) != 0)
                     {
-                        writeColor(stripe, y, color);
+                        writeColorHex(stripe, y, color);
                     }
                 }
             }
@@ -602,34 +668,66 @@ void RaycastWorld::renderMiniMap()
             usize color;
             if (x == x0 && y == y0)
             {
+                // Color of home cell
                 color = 0x00FF00;
             }
             else if (x == xf && y == yf)
             {
+                // Color of destination cell
                 color = 0x0000FF;
             }
             else
             {
+                // Wall or hall
                 color = cell == 0 ? 0xAAAAAA : 0x222222;
             }
             for (usize sy = y * cellSize; sy < y * cellSize + cellSize; ++sy)
             {
                 for (usize sx = x * cellSize; sx < x * cellSize + cellSize; ++sx)
                 {
-                    writeColor(sx, originY - sy, color);
+                    writeColorHex(sx, originY - sy, color);
                 }
             }
         }
     }
 
+    // Draw the agent
     usize ar = 2;
-
     for (int y = posY * cellSize - ar; y < posY * cellSize + ar; y++)
     {
         for (int x = posX * cellSize - ar; x < posX * cellSize + ar; x++)
         {
-            writeColor(x, originY - y, 0xFF0000);
+            // std::cout << "AGENT: " << x << "," << y << std::endl;
+            writeColorHex(x, originY - y, 0xFF0000);
         }
+    }
+
+    // Draw the agent's direction
+    auto dx = (posX + dirX * ar * cellSize) - posX;
+    auto dy = (posY + dirY * ar * cellSize) - posY;
+    auto nx = std::max(1, (int)std::abs(dx));
+    auto ny = std::max(1, (int)std::abs(dy));
+    auto sign_x = dx > 0 ? 1 : -1;
+    auto sign_y = dy > 0 ? 1 : -1;
+
+    auto newpx = posX * cellSize;
+    auto newpy = posY * cellSize;
+
+    for (auto ix = 0, iy = 0; ix < nx || iy < ny;)
+    {
+        if ((0.5 + ix) / nx < (0.5 + iy) / ny)
+        {
+            // next step is horizontal
+            newpx += sign_x;
+            ix++;
+        }
+        else
+        {
+            // next step is vertical
+            newpy += sign_y;
+            iy++;
+        }
+        writeColorHex(std::max(0, (int)newpx), std::max(0, int(originY - newpy)), 0xFF0000);
     }
 }
 
