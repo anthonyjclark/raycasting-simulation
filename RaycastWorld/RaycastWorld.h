@@ -32,8 +32,8 @@ using Tex = std::vector<uintrgb>;
 using TexMap = std::unordered_map<usize, Tex>;
 
 // Texture dimensions must be power of two
-const usize texWidth = 2048;
-const usize texHeight = 2048;
+const usize texWidth = 1024;
+const usize texHeight = 1024;
 
 struct Sprite
 {

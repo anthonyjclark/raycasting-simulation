@@ -373,10 +373,12 @@ if __name__ == "__main__":
     if args.out:
         # Print texture file paths
         textures = [
-            "../textures/wood.png",
-            "../textures/redbrick.png",
-            "../textures/redbrick-right.png",
-            "../textures/redbrick-left.png",
+            "../Textures/Tiles074_2K_Color1024.png",
+            "../Textures/Plaster001_2K_Color1024.png",
+            "../Textures/PavingStones087_2K_Color1024.png",
+            "../Textures/arrow-right.png",
+            "../Textures/arrow-left.png",
+            "../Textures/goal.png",
         ]
         print(len(textures))
         print("\n".join(textures))
@@ -386,9 +388,11 @@ if __name__ == "__main__":
 
         # Print maze
         bm = np.zeros_like(block_maze)
-        bm[block_maze == colors.wall] = 1
-        bm[block_maze == colors.right] = 2
-        bm[block_maze == colors.left] = 3
+        bm[block_maze == colors.wall] = 2
+        bm[block_maze == colors.right] = 3
+        bm[block_maze == colors.left] = 4
+        bm[-1, -2] = 5
+        bm[-2, -1] = 5
 
         bm = np.flipud(bm)
 
