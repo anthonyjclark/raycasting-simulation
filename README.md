@@ -2,6 +2,8 @@
 
 Generate mazes and navigate through them with turn-by-turn directions.
 
+![](demo.png)
+
 # Requirements
 
 `RaycastWorld/RaycastWorld.cpp` does not have any dependencies not found in this repository (`lodepng` is a submodule).
