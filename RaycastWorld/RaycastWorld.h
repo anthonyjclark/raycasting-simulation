@@ -421,21 +421,23 @@ void RaycastWorld::renderFloorCeiling()
             floorY += floorStepY;
 
             // Choose texture and draw the pixel
-            int checkerBoardPattern = (int(cellX + cellY)) & 1;
+            // int checkerBoardPattern = (int(cellX + cellY)) & 1;
             // int floorTexture = checkerBoardPattern == 0 ? 1 : 2;
-            int ceilingTexture = 0;
+            // int ceilingTexture = 0;
 
-            // Floor or ceiling (and make it a bit darker)
-            if (isFloor)
-            {
-                auto color = checkerBoardPattern == 0 ? 0x666666 : 0xEEEEEE;
-                writeColorHex(x, y, (color >> 1) & 0x7F7F7F);
-            }
-            else
-            {
-                int texID = ceilingTexture;
-                writeColorRGB(x, y, &textures[texID][(texX + texWidth * texY) * 3]);
-            }
+            // // Floor or ceiling (and make it a bit darker)
+            // if (isFloor)
+            // {
+            //     auto color = checkerBoardPattern == 0 ? 0x666666 : 0xEEEEEE;
+            //     writeColorHex(x, y, (color >> 1) & 0x7F7F7F);
+            // }
+            // else
+            // {
+            //     int texID = ceilingTexture;
+            //     writeColorRGB(x, y, &textures[texID][(texX + texWidth * texY) * 3]);
+            // }
+            int texID = isFloor ? 0 : 1;
+            writeColorRGB(x, y, &textures[texID][(texX + texWidth * texY) * 3]);
         }
     }
 }
