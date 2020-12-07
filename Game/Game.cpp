@@ -56,15 +56,15 @@ void keyCallback(GLFWwindow *window, int key, int, int action, int)
 
 int main(int argc, char const *argv[])
 {
-
     const unsigned int WINDOW_WIDTH = 640;
     const unsigned int WINDOW_HEIGHT = 480;
 
-    DisplayArray displayer(WINDOW_WIDTH, WINDOW_HEIGHT, keyCallback);
+    std::string mapFile = argc >= 2 ? argv[1] : "../Mazes/maze.txt";
+    usize width = argc >= 4 ? std::stoul(argv[2]) : WINDOW_WIDTH;
+    usize height = argc >= 4 ? std::stoul(argv[2]) : WINDOW_HEIGHT;
 
-    std::string mapFile = argc == 2 ? argv[1] : "../Mazes/maze.txt";
-
-    RaycastWorld world(WINDOW_WIDTH, WINDOW_HEIGHT, mapFile);
+    DisplayArray displayer(width, height, keyCallback);
+    RaycastWorld world(width, height, mapFile);
     world.setDirection(0);
 
     glfwSetWindowUserPointer(displayer.window, &world);
