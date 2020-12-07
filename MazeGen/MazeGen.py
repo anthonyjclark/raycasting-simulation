@@ -375,8 +375,8 @@ if __name__ == "__main__":
         textures = [
             "../textures/wood.png",
             "../textures/redbrick.png",
-            "../textures/arrow-right.png",
-            "../textures/arrow-left.png",
+            "../textures/redbrick-right.png",
+            "../textures/redbrick-left.png",
         ]
         print(len(textures))
         print("\n".join(textures))
