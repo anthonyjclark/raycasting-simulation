@@ -234,16 +234,16 @@ RaycastWorld::RaycastWorld(usize width, usize height, std::string mazeFilePath)
     std::cout << "Number of texture: " << numTextures << std::endl;
 
     // Loop through given texture files
-    for (usize texNum = 0; texNum < numTextures; ++texNum)
+    for (usize texID = 0; texID < numTextures; ++texID)
     {
         std::string texFilename;
         mazeFile >> texFilename;
         std::cout << "Texture filename: " << texFilename << std::endl;
 
         // Tex texture(texWidth * texHeight * 3);
-        Tex texture; // TODO: does this need to be pre-sized
+        Tex texture; // TODO: does this need to be pre-sized?
         readPNG(texture, texFilename);
-        textures[texNum] = texture;
+        textures[texID] = texture;
     }
 
     mazeFile >> mapWidth >> mapHeight;
@@ -265,6 +265,15 @@ RaycastWorld::RaycastWorld(usize width, usize height, std::string mazeFilePath)
     std::reverse(worldMap.begin(), worldMap.end());
 
     showMiniMap = false;
+
+    // Add the sprites
+    double x, y;
+    usize texID;
+    while (mazeFile >> x >> y >> texID)
+    {
+        addSprite(x, y, texID);
+        break;
+    }
 
     // Location on the map
     posX = 1.5;
@@ -424,8 +433,8 @@ void RaycastWorld::renderFloorCeiling()
             }
             else
             {
-                int texNum = ceilingTexture;
-                writeColorRGB(x, y, &textures[texNum][(texX + texWidth * texY) * 3]);
+                int texID = ceilingTexture;
+                writeColorRGB(x, y, &textures[texID][(texX + texWidth * texY) * 3]);
             }
         }
     }
@@ -505,7 +514,7 @@ void RaycastWorld::renderWalls()
         drawEnd = std::min(drawEnd, static_cast<int>(screenHeight) - 1);
 
         // Texturing calculations (1 subtracted from it so that texture 0 can be used!)
-        int texNum = worldMap[mapY][mapX];
+        int texID = worldMap[mapY][mapX];
 
         // Calculate value of wallX (where exactly the wall was hit)
         double wallX = side == Hit::X ? posY + perpWallDist * rayDirY : posX + perpWallDist * rayDirX;
@@ -531,7 +540,7 @@ void RaycastWorld::renderWalls()
             // Cast the texture coordinate to integer, and mask with (texHeight - 1) in case of overflow
             int texY = (int)texPos & (texHeight - 1);
             texPos += step;
-            writeColorRGB(x, y, &textures[texNum][(texX + texWidth * texY) * 3], side == Hit::Y);
+            writeColorRGB(x, y, &textures[texID][(texX + texWidth * texY) * 3], side == Hit::Y);
         }
 
         // Set zbuffer as distance to wall for sprite casting
@@ -613,12 +622,12 @@ void RaycastWorld::renderSprites()
                     int texY = ((d * texHeight) / spriteHeight) / 256;
 
                     // Get color from the texture
-                    usize color = textures[sprite.texture][texWidth * texY + texX]; // TODO: fix color
+                    uintrgb *rgb = &textures[sprite.texture][(texX + texWidth * texY) * 3];
 
                     // Paint pixel if it isn't black, black is the invisible color
-                    if ((color & 0x00FFFFFF) != 0)
+                    if (rgb[0] != 0 && rgb[1] != 0 && rgb[2] != 0)
                     {
-                        writeColorHex(stripe, y, color);
+                        writeColorRGB(stripe, y, &textures[sprite.texture][(texX + texWidth * texY) * 3]);
                     }
                 }
             }
