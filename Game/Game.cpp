@@ -4,57 +4,31 @@
 #include <iostream>
 #include <vector>
 
-#include <stdio.h>
-#include <stdlib.h>
-
-// #define STB_IMAGE_IMPLEMENTATION
-// #include "../stb_image/stb_image.h"
-#define STB_IMAGE_WRITE_IMPLEMENTATION
-#include "../stb_image/stb_image_write.h"
-
-using namespace std;
-
 int count = 0;
-
-// https://lencerf.github.io/post/2019-09-21-save-the-opengl-rendering-to-image-file/
-void saveImage(char* filepath, GLFWwindow* w) 
-{
-    int width, height;
-    glfwGetFramebufferSize(w, &width, &height);
-    GLsizei nrChannels = 3;
-    GLsizei stride = nrChannels * width;
-    stride += (stride % 4) ? (4 - stride % 4) : 0;
-    GLsizei bufferSize = stride * height;
-    std::vector<char> buffer(bufferSize);
-    glPixelStorei(GL_PACK_ALIGNMENT, 4);
-    glReadBuffer(GL_FRONT);
-    glReadPixels(0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, buffer.data());
-    stbi_flip_vertically_on_write(true);
-    stbi_write_png(filepath, width, height, nrChannels, buffer.data(), stride);
-}
 
 // void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods)
 void keyCallback(GLFWwindow *window, int key, int, int action, int)
 {
     if (key == GLFW_KEY_Q && action == GLFW_PRESS)
-    {
+    {   
+        std::cout << "Total moves: " + std::to_string(::count) + "\n";
         glfwSetWindowShouldClose(window, GLFW_TRUE);
     }
-    else if (key == GLFW_KEY_UP && action == GLFW_PRESS)
+    else if (key == GLFW_KEY_UP && (action == GLFW_PRESS || action == GLFW_REPEAT))
     {   
         std::string imagePath = "../Images/forward/" + std::to_string(::count) + ".png";
         char* pngPath = &imagePath[0];
-        saveImage(pngPath, window);
-        std::cout << "Forward\n";
+        // std::cout << "Forward\n";
+        static_cast<RaycastWorld *>(glfwGetWindowUserPointer(window))->savePNG(pngPath);
         static_cast<RaycastWorld *>(glfwGetWindowUserPointer(window))->setWalk(FORWARD);
         ::count++;
     }
-    else if (key == GLFW_KEY_DOWN && action == GLFW_PRESS)
+    else if (key == GLFW_KEY_DOWN && (action == GLFW_PRESS || action == GLFW_REPEAT))
     {   
         std::string imagePath = "../Images/backward/" + std::to_string(::count) + ".png";
         char* pngPath = &imagePath[0];
-        saveImage(pngPath,  window);
-        std::cout << "Backward\n";
+        // std::cout << "Backward\n";
+        static_cast<RaycastWorld *>(glfwGetWindowUserPointer(window))->savePNG(pngPath);
         static_cast<RaycastWorld *>(glfwGetWindowUserPointer(window))->setWalk(BACKWARD);
         ::count++;
     }
@@ -62,26 +36,26 @@ void keyCallback(GLFWwindow *window, int key, int, int action, int)
     {   
         std::string imagePath = "../Images/stop/" + std::to_string(::count) + ".png";
         char* pngPath = &imagePath[0];
-        saveImage(pngPath,  window);
-        std::cout << "Stop\n";
+        // std::cout << "Stop\n";
+        static_cast<RaycastWorld *>(glfwGetWindowUserPointer(window))->savePNG(pngPath);
         static_cast<RaycastWorld *>(glfwGetWindowUserPointer(window))->setWalk(STOPPED);
         ::count++;
     }
-    else if (key == GLFW_KEY_RIGHT && action == GLFW_PRESS)
+    else if (key == GLFW_KEY_RIGHT && (action == GLFW_PRESS || action == GLFW_REPEAT))
     {
         std::string imagePath = "../Images/right/" + std::to_string(::count) + ".png";
         char* pngPath = &imagePath[0];
-        saveImage(pngPath,  window);
-        std::cout << "Right\n";
+        // std::cout << "Right\n";
+        static_cast<RaycastWorld *>(glfwGetWindowUserPointer(window))->savePNG(pngPath);
         static_cast<RaycastWorld *>(glfwGetWindowUserPointer(window))->setTurn(RIGHT);
         ::count++;
     }
-    else if (key == GLFW_KEY_LEFT && action == GLFW_PRESS)
+    else if (key == GLFW_KEY_LEFT && (action == GLFW_PRESS || action == GLFW_REPEAT))
     {
         std::string imagePath = "../Images/left/" + std::to_string(::count) + ".png";
         char* pngPath = &imagePath[0];
-        saveImage(pngPath,  window);
-        std::cout << "Left\n";
+        static_cast<RaycastWorld *>(glfwGetWindowUserPointer(window))->savePNG(pngPath);
+        // std::cout << "Left\n";
         static_cast<RaycastWorld *>(glfwGetWindowUserPointer(window))->setTurn(LEFT);
         ::count++;
     }
@@ -110,8 +84,10 @@ void keyCallback(GLFWwindow *window, int key, int, int action, int)
 
 int main(int argc, char const *argv[])
 {
-    const unsigned int WINDOW_WIDTH = 640;
-    const unsigned int WINDOW_HEIGHT = 480;
+    // const unsigned int WINDOW_WIDTH = 640;
+    // const unsigned int WINDOW_HEIGHT = 480;
+    const unsigned int WINDOW_WIDTH = 320;
+    const unsigned int WINDOW_HEIGHT = 240;
 
     std::string mapFile = argc >= 2 ? argv[1] : "../Mazes/maze.txt";
     usize width = argc >= 4 ? std::stoul(argv[2]) : WINDOW_WIDTH;
