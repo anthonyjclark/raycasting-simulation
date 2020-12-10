@@ -42,7 +42,6 @@ def init(data, canvas):
     data.array = np.array(data.world, copy=False, dtype=np.uint8)
     data.photo = ImageTk.PhotoImage(image=Image.fromarray(data.array))
     data.image = canvas.create_image(0, 0, image=data.photo, anchor="nw")
-    # data.rays = []
 
 
 def mousePressed(event, data):
