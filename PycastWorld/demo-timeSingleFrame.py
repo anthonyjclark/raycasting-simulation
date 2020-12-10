@@ -8,29 +8,10 @@ from pycaster import RaycastWorld
 
 WINDOW_WIDTH = 640
 WINDOW_HEIGHT = 480
-
-WORLD_MAP = [
-    [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-    [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1],
-    [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 1],
-    [1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 1],
-    [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 1],
-    [1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 1],
-    [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-    [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-    [1, 1, 1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 0, 1],
-    [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-    [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-]
-
-TEX_FNAMES = {
-    0: "../textures/wood.png",
-    1: "../textures/redbrick.png",
-}
 """
 
 code = """
-world = RaycastWorld(WINDOW_WIDTH, WINDOW_HEIGHT, WORLD_MAP, TEX_FNAMES)
+world = RaycastWorld(WINDOW_WIDTH, WINDOW_HEIGHT, "../Worlds/maze.txt")
 """
 
 num_trials = 1
