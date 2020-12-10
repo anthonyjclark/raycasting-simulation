@@ -11,6 +11,7 @@ import sys
 sys.path.append("../PycastWorld")
 from pycaster import RaycastWorld, Turn, Walk
 
+# TODO: this stuff probably shouldn't be hardcoded
 world = RaycastWorld(320, 240, "../Worlds/maze.txt")
 world.direction(0, 1.152)
 
