@@ -7,6 +7,7 @@
 // void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods)
 void keyCallback(GLFWwindow *window, int key, int, int action, int)
 {
+    std::cout << key << std::endl;
     if (key == GLFW_KEY_Q && action == GLFW_PRESS)
     {
         glfwSetWindowShouldClose(window, GLFW_TRUE);
@@ -59,7 +60,7 @@ int main(int argc, char const *argv[])
     const unsigned int WINDOW_WIDTH = 640;
     const unsigned int WINDOW_HEIGHT = 480;
 
-    std::string mapFile = argc >= 2 ? argv[1] : "../Mazes/maze.txt";
+    std::string mapFile = argc >= 2 ? argv[1] : "../Worlds/maze.txt";
     usize width = argc >= 4 ? std::stoul(argv[2]) : WINDOW_WIDTH;
     usize height = argc >= 4 ? std::stoul(argv[2]) : WINDOW_HEIGHT;
 

@@ -1,4 +1,4 @@
-INCLUDES = -I../extern/pybind11/include `python3-config --includes`
+INCLUDES = -I../extern/lodepng -I../extern/pybind11/include `python3-config --includes`
 CXXFLAGS = -O3 -W -Wall -Wextra -std=c++17 -shared -undefined dynamic_lookup
 
 MAIN = pycaster

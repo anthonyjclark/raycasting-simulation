@@ -17,7 +17,7 @@ PYBIND11_MODULE(pycaster, m)
         .value("Forward", FORWARD);
 
     py::class_<RaycastWorld>(m, "RaycastWorld", py::buffer_protocol())
-        .def(py::init<uint32_t, uint32_t, World, TexDict>())
+        .def(py::init<usize, usize, std::string>())
         .def("turn", &RaycastWorld::setTurn)
         .def("walk", &RaycastWorld::setWalk)
         .def("update", &RaycastWorld::updatePose)
