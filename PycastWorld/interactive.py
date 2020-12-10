@@ -18,35 +18,9 @@ import time
 inside = time.time()
 outside1, outisde2 = time.time(), time.time()
 
-WORLD_MAP = [
-    [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-    [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 0, 1, 0, 1],
-    [1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 1, 0, 1, 0, 1],
-    [1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0, 1, 0, 0, 0, 1],
-    [1, 1, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 1],
-    [1, 0, 0, 0, 1, 0, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 3],
-    [1, 1, 1, 1, 1, 0, 1, 0, 1, 0, 1, 2, 1, 1, 1, 0, 1],
-    [1, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 2, 0, 0, 0, 1],
-    [1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 3, 1],
-    [1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 3],
-    [1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 1, 0, 1, 2, 1, 0, 1],
-    [1, 0, 1, 0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1],
-    [1, 0, 1, 1, 1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 1, 0, 1],
-    [1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, 0, 0, 0, 0, 0, 1],
-    [1, 0, 1, 0, 1, 1, 1, 1, 1, 0, 1, 0, 1, 1, 1, 3, 1],
-    [1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1],
-    [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1],
-]
-
-TEX_FNAMES = {
-    0: "../textures/wood.png",
-    1: "../textures/redbrick.png",
-    2: "../textures/redbrick-left.png",
-    3: "../textures/redbrick-right.png",
-}
-
-NUM_ROWS = len(WORLD_MAP)
-NUM_COLS = len(WORLD_MAP[0])
+# TODO: these should not be hard-coded
+NUM_ROWS = 17
+NUM_COLS = 17
 TILE_SIZE = 64
 WIDTH = 640  # NUM_COLS * TILE_SIZE
 HEIGHT = 480  # NUM_ROWS * TILE_SIZE
@@ -59,9 +33,9 @@ VIEW_MINIMAP = False
 
 
 def init(data, canvas):
-    data.world = RaycastWorld(WIDTH, HEIGHT, WORLD_MAP, TEX_FNAMES)
-    data.mapWidth = len(WORLD_MAP[0])
-    data.mapHeight = len(WORLD_MAP)
+    data.world = RaycastWorld(WIDTH, HEIGHT, "../Worlds/maze.txt")
+    data.mapWidth = 17  # TODO: hardcoded
+    data.mapHeight = 17  # TODO: hardcoded
     data.screenWidth = WIDTH
     data.screenHeight = HEIGHT
 
