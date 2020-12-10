@@ -6,7 +6,6 @@
 
 std::string imgDir;
 
-
 /*
  * Saves an image from the window for the specified move
  * assumes imgDir doesn't include '/'
@@ -16,8 +15,8 @@ std::string imgDir;
  * @param move specified move and subdirectory to save image to
  */
 void saveImg(RaycastWorld *w, std::string move)
-{   
-    static int count = 5083;
+{
+    static int count = 0;
     if (move == "q")
     {
         std::cout << "Total moves " + std::to_string(count) + "\n";
@@ -32,24 +31,24 @@ void saveImg(RaycastWorld *w, std::string move)
 
 // void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods)
 void keyCallback(GLFWwindow *window, int key, int, int action, int)
-{   
+{
     if (key == GLFW_KEY_Q && action == GLFW_PRESS)
-    {   
+    {
         saveImg(static_cast<RaycastWorld *>(glfwGetWindowUserPointer(window)), "q");
         glfwSetWindowShouldClose(window, GLFW_TRUE);
     }
     else if (key == GLFW_KEY_UP && (action == GLFW_PRESS || action == GLFW_REPEAT))
-    {   
+    {
         saveImg(static_cast<RaycastWorld *>(glfwGetWindowUserPointer(window)), "forward");
         static_cast<RaycastWorld *>(glfwGetWindowUserPointer(window))->setWalk(FORWARD);
     }
     else if (key == GLFW_KEY_DOWN && (action == GLFW_PRESS || action == GLFW_REPEAT))
-    {   
+    {
         saveImg(static_cast<RaycastWorld *>(glfwGetWindowUserPointer(window)), "backward");
         static_cast<RaycastWorld *>(glfwGetWindowUserPointer(window))->setWalk(BACKWARD);
     }
     else if ((key == GLFW_KEY_UP || key == GLFW_KEY_DOWN) && action == GLFW_RELEASE)
-    {   
+    {
         static_cast<RaycastWorld *>(glfwGetWindowUserPointer(window))->setWalk(STOPPED);
     }
     else if (key == GLFW_KEY_RIGHT && (action == GLFW_PRESS || action == GLFW_REPEAT))
