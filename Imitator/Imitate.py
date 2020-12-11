@@ -3,6 +3,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
+from fastai.vision.all import *
 from math import radians
 
 # Needed to import pycaster from relative path
@@ -15,19 +16,24 @@ from pycaster import RaycastWorld, Turn, Walk
 world = RaycastWorld(320, 240, "../Worlds/maze.txt")
 world.direction(0, 1.152)
 
-for frame in range(10):
+path = Path("../")
+model_inf = load_learner(path / "export.pkl")
+
+for frame in range(1000):
 
     # Get image
     image_data = np.array(world)
 
     # Convert image_data and give to network... work for Jared
     # x = ... x is the direction to move
+    move = model_inf.predict(image_data)[0]
+    print(move)
 
     # Move in world
-    if frame % 2 == 0:
+    if move == "forward":
         world.walk(Walk.Forward)
         world.turn(Turn.Stop)
-    elif frame % 3 == 0:
+    elif move == "left":
         world.walk(Walk.Stopped)
         world.turn(Turn.Left)
     else:
@@ -36,6 +42,7 @@ for frame in range(10):
 
     world.update()
 
-    print("Showing frame", frame)
-    plt.imshow(image_data)
-    plt.show()
+    if frame % 10 == 0:
+        print("Showing frame", frame)
+        plt.imshow(image_data)
+        plt.show()
