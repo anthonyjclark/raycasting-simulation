@@ -1,3 +1,8 @@
+# Executables
+Game/Game
+PycastWorld/*.so
+RaycastWorld/Demo
+
 # Created by https://www.toptal.com/developers/gitignore/api/VisualStudioCode,Python
 # Edit at https://www.toptal.com/developers/gitignore?templates=VisualStudioCode,Python
 
@@ -142,6 +147,7 @@ dmypy.json
 .prof
 
 ### VisualStudioCode ###
+.vscode
 .vscode/*
 !.vscode/settings.json
 !.vscode/tasks.json
