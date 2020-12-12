@@ -10,6 +10,7 @@ from math import radians
 import sys
 
 sys.path.append("../PycastWorld")
+sys.path.append("../Models")
 from pycaster import RaycastWorld, Turn, Walk
 
 # TODO: this stuff probably shouldn't be hardcoded
@@ -17,9 +18,9 @@ world = RaycastWorld(320, 240, "../Worlds/maze.txt")
 world.direction(0, 1.152)
 
 path = Path("../")
-model_inf = load_learner(path / "export.pkl")
+model_inf = load_learner(path / "Models/export.pkl")
 
-for frame in range(1000):
+for frame in range(400):
 
     # Get image
     image_data = np.array(world)
@@ -27,7 +28,7 @@ for frame in range(1000):
     # Convert image_data and give to network... work for Jared
     # x = ... x is the direction to move
     move = model_inf.predict(image_data)[0]
-    print(move)
+    # print(move)
 
     # Move in world
     if move == "forward":
@@ -42,7 +43,7 @@ for frame in range(1000):
 
     world.update()
 
-    if frame % 10 == 0:
+    if frame % 1 == 0:
         print("Showing frame", frame)
         plt.imshow(image_data)
         plt.show()

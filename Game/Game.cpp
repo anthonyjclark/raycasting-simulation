@@ -32,7 +32,7 @@ void saveImg(RaycastWorld *w, std::string move)
 // void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods)
 void keyCallback(GLFWwindow *window, int key, int, int action, int)
 {
-    std::cout << key << std::endl;
+    // std::cout << key << std::endl;
     if (key == GLFW_KEY_Q && action == GLFW_PRESS)
     {
         saveImg(static_cast<RaycastWorld *>(glfwGetWindowUserPointer(window)), "q");
@@ -45,7 +45,7 @@ void keyCallback(GLFWwindow *window, int key, int, int action, int)
     }
     else if (key == GLFW_KEY_DOWN && (action == GLFW_PRESS || action == GLFW_REPEAT))
     {
-        saveImg(static_cast<RaycastWorld *>(glfwGetWindowUserPointer(window)), "backward");
+        // saveImg(static_cast<RaycastWorld *>(glfwGetWindowUserPointer(window)), "backward");
         static_cast<RaycastWorld *>(glfwGetWindowUserPointer(window))->setWalk(BACKWARD);
     }
     else if ((key == GLFW_KEY_UP || key == GLFW_KEY_DOWN) && action == GLFW_RELEASE)
