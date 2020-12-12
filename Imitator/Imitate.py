@@ -25,8 +25,7 @@ for frame in range(400):
     # Get image
     image_data = np.array(world)
 
-    # Convert image_data and give to network... work for Jared
-    # x = ... x is the direction to move
+    # Convert image_data and give to network
     move = model_inf.predict(image_data)[0]
     # print(move)
 
