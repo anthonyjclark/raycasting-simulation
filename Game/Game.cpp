@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <vector>
+#include <random>
 
 std::string imgDir;
 
@@ -21,7 +22,7 @@ void saveImg(RaycastWorld *w, std::string move)
     {
         std::cout << "Total moves " + std::to_string(count) + "\n";
     }
-    else
+    else if (imgDir != "none")
     {
         std::string imgPath = imgDir + "/" + move + "/" + std::to_string(count) + ".png";
         w->savePNG(imgPath);
@@ -94,14 +95,29 @@ int main(int argc, char const *argv[])
 
     // static int count = std::stoul(argv[1]);
     std::string mapFile = argc >= 2 ? argv[1] : "../Worlds/maze.txt";
-    imgDir = argc >= 3 ? argv[2] : "../Images";
+    imgDir = argc >= 3 ? argv[2] : "none";
 
     usize width = argc >= 4 ? std::stoul(argv[3]) : WINDOW_WIDTH;
     usize height = argc >= 5 ? std::stoul(argv[4]) : WINDOW_HEIGHT;
 
     DisplayArray displayer(width, height, keyCallback);
     RaycastWorld world(width, height, mapFile);
-    world.setDirection(0);
+
+    // manually changing based on maze for data collection
+    world.setDirection(3.14 / 2);
+
+    // setting random position on path (currently hard-coded coordinates of position)
+    double lower_bound1 = 3;
+    double upper_bound1 = 4;
+    double lower_bound2 = 15;
+    double upper_bound2 = 16;
+    std::random_device rd;
+    std::default_random_engine eng(rd());
+    std::uniform_real_distribution<double> distr(lower_bound1, upper_bound1);
+    std::uniform_real_distribution<double> distr2(lower_bound2, upper_bound2);
+    double rand_x = distr(eng);
+    double rand_y = distr2(eng);
+    world.setPosition(rand_x, rand_y);
 
     glfwSetWindowUserPointer(displayer.window, &world);
 
