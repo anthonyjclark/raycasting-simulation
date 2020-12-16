@@ -103,20 +103,33 @@ int main(int argc, char const *argv[])
     DisplayArray displayer(width, height, keyCallback);
     RaycastWorld world(width, height, mapFile);
 
-    // manually changing based on maze for data collection
-    world.setDirection(3.14 / 2);
+    // hard coded ranges
+    double lower_dir = 3.14 / 4;
+    double upper_dir = 3.14 * 3 / 4;
+    double lower_posx = 17;
+    double upper_posx = 18;
+    double lower_posy = 9;
+    double upper_posy = 10;
+    // double lower_posx = 3;
+    // double upper_posx = 4;
+    // double lower_posy = 15;
+    // double upper_posy = 16;
 
-    // setting random position on path (currently hard-coded coordinates of position)
-    double lower_bound1 = 3;
-    double upper_bound1 = 4;
-    double lower_bound2 = 15;
-    double upper_bound2 = 16;
     std::random_device rd;
     std::default_random_engine eng(rd());
-    std::uniform_real_distribution<double> distr(lower_bound1, upper_bound1);
-    std::uniform_real_distribution<double> distr2(lower_bound2, upper_bound2);
-    double rand_x = distr(eng);
-    double rand_y = distr2(eng);
+
+    std::uniform_real_distribution<double> distr_dir(lower_dir, upper_dir);
+    std::uniform_real_distribution<double> distr_x(lower_posx, upper_posx);
+    std::uniform_real_distribution<double> distr_y(lower_posy, upper_posy);
+
+    double rand_dir = distr_dir(eng);
+    double rand_x = distr_x(eng);
+    double rand_y = distr_y(eng);
+
+    // setting direction to random value within specified range
+    world.setDirection(rand_dir);
+
+    // setting random position on path within specified range
     world.setPosition(rand_x, rand_y);
 
     glfwSetWindowUserPointer(displayer.window, &world);
