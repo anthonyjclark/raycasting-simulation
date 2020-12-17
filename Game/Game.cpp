@@ -10,7 +10,7 @@ std::string imgDir;
  * Saves an image from the window for the specified move
  * assumes imgDir doesn't include '/'
  * assumes imgDir/move directory already exists
- * 
+ *
  * @param w RaycastWorld
  * @param move specified move and subdirectory to save image to
  */
@@ -102,6 +102,7 @@ int main(int argc, char const *argv[])
     DisplayArray displayer(width, height, keyCallback);
     RaycastWorld world(width, height, mapFile);
     world.setDirection(0);
+    world.setPosition(3.5, 13.5);
 
     glfwSetWindowUserPointer(displayer.window, &world);
 
