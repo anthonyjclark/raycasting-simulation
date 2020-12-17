@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+# TODO: add gif output using matplotlib animation
+
 import matplotlib.pyplot as plt
 import numpy as np
 
