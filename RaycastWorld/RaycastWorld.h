@@ -289,24 +289,6 @@ RaycastWorld::RaycastWorld(usize width, usize height, std::string mazeFilePath)
     posX += 0.5;
     posY += 0.5;
 
-    // Set direction
-    if (direction == "Dir.NORTH")
-    {
-        setDirection(deg2rad(90));
-    }
-    else if (direction == "Dir.EAST")
-    {
-        setDirection(deg2rad(0));
-    }
-    else if (direction == "Dir.SOUTH")
-    {
-        setDirection(deg2rad(270));
-    }
-    else
-    {
-        setDirection(deg2rad(180));
-    }
-
     // Vertical camera strafing up/down, for jumping/crouching.
     // 0 means standard height.
     // Expressed in screen pixels a wall at distance 1 shifts
@@ -328,6 +310,26 @@ RaycastWorld::RaycastWorld(usize width, usize height, std::string mazeFilePath)
     turnSpeed = 2.5 * (3.1415926 / 180);
     walkDirection = STOPPED;
     walkSpeed = 0.05;
+
+    // Set direction
+    if (direction == "Dir.NORTH")
+    {
+        setDirection(deg2rad(90));
+    }
+    else if (direction == "Dir.EAST")
+    {
+        setDirection(deg2rad(0));
+    }
+    else if (direction == "Dir.SOUTH")
+    {
+        setDirection(deg2rad(270));
+    }
+    else
+    {
+        setDirection(deg2rad(180));
+    }
+
+    std::cout << "Initial pose: " << posX << ", " << posY << " " << direction << std::endl;
 
     needToRender = true;
     renderView();
