@@ -64,6 +64,11 @@ enum Walk
     FORWARD = 1,
 };
 
+double deg2rad(double deg)
+{
+    return deg * 3.1415926 / 180.0;
+}
+
 void readPNG(std::vector<uintrgb> &out, const std::string &filename)
 {
     unsigned width, height;
@@ -266,18 +271,41 @@ RaycastWorld::RaycastWorld(usize width, usize height, std::string mazeFilePath)
 
     showMiniMap = false;
 
+    // TODO: add sprites to maze file?
     // Add the sprites
-    double x, y;
-    usize texID;
-    while (mazeFile >> x >> y >> texID)
-    {
-        addSprite(x, y, texID);
-        break;
-    }
+    // double x, y;
+    // usize texID;
+    // while (mazeFile >> x >> y >> texID)
+    // {
+    //     addSprite(x, y, texID);
+    //     break;
+    // }
 
     // Location on the map
-    posX = 1.5;
-    posY = 1.5;
+    std::string direction;
+    mazeFile >> posX >> posY >> direction;
+
+    // Position into middle of cell
+    posX += 0.5;
+    posY += 0.5;
+
+    // Set direction
+    if (direction == "Dir.NORTH")
+    {
+        setDirection(deg2rad(90));
+    }
+    else if (direction == "Dir.EAST")
+    {
+        setDirection(deg2rad(0));
+    }
+    else if (direction == "Dir.SOUTH")
+    {
+        setDirection(deg2rad(270));
+    }
+    else
+    {
+        setDirection(deg2rad(180));
+    }
 
     // Vertical camera strafing up/down, for jumping/crouching.
     // 0 means standard height.
