@@ -18,7 +18,7 @@ world = RaycastWorld(320, 240, "../Worlds/maze.txt")
 world.direction(0, 1.152)
 
 path = Path("../")
-model_inf = load_learner(path / "Models/export.pkl")
+model_inf = load_learner(path / "Models/export3.pkl")
 
 for frame in range(400):
 

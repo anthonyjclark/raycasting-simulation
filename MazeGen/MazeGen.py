@@ -12,7 +12,6 @@ https://journal.stuffwithstuff.com/2014/12/21/rooms-and-mazes/
 
 from argparse import ArgumentParser
 from enum import IntEnum
-from math import copysign
 from random import randrange, choice, seed
 from time import sleep
 from typing import Dict, List, Optional, Tuple
@@ -264,10 +263,6 @@ def generate_block_maze(
         """Scale coordinate to block style."""
         return 2 * v + 1
 
-    # def contract(v: int, amount=0.0) -> float:
-    #     """Contract number so that it is closer to zero."""
-    #     return v - copysign(amount, v)
-
     def new_dir(
         d: Dir, cfrom: Coord, cto: Coord
     ) -> Tuple[Dir, Turn, Tuple[float, float]]:
@@ -309,8 +304,6 @@ def generate_block_maze(
     np_maze[:, 0] = colors.wall
     np_maze[:, -1] = colors.wall
 
-    directions = []
-
     for y, row in enumerate(maze.maze):
         for x, cell in enumerate(row):
             if not isPathSouth(cell):
@@ -319,13 +312,23 @@ def generate_block_maze(
                 np_maze[sc(y), sc(x) + E] = colors.wall
             np_maze[2 * y, 2 * x] = colors.wall
 
-    # Initial direction (compare x values of first two on path)
-    cdir = Dir.NORTH if path[0].x == path[1].x else Dir.EAST
+    # Initial direction
+    s0, s1 = path[0], path[1]
+    if s0.x == s1.x and s1.y > s0.y:
+        cdir = Dir.NORTH
+    elif s0.x == s1.x:
+        cdir = Dir.SOUTH
+    elif s1.x > s0.x:
+        cdir = Dir.EAST
+    else:
+        cdir = Dir.WEST
 
     # Draw shortest path
+    path_cells = []
     for cfrom, cto in zip(path, path[1:]):
 
         ndir, turn, (xstep, ystep) = new_dir(cdir, cfrom, cto)
+        path_cells.append((sc(cfrom.x), sc(cfrom.y), ndir))
 
         # TODO: dependent upon +- 1 for N/E/S/W
         if ndir == Dir.NORTH:
@@ -338,37 +341,39 @@ def generate_block_maze(
             np_maze[sc(cfrom.y), sc(cto.x) + 1 : sc(cfrom.x) + 1] = colors.path
 
         if ndir != cdir:
-            # x, y = sc(cfrom.x) + xstep + 0.5, sc(cfrom.y) + ystep + 0.5
-            # directions.append((turn, x, y))
             x, y = sc(cfrom.x) + xstep, sc(cfrom.y) + ystep
             np_maze[y, x] = colors.left if turn == Turn.LEFT else colors.right
             # print("From:", cdir, "To:", ndir, "Is a:", turn)
         cdir = ndir
 
-    return np_maze, directions
+    return np_maze, path_cells
 
 
 if __name__ == "__main__":
-    arg_parser = ArgumentParser("Generate perfect mazes.")
-    arg_parser.add_argument("--width", type=int, default=10, help="Maze width")
-    arg_parser.add_argument("--height", type=int, default=10, help="Maze height")
-    arg_parser.add_argument("--out", action="store_true", help="Output for file")
-    arg_parser.add_argument("--show", action="store_true", help="Show the maze")
-    arg_parser.add_argument("--animate", action="store_true", help="Animate the maze")
-    arg_parser.add_argument("--seed", type=int)
-    args = arg_parser.parse_args()
+    aparser = ArgumentParser("Generate perfect mazes.")
+    aparser.add_argument("--width", type=int, default=10, help="Maze width")
+    aparser.add_argument("--height", type=int, default=10, help="Maze height")
+    aparser.add_argument("--start", type=int, nargs=2, metavar=("x", "y"))
+    aparser.add_argument("--end", type=int, nargs=2, metavar=("x", "y"))
+    aparser.add_argument("--out", action="store_true", help="Output for file")
+    aparser.add_argument("--show", action="store_true", help="Show the maze")
+    aparser.add_argument("--animate", action="store_true", help="Animate the maze")
+    aparser.add_argument("--seed", type=int)
+    args = aparser.parse_args()
 
     if args.seed != None:
         seed(args.seed)
 
     maze = Maze(args.width, args.height, animate=args.animate)
 
-    start = Coord(0, 0)
-    end = Coord(args.width - 1, args.height - 1)
+    # Not all start and end values are valid (TODO: validate)
+    start = Coord(args.start[0], args.start[1]) if args.start else Coord(0, 0)
+    fx, fy = args.width - 1, args.height - 1
+    end = Coord(args.end[0], args.end[1]) if args.end else Coord(fx, fy)
     path = maze.get_path_bfs(start, end)
 
     colors = Colors(wall=0, hall=4, path=3, left=1, right=2)
-    block_maze, directions = generate_block_maze(maze, path, colors)
+    block_maze, cells = generate_block_maze(maze, path, colors)
 
     if args.out:
         # Print texture file paths
@@ -400,10 +405,9 @@ if __name__ == "__main__":
         s = [line.strip() for line in s.split("\n")]
         print("\n".join(s))
 
-        # # Print turn by turn
-        # for (turn, x, y) in directions:
-        #     tex = 2 if turn == Turn.LEFT else 3
-        #     print(f"{x:.2f} {y:.2f}", tex)
+        # Print cells on path
+        for x, y, d in cells:
+            print(x, y, d)
 
     if args.show:
         import matplotlib.pyplot as plt
