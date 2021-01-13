@@ -155,6 +155,9 @@ public:
     auto getX() { return posX; }
     auto getY() { return posY; }
 
+    auto getDirX() { return dirX; }
+    auto getDirY() { return dirY; }
+
     void setX(double x)
     {
         posX = x;
