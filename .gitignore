@@ -1,3 +1,6 @@
+# Models
+Models/*.pkl
+
 # Executables
 Game/Game
 PycastWorld/*.so
