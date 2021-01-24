@@ -9,8 +9,17 @@ from math import floor
 from math import radians
 from pycaster import RaycastWorld, Turn, Walk
 
-# are we in target cell?
+
 def pos_check(curr_x, curr_y, targ_x, targ_y, base_dir):
+    """
+    :param curr_x: the current x-coordinate direction the camera is facing (radians)
+    :param curr_y: the curren y-coordinate direction the camera is facing (radians)
+    :param targ_x: the target x-coordinate direction (radians)
+    :param targ_y: the target y-coordinate direction (radians)
+    :param base_dir: the direction from the previous step (NESW)
+    :rtype: boolean
+    :return: True if camera is in the target cell, False otherwise
+    """
     if base_dir == "Dir.WEST":
         if curr_x - targ_x > 0.5:
             return True
@@ -33,8 +42,17 @@ def pos_check(curr_x, curr_y, targ_x, targ_y, base_dir):
             return False
 
 
-# which direction to go?
+
 def turn_check(curr_dir, base_dir, targ_dir):
+"""
+:param curr_dir: the direction (in radians) the camera is facing 
+:param base_dir: the direction (NESW) from the previous step
+:param targ_dir: the target direction (NESW)
+:rtype: string
+:return: 'right' or 'left' depending on where the camera should turn,
+otherwise 'straight' if the camera is facing in the target direction and 
+should not turn
+"""
     if targ_dir == "Dir.WEST":
         if base_dir == "Dir.NORTH":
             if curr_dir < pi:
@@ -75,7 +93,14 @@ def turn_check(curr_dir, base_dir, targ_dir):
 
 
 def getDir(dirX, dirY):
-    # fix from RaycastWorld
+    """
+    :param dirX: the x-coordinate of the direction vector of the camera
+    :param dirY: the y-coordinate of the direction vector of the camera
+    :rtype: float
+    :return: direction the camera is facing (radians)
+    """
+    
+    # fixing the fact that X,Y coordinates not always within [-1,1]
     if not -1 <= dirX <= 1:
         dirX = round(dirX)
     if not -1 <= dirY <= 1:
