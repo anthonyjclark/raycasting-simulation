@@ -3,7 +3,6 @@
 
 #include <iostream>
 #include <vector>
-#include <random>
 
 // TODO: remove as global variable
 std::string imageDirectory;
@@ -58,7 +57,6 @@ void keyCallback(GLFWwindow *window, int key, int, int action, int)
     }
     else if (key == GLFW_KEY_DOWN && action == GLFW_PRESS)
     {
-
         world->setWalk(BACKWARD);
     }
     else if ((key == GLFW_KEY_UP || key == GLFW_KEY_DOWN) && action == GLFW_RELEASE)
@@ -97,7 +95,6 @@ void keyCallback(GLFWwindow *window, int key, int, int action, int)
 
 int main(int argc, char const *argv[])
 {
-
     const unsigned int DEFAULT_WINDOW_WIDTH = 320;
     const unsigned int DEFAULT_WINDOW_HEIGHT = 240;
     const auto DEFAULT_WORLD_FILE = "../Worlds/maze.txt";
