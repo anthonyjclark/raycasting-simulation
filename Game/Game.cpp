@@ -18,6 +18,7 @@ std::string imageDirectory;
 void saveCommandPNG(RaycastWorld *world, std::string move)
 {
     static int count = 0;
+
     std::string imagePath = imageDirectory + "/" + move + "/" + std::to_string(count) + ".png";
     std::cout << "Saving image \"" << imagePath << "\"\n";
     world->savePNG(imagePath);
@@ -27,6 +28,7 @@ void saveCommandPNG(RaycastWorld *world, std::string move)
 // void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods)
 void keyCallback(GLFWwindow *window, int key, int, int action, int)
 {
+
     auto world = static_cast<RaycastWorld *>(glfwGetWindowUserPointer(window));
 
     if (imageDirectory.length() > 0 && (action == GLFW_PRESS || action == GLFW_REPEAT))
