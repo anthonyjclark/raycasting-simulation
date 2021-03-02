@@ -15,6 +15,13 @@ from numpy.random import default_rng
 
 rng = default_rng()
 
+# NOISE CONTROL
+
+# the standard deviation of the Gaussian that random angles are drawn from
+rand_angle_scale = pi/18
+
+# the minimum of the uniform distribution that random distances (to move) are drawn from 
+rand_step_scale = 0.3
 
 def getDir(dirX, dirY):
     """
@@ -78,7 +85,7 @@ def get_rand_angle(curr_x, curr_y, targ_x, targ_y):
         else:
             theta = atan((targ_x - curr_x) / (curr_y - targ_y)) + 3 * pi / 2
     
-    return rng.normal(loc=theta, scale=pi/12)
+    return rng.normal(loc=theta, scale=rand_angle_scale)
 
 
 def l2_dist(curr_x, curr_y, targ_x, targ_y):
@@ -173,9 +180,8 @@ def get_better_targ(targ_x, targ_y, base_dir):
         return targ_x + 0.5, targ_y + 0.25
         
 
-
 def main():
-    img_dir = sys.argv[1] if len(sys.argv) > 1 else "../Images/AutoRand"
+    img_dir = sys.argv[1] if len(sys.argv) > 1 else "../Images/AutoRand2"
     maze = sys.argv[2] if len(sys.argv) > 2 else "../Worlds/new_maze4.txt"
 
     world = RaycastWorld(320, 240, maze)
@@ -231,20 +237,22 @@ def main():
             curr_dir = getDir(world.getDirX(), world.getDirY())
             while abs(curr_dir - rand_angle) > .2:
                 if curr_dir > rand_angle:
-                    world.turn(Turn.Right)
-                    world.update()
 
                     # save image right
                     world.savePNG(f"{img_dir}/right/{img_num_r:05}.png")
+                    
                     img_num_r += 1
+                    world.turn(Turn.Right)
+                    world.update()
 
                 elif curr_dir < rand_angle:
+
+                    # save image left
+                    world.savePNG(f"{img_dir}/left/{img_num_l:05}.png")
+                    img_num_l += 1
+
                     world.turn(Turn.Left)
                     world.update()
-                    
-                    # save image left
-                    world.savePNG(f"{img_dir}/left/{img_num_l:05}")
-                    img_num_l += 1
                 
                 # image_data = np.array(world)
                 # plt.imshow(image_data)
@@ -255,17 +263,18 @@ def main():
             world.turn(Turn.Stop)
 
             # choosing how much to move in direction of random angle
-            step = rng.uniform(0.3, abs_dist)
+            step = rng.uniform(rand_step_scale, abs_dist)
 
             # moving forward in direction of rand angle
             move_straight = keep_straight(curr_x, curr_y, c_targ_x, c_targ_y, curr_dir, base_dir, step)
             while move_straight:
-                world.walk(Walk.Forward)
-                world.update()
 
                 # saving image straight
                 world.savePNG(f"{img_dir}/straight/{img_num_s:05}.png")
+
                 img_num_s += 1
+                world.walk(Walk.Forward)
+                world.update()
 
                 # image_data = np.array(world)
                 # plt.imshow(image_data)
