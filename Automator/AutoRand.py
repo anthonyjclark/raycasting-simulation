@@ -12,6 +12,7 @@ from math import floor
 from math import radians
 from pycaster import RaycastWorld, Turn, Walk
 from numpy.random import default_rng
+from Automate import pos_check
 
 rng = default_rng()
 
@@ -178,10 +179,49 @@ def get_better_targ(targ_x, targ_y, base_dir):
         return targ_x + 0.5, targ_y + 0.75
     elif base_dir == "Dir.SOUTH":
         return targ_x + 0.5, targ_y + 0.25
+
+
+def angle_diff(curr_dir, rand_angle):
+    """
+    :param curr_dir: the current direction the camera is facing
+    :param rand_angle: the chosen direction for the camera to turn towards
+    :rtype: float
+    :return: the angle difference 
+    """
+    abs_diff = abs(curr_dir - rand_angle)
+    if abs_diff > np.pi:
+        angle_diff = np.pi*2 - abs_diff
+    else:
+        angle_diff = abs_diff
+    return angle_diff
+
+
+def turn_right(curr_dir, rand_angle):
+    """
+    :param curr_dir: the current direction the camera is facing
+    :param rand_angle: the chosen direction for the camera to turn towards
+    :rtype: boolean
+    :return: whether or not to turn right
+    """
+    if curr_dir < 0:
+        curr_dir += 2*np.pi
+    if rand_angle < 0:
+        rand_angle += 2*np.pi
+
+    if curr_dir > rand_angle:
+        if curr_dir - rand_angle > np.pi:
+            return False
+        else:
+            return True
+    else:
+        if rand_angle - curr_dir > np.pi:
+            return True
+        else:
+            return False
         
 
 def main():
-    img_dir = sys.argv[1] if len(sys.argv) > 1 else "../Images/AutoRand2"
+    img_dir = sys.argv[1] if len(sys.argv) > 1 else "../Images/AutoRand3"
     maze = sys.argv[2] if len(sys.argv) > 2 else "../Worlds/new_maze4.txt"
 
     world = RaycastWorld(320, 240, maze)
@@ -223,7 +263,7 @@ def main():
 
         # moving towards target
         abs_dist = l2_dist(curr_x, curr_y, c_targ_x, c_targ_y)
-        while  abs_dist > 0.7:
+        while  abs_dist > 0.65:
             # choosing next angle direction
             rand_angle = get_rand_angle(curr_x, curr_y, c_targ_x, c_targ_y)
 
@@ -235,8 +275,10 @@ def main():
 
             # turning towards rand_angle
             curr_dir = getDir(world.getDirX(), world.getDirY())
-            while abs(curr_dir - rand_angle) > .2:
-                if curr_dir > rand_angle:
+
+            while angle_diff(curr_dir, rand_angle) > .2:
+
+                if turn_right(curr_dir, rand_angle):
 
                     # save image right
                     world.savePNG(f"{img_dir}/right/{img_num_r:05}.png")
@@ -245,7 +287,7 @@ def main():
                     world.turn(Turn.Right)
                     world.update()
 
-                elif curr_dir < rand_angle:
+                else:
 
                     # save image left
                     world.savePNG(f"{img_dir}/left/{img_num_l:05}.png")
