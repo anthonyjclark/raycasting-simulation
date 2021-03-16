@@ -19,7 +19,7 @@ rng = default_rng()
 # NOISE CONTROL
 
 # the standard deviation of the Gaussian that random angles are drawn from
-rand_angle_scale = pi/18
+rand_angle_scale = pi/36
 
 # the minimum of the uniform distribution that random distances (to move) are drawn from 
 rand_step_scale = 0.3
@@ -47,17 +47,15 @@ def getDir(dirX, dirY):
     elif dirX >= 0 and dirY < 0:
         return asin(dirY)
 
-
-def get_rand_angle(curr_x, curr_y, targ_x, targ_y):
+def get_angle(curr_x, curr_y, targ_x, targ_y):
     """
     :param curr_x: the current x-coordinate of the camera
     :param curr_y: the current y-coordinate of the camera
     :param targ_x: the target x-coordinate of the camera
     :param targ_y: the target y-coordinate of the camera
     :rtype: float
-    :return: an random angle in the direction of the target with added noise
+    :return: the angle in the direction of the target
     """
-
     # case where target pos is up and to the right
     if curr_x <= targ_x and curr_y <= targ_y:
         if targ_x == curr_x:
@@ -85,6 +83,21 @@ def get_rand_angle(curr_x, curr_y, targ_x, targ_y):
             theta = 0
         else:
             theta = atan((targ_x - curr_x) / (curr_y - targ_y)) + 3 * pi / 2
+    
+    return theta
+
+
+def get_rand_angle(curr_x, curr_y, targ_x, targ_y):
+    """
+    :param curr_x: the current x-coordinate of the camera
+    :param curr_y: the current y-coordinate of the camera
+    :param targ_x: the target x-coordinate of the camera
+    :param targ_y: the target y-coordinate of the camera
+    :rtype: float
+    :return: an random angle in the direction of the target with added noise
+    """
+
+    theta = get_angle(curr_x, curr_y, targ_x, targ_y)
     
     return rng.normal(loc=theta, scale=rand_angle_scale)
 
@@ -152,13 +165,13 @@ def keep_straight(curr_x, curr_y, targ_x, targ_y, angle, base_dir, step):
     :rtype: boolean
     :return: True if camera within 0.1 of a side wall
     """
-    dist = l2_dist(curr_x, curr_y, targ_x, targ_y)
+    # dist = l2_dist(curr_x, curr_y, targ_x + 0.5, targ_y + 0.5)
 
-    if dist < 0.1:
+    # if dist < 0.5:
+    #     return False
+    if head_near_bound(curr_x, curr_y, targ_x, targ_y, angle, base_dir):
         return False
-    elif head_near_bound(curr_x, curr_y, targ_x, targ_y, angle, base_dir):
-        return False
-    elif step < 0.2:
+    elif step < 0.15:
         return False
     else:
         return True
@@ -218,11 +231,66 @@ def turn_right(curr_dir, rand_angle):
             return True
         else:
             return False
+
+def check_no_turn(curr_x, curr_y, c_targ_x, c_targ_y, base_dir, targ_dir):
+    """
+    :param curr_x: the current x-coordinate of the camera
+    :param curr_y: the current y-coordinate of the camera
+    :param c_targ_x: the x-coordinate of the center of the target square
+    :param c_targ_y: the y-coordinate of the center of the target square
+    :param base_dir: the direction of the previous step (NESW)
+    :param base_dir: the direction of the next instruction (NESW)
+    :rtype: boolean
+    :return: True if should not turn
+    """
+    if base_dir == "Dir.WEST" or base_dir == "Dir.EAST":
+        if targ_dir == "Dir.NORTH":
+            if curr_y > c_targ_y:
+                return True
+        elif targ_dir == "Dir.SOUTH":
+            if curr_y < c_targ_y:
+                return True
+    elif base_dir ==  "Dir.NORTH" or base_dir == "Dir.SOUTH":
+        if targ_dir == "Dir.EAST":
+            if curr_x > c_targ_x:
+                return True
+        elif targ_dir == "Dir.WEST":
+            if curr_x < c_targ_x:
+                return True
+    else:
+        return False
+
+def get_non_rand_angle(curr_x, curr_y, c_targ_x, c_targ_y, base_dir, targ_dir):
+    if base_dir == "Dir.WEST":
+        if targ_dir == "Dir.NORTH":
+            return get_angle(curr_x, curr_y, c_targ_x - 0.5, c_targ_y + 0.5)
+        elif targ_dir == "Dir.SOUTH":
+            return get_angle(curr_x, curr_y, c_targ_x - 0.5, c_targ_y - 0.5)
+        else:
+            return pi
+    elif base_dir == "Dir.EAST":
+        if targ_dir == "Dir.NORTH":
+            return get_angle(curr_x, curr_y, c_targ_x + 0.5, c_targ_y + 0.5)
+        elif targ_dir == "Dir.SOUTH":
+            return get_angle(curr_x, curr_y, c_targ_x + 0.5, c_targ_y - 0.5)
+        return 0.0
+    elif base_dir == "Dir.NORTH":
+        if targ_dir == "Dir.WEST":
+            return get_angle(curr_x, curr_y, c_targ_x - 0.5, c_targ_y + 0.5)
+        elif targ_dir == "Dir.EAST":
+            return get_angle(curr_x, curr_y, c_targ_x + 0.5, c_targ_y + 0.5)
+        return pi / 2
+    else:
+        if targ_dir == "Dir.WEST":
+            return get_angle(curr_x, curr_y, c_targ_x - 0.5, c_targ_y - 0.5)
+        elif targ_dir == "Dir.EAST":
+            return get_angle(curr_x, curr_y, c_targ_x + 0.5, c_targ_y - 0.5)
+        return 3 * pi / 2
         
 
 def main():
-    img_dir = sys.argv[1] if len(sys.argv) > 1 else "../Images/AutoRand3"
-    maze = sys.argv[2] if len(sys.argv) > 2 else "../Worlds/new_maze4.txt"
+    img_dir = sys.argv[1] if len(sys.argv) > 1 else "../Images"
+    maze = sys.argv[2] if len(sys.argv) > 2 else "../Worlds/new_maze.txt"
 
     world = RaycastWorld(320, 240, maze)
     # print(f"dirX: {acos(world.getDirX())}")
@@ -240,9 +308,9 @@ def main():
         directions = in_file.readlines()
 
     # if 100 images in directory, start counting at 101
-    img_num_l = len(os.listdir(f"{img_dir}/left")) + 1
-    img_num_r = len(os.listdir(f"{img_dir}/right")) + 1
-    img_num_s = len(os.listdir(f"{img_dir}/straight")) + 1
+    img_num_l = 1#len(os.listdir(f"{img_dir}/left")) + 1
+    img_num_r = 1#len(os.listdir(f"{img_dir}/right")) + 1
+    img_num_s = 1#len(os.listdir(f"{img_dir}/straight")) + 1
 
     i = 0
     while i < len(directions) - 1:
@@ -263,9 +331,16 @@ def main():
 
         # moving towards target
         abs_dist = l2_dist(curr_x, curr_y, c_targ_x, c_targ_y)
-        while  abs_dist > 0.65:
-            # choosing next angle direction
-            rand_angle = get_rand_angle(curr_x, curr_y, c_targ_x, c_targ_y)
+        while  abs_dist > 0.5:
+            if abs_dist < 1.3:
+                # rand_angle = get_non_rand_angle(base_dir)
+                if check_no_turn(curr_x, curr_y, c_targ_x, c_targ_y, base_dir, targ_dir):
+                    rand_angle = get_non_rand_angle(curr_x, curr_y, c_targ_x, c_targ_y, base_dir, targ_dir)
+                else:
+                    rand_angle = get_rand_angle(curr_x, curr_y, c_targ_x, c_targ_y)
+            else:    
+                # choosing next angle direction
+                rand_angle = get_rand_angle(curr_x, curr_y, c_targ_x, c_targ_y)
 
             # need this since getDir in range (-pi/2, 3pi/2)
             if rand_angle > 3 * pi / 2:
@@ -281,7 +356,7 @@ def main():
                 if turn_right(curr_dir, rand_angle):
 
                     # save image right
-                    world.savePNG(f"{img_dir}/right/{img_num_r:05}.png")
+                    # world.savePNG(f"{img_dir}/right/{img_num_r:05}.png")
                     
                     img_num_r += 1
                     world.turn(Turn.Right)
@@ -290,15 +365,15 @@ def main():
                 else:
 
                     # save image left
-                    world.savePNG(f"{img_dir}/left/{img_num_l:05}.png")
+                    # world.savePNG(f"{img_dir}/left/{img_num_l:05}.png")
                     img_num_l += 1
 
                     world.turn(Turn.Left)
                     world.update()
                 
-                # image_data = np.array(world)
-                # plt.imshow(image_data)
-                # plt.show()
+                image_data = np.array(world)
+                plt.imshow(image_data)
+                plt.show()
                 
                 curr_dir = getDir(world.getDirX(), world.getDirY())
 
@@ -308,11 +383,11 @@ def main():
             step = rng.uniform(rand_step_scale, abs_dist)
 
             # moving forward in direction of rand angle
-            move_straight = keep_straight(curr_x, curr_y, c_targ_x, c_targ_y, curr_dir, base_dir, step)
-            while move_straight:
+            move_straight = keep_straight(curr_x, curr_y, targ_x, targ_y, curr_dir, base_dir, step)
+            while move_straight and abs_dist > 0.5:
 
                 # saving image straight
-                world.savePNG(f"{img_dir}/straight/{img_num_s:05}.png")
+                # world.savePNG(f"{img_dir}/straight/{img_num_s:05}.png")
 
                 img_num_s += 1
                 world.walk(Walk.Forward)
@@ -327,6 +402,7 @@ def main():
                 curr_dir = getDir(world.getDirX(), world.getDirY())
 
                 move_straight = keep_straight(curr_x, curr_y, targ_x, targ_y, curr_dir, base_dir, step)
+                abs_dist = l2_dist(curr_x, curr_y, c_targ_x, c_targ_y)
 
             abs_dist = l2_dist(curr_x, curr_y, c_targ_x, c_targ_y)
 
