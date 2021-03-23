@@ -114,7 +114,7 @@ def l2_dist(curr_x, curr_y, targ_x, targ_y):
     return math.sqrt((targ_x - curr_x) ** 2 + (targ_y - curr_y) ** 2)
 
 
-def head_near_bound(curr_x, curr_y, targ_x, targ_y, angle, base_dir):
+def head_near_bound(curr_x, curr_y, targ_x, targ_y, angle, base_dir, targ_dir):
     """
     :param curr_x: the current x-coordinate of the camera
     :param curr_y: the current y-coordinate of the camera
@@ -136,6 +136,7 @@ def head_near_bound(curr_x, curr_y, targ_x, targ_y, angle, base_dir):
             return True
         elif 0 < angle < pi / 2 and (targ_y + 1 - curr_y) < 0.1:
             return True
+
         else:
             return False
     elif base_dir == "Dir.NORTH":
@@ -155,7 +156,7 @@ def head_near_bound(curr_x, curr_y, targ_x, targ_y, angle, base_dir):
     return False
     
 
-def keep_straight(curr_x, curr_y, targ_x, targ_y, angle, base_dir, step):
+def keep_straight(curr_x, curr_y, targ_x, targ_y, angle, base_dir, targ_dir, step):
     """
     :param curr_x: the current x-coordinate of the camera
     :param curr_y: the current y-coordinate of the camera
@@ -165,16 +166,13 @@ def keep_straight(curr_x, curr_y, targ_x, targ_y, angle, base_dir, step):
     :rtype: boolean
     :return: True if camera within 0.1 of a side wall
     """
-    # dist = l2_dist(curr_x, curr_y, targ_x + 0.5, targ_y + 0.5)
-
-    # if dist < 0.5:
-    #     return False
-    if head_near_bound(curr_x, curr_y, targ_x, targ_y, angle, base_dir):
+    if head_near_bound(curr_x, curr_y, targ_x, targ_y, angle, base_dir, targ_dir):
         return False
     elif step < 0.15:
         return False
     else:
         return True
+
 
 def get_better_targ(targ_x, targ_y, base_dir):
     """
@@ -290,7 +288,7 @@ def get_non_rand_angle(curr_x, curr_y, c_targ_x, c_targ_y, base_dir, targ_dir):
 
 def main():
     img_dir = sys.argv[1] if len(sys.argv) > 1 else "../Images"
-    maze = sys.argv[2] if len(sys.argv) > 2 else "../Worlds/new_maze.txt"
+    maze = sys.argv[2] if len(sys.argv) > 2 else "../Worlds/new_maze3.txt"
 
     world = RaycastWorld(320, 240, maze)
     # print(f"dirX: {acos(world.getDirX())}")
@@ -332,24 +330,16 @@ def main():
         # moving towards target
         abs_dist = l2_dist(curr_x, curr_y, c_targ_x, c_targ_y)
         while  abs_dist > 0.5:
-            if abs_dist < 1.3:
-                # rand_angle = get_non_rand_angle(base_dir)
-                if check_no_turn(curr_x, curr_y, c_targ_x, c_targ_y, base_dir, targ_dir):
-                    rand_angle = get_non_rand_angle(curr_x, curr_y, c_targ_x, c_targ_y, base_dir, targ_dir)
-                else:
-                    rand_angle = get_rand_angle(curr_x, curr_y, c_targ_x, c_targ_y)
-            else:    
-                # choosing next angle direction
-                rand_angle = get_rand_angle(curr_x, curr_y, c_targ_x, c_targ_y)
 
-            # need this since getDir in range (-pi/2, 3pi/2)
-            if rand_angle > 3 * pi / 2:
-                rand_angle = rand_angle - 2 * pi
+            # getting random angle to turn towards
+            rand_angle = get_rand_angle(curr_x, curr_y, c_targ_x, c_targ_y)
+            rand_angle = rand_angle % (2 * pi)
             
             world.walk(Walk.Stopped)
 
             # turning towards rand_angle
             curr_dir = getDir(world.getDirX(), world.getDirY())
+            curr_dir = curr_dir % (2 * pi)
 
             while angle_diff(curr_dir, rand_angle) > .2:
 
@@ -371,19 +361,19 @@ def main():
                     world.turn(Turn.Left)
                     world.update()
                 
-                image_data = np.array(world)
-                plt.imshow(image_data)
-                plt.show()
+                # image_data = np.array(world)
+                # plt.imshow(image_data)
+                # plt.show()
                 
                 curr_dir = getDir(world.getDirX(), world.getDirY())
 
             world.turn(Turn.Stop)
 
             # choosing how much to move in direction of random angle
-            step = rng.uniform(rand_step_scale, abs_dist)
+            step = rng.uniform(rand_step_scale, abs_dist-0.1)
 
             # moving forward in direction of rand angle
-            move_straight = keep_straight(curr_x, curr_y, targ_x, targ_y, curr_dir, base_dir, step)
+            move_straight = keep_straight(curr_x, curr_y, targ_x, targ_y, curr_dir, base_dir, targ_dir, step)
             while move_straight and abs_dist > 0.5:
 
                 # saving image straight
@@ -401,7 +391,7 @@ def main():
                 curr_x, curr_y = world.getX(), world.getY()
                 curr_dir = getDir(world.getDirX(), world.getDirY())
 
-                move_straight = keep_straight(curr_x, curr_y, targ_x, targ_y, curr_dir, base_dir, step)
+                move_straight = keep_straight(curr_x, curr_y, targ_x, targ_y, curr_dir, base_dir, targ_dir, step)
                 abs_dist = l2_dist(curr_x, curr_y, c_targ_x, c_targ_y)
 
             abs_dist = l2_dist(curr_x, curr_y, c_targ_x, c_targ_y)
