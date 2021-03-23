@@ -29,6 +29,8 @@ PYBIND11_MODULE(pycaster, m)
         .def("getDirY", &RaycastWorld::getDirY)
         .def("position", &RaycastWorld::setPosition)
         .def("direction", &RaycastWorld::setDirection)
+        .def("getTurnSpeed", &RaycastWorld::getTurnSpeed)
+        .def("getWalkSpeed", &RaycastWorld::getWalkSpeed)
         .def_buffer([](RaycastWorld &caster) -> py::buffer_info {
             return py::buffer_info(
                 caster.getBuffer(),                       // Pointer to data
