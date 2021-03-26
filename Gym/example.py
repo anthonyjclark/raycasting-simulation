@@ -3,7 +3,7 @@ import gym
 import sys
 
 sys.path.append("../PycastWorld")
-from gym_pycastworld.PycastWorldEnv import PycastWorldEnv
+from gym_pycastworld.PycastWorldEnv import PycastWorldEnv  # type: ignore
 
 
 num_episodes = 10
