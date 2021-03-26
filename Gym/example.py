@@ -1,5 +1,3 @@
-import gym
-
 import sys
 
 sys.path.append("../PycastWorld")
