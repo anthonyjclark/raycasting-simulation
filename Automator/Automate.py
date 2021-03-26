@@ -9,7 +9,7 @@ sys.path.append("../PycastWorld")
 from math import acos, asin, cos, sin, pi
 from math import floor
 from math import radians
-from pycaster import RaycastWorld, Turn, Walk
+from pycaster import PycastWorld, Turn, Walk
 
 
 def pos_check(curr_x, curr_y, targ_x, targ_y, base_dir):
@@ -44,15 +44,14 @@ def pos_check(curr_x, curr_y, targ_x, targ_y, base_dir):
             return False
 
 
-
 def turn_check(curr_dir, base_dir, targ_dir):
     """
-    :param curr_dir: the direction (in radians) the camera is facing 
+    :param curr_dir: the direction (in radians) the camera is facing
     :param base_dir: the direction (NESW) from the previous step
     :param targ_dir: the target direction (NESW)
     :rtype: string
     :return: 'right' or 'left' depending on where the camera should turn,
-    otherwise 'straight' if the camera is facing in the target direction and 
+    otherwise 'straight' if the camera is facing in the target direction and
     should not turn
     """
     if targ_dir == "Dir.WEST":
@@ -61,7 +60,7 @@ def turn_check(curr_dir, base_dir, targ_dir):
                 return "left"
 
         elif base_dir == "Dir.SOUTH":
-            if pi <= curr_dir <= 2*pi or -pi <= curr_dir <= 0:
+            if pi <= curr_dir <= 2 * pi or -pi <= curr_dir <= 0:
                 return "right"
 
     elif targ_dir == "Dir.EAST":
@@ -84,7 +83,7 @@ def turn_check(curr_dir, base_dir, targ_dir):
 
     elif targ_dir == "Dir.SOUTH":
         if base_dir == "Dir.WEST":
-            if pi / 2 <= curr_dir <= pi * 3 / 2 or - 3 * pi / 2 <= curr_dir <= - pi / 2:
+            if pi / 2 <= curr_dir <= pi * 3 / 2 or -3 * pi / 2 <= curr_dir <= -pi / 2:
                 return "left"
 
         elif base_dir == "Dir.EAST":
@@ -101,7 +100,7 @@ def getDir(dirX, dirY):
     :rtype: float
     :return: direction the camera is facing (radians)
     """
-    
+
     # fixing the fact that X,Y coordinates not always within [-1,1]
     if not -1 <= dirX <= 1:
         dirX = round(dirX)
@@ -126,7 +125,7 @@ def main():
     img_dir = sys.argv[1] if len(sys.argv) > 1 else "../Images/AutoStraight"
     maze = sys.argv[2] if len(sys.argv) > 2 else "../Worlds/maze.txt"
 
-    world = RaycastWorld(320, 240, maze)
+    world = PycastWorld(320, 240, maze)
     # print(f"dirX: {acos(world.getDirX())}")
 
     # getting directions
@@ -190,7 +189,7 @@ def main():
             elif decide == "left":
                 world.turn(Turn.Left)
                 world.update()
-                
+
                 # save image left
                 world.savePNG(f"{img_dir}/left/{img_num_l:05}")
                 img_num_l += 1

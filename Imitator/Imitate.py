@@ -13,10 +13,10 @@ import sys
 
 sys.path.append("../PycastWorld")
 sys.path.append("../Models")
-from pycaster import RaycastWorld, Turn, Walk
+from pycaster import PycastWorld, Turn, Walk
 
 # TODO: this stuff probably shouldn't be hardcoded
-world = RaycastWorld(320, 240, "../Worlds/maze.txt")
+world = PycastWorld(320, 240, "../Worlds/maze.txt")
 world.direction(0, 1.152)
 
 path = Path("../")

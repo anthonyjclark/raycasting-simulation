@@ -8,7 +8,7 @@ https://lodev.org/cgtutor/raycasting.html
 
 from math import sin, cos, tan, pi
 from tkinter import Tk, Canvas, ALL
-from pycaster import RaycastWorld, Turn, Walk
+from pycaster import PycastWorld, Turn, Walk
 from enum import IntEnum
 import numpy as np
 from typing import List, Tuple
@@ -33,7 +33,7 @@ VIEW_MINIMAP = False
 
 
 def init(data, canvas):
-    data.world = RaycastWorld(WIDTH, HEIGHT, "../Worlds/maze.txt")
+    data.world = PycastWorld(WIDTH, HEIGHT, "../Worlds/maze.txt")
     data.mapWidth = 17  # TODO: hardcoded
     data.mapHeight = 17  # TODO: hardcoded
     data.screenWidth = WIDTH

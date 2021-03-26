@@ -12,10 +12,9 @@ from gym.utils import seeding
 
 import numpy as np
 
-import sys
 from typing import Dict, List, Tuple
 
-from pycaster import RaycastWorld, Turn, Walk  # type: ignore
+from pycaster import PycastWorld, Turn, Walk  # type: ignore
 
 
 class PycastWorldEnv(gym.Env):
@@ -27,7 +26,7 @@ class PycastWorldEnv(gym.Env):
         image_width = 320
         image_height = 240
 
-        self.world = RaycastWorld(image_width, image_height, "../../Worlds/maze.txt")
+        self.world = PycastWorld(image_width, image_height, "../Worlds/maze.txt")
         self.world.direction(0, 1.152)
 
         self.seed()
