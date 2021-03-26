@@ -1,10 +1,11 @@
 // TODO:
 // - take into account dt
-// - use gpu?
+// - use gpu? parallelize rays?
 // - set ceiling and floor textures
 // - license
 // - generalize floor, ceiling, and checkerboard
 // - allow solid colors (use something other than int for each cell?)
+// - allow to set turn and walk speeds
 
 #if !defined(_RAYCAST_WORLD_H_)
 #define _RAYCAST_WORLD_H_
