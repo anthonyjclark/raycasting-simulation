@@ -134,6 +134,9 @@ private:
     // Initial view
     double initialX, initialY, initialAngle;
 
+    // Goal view
+    double goalX, goalY;
+
     // Motion
     Turn turnDirection;
     double turnSpeed;
@@ -209,6 +212,11 @@ public:
     {
         setPosition(initialX, initialY);
         setDirection(initialAngle);
+    }
+
+    bool atGoal()
+    {
+        return fabs(posX - goalX) < 1 && fabs(posY - goalY) < 1;
     }
 
     void toggleMiniMap()
@@ -354,12 +362,11 @@ RaycastWorld::RaycastWorld(usize width, usize height, std::string mazeFilePath)
               << initialAngle << " (" << direction << ")" << std::endl;
 
     // Loop through maze file to get coordinates of the goal
-    double curX, curY;
-    std::string curDir;
-    while (mazeFile >> curX >> curY >> curDir)
+    std::string goalDir;
+    while (mazeFile >> goalX >> goalY >> goalDir)
         ;
     std::cout << "Goal position: "
-              << curX << ", " << curY << std::endl;
+              << goalX << ", " << goalY << std::endl;
 
     needToRender = true;
     renderView();

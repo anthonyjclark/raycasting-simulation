@@ -62,7 +62,7 @@ class PycastWorldEnv(gym.Env):
         ob = np.array(self.world)
 
         # Reward with 1 if at the end
-        reward = 1 if self.world.at_goal() else -1
+        reward = 1 if self.world.atGoal() else -1
 
         # Episode is over if we reached the goal
         episode_over = reward == 1
