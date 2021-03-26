@@ -22,12 +22,15 @@ PYBIND11_MODULE(pycaster, m)
         .def("walk", &RaycastWorld::setWalk)
         .def("update", &RaycastWorld::updatePose)
         .def("render", &RaycastWorld::renderView)
+        .def("savePNG", &RaycastWorld::savePNG)
         .def("getX", &RaycastWorld::getX)
         .def("getY", &RaycastWorld::getY)
         .def("getDirX", &RaycastWorld::getDirX)
         .def("getDirY", &RaycastWorld::getDirY)
         .def("position", &RaycastWorld::setPosition)
         .def("direction", &RaycastWorld::setDirection)
+        .def("getTurnSpeed", &RaycastWorld::getTurnSpeed)
+        .def("getWalkSpeed", &RaycastWorld::getWalkSpeed)
         .def_buffer([](RaycastWorld &caster) -> py::buffer_info {
             return py::buffer_info(
                 caster.getBuffer(),                       // Pointer to data

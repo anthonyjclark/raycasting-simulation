@@ -1,7 +1,9 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import sys
+import os
 
+# assuming running from raycasting-simulation/Automator
 sys.path.append("../PycastWorld")
 
 from math import acos, asin, cos, sin, pi
@@ -12,10 +14,10 @@ from pycaster import RaycastWorld, Turn, Walk
 
 def pos_check(curr_x, curr_y, targ_x, targ_y, base_dir):
     """
-    :param curr_x: the current x-coordinate direction the camera is facing (radians)
-    :param curr_y: the curren y-coordinate direction the camera is facing (radians)
-    :param targ_x: the target x-coordinate direction (radians)
-    :param targ_y: the target y-coordinate direction (radians)
+    :param curr_x: the current x-coordinate of the camera
+    :param curr_y: the current y-coordinate of the camera
+    :param targ_x: the target x-coordinate
+    :param targ_y: the target y-coordinate
     :param base_dir: the direction from the previous step (NESW)
     :rtype: boolean
     :return: True if camera is in the target cell, False otherwise
@@ -44,22 +46,22 @@ def pos_check(curr_x, curr_y, targ_x, targ_y, base_dir):
 
 
 def turn_check(curr_dir, base_dir, targ_dir):
-"""
-:param curr_dir: the direction (in radians) the camera is facing 
-:param base_dir: the direction (NESW) from the previous step
-:param targ_dir: the target direction (NESW)
-:rtype: string
-:return: 'right' or 'left' depending on where the camera should turn,
-otherwise 'straight' if the camera is facing in the target direction and 
-should not turn
-"""
+    """
+    :param curr_dir: the direction (in radians) the camera is facing 
+    :param base_dir: the direction (NESW) from the previous step
+    :param targ_dir: the target direction (NESW)
+    :rtype: string
+    :return: 'right' or 'left' depending on where the camera should turn,
+    otherwise 'straight' if the camera is facing in the target direction and 
+    should not turn
+    """
     if targ_dir == "Dir.WEST":
         if base_dir == "Dir.NORTH":
             if curr_dir < pi:
                 return "left"
 
         elif base_dir == "Dir.SOUTH":
-            if curr_dir > pi:
+            if pi <= curr_dir <= 2*pi or -pi <= curr_dir <= 0:
                 return "right"
 
     elif targ_dir == "Dir.EAST":
@@ -82,7 +84,7 @@ should not turn
 
     elif targ_dir == "Dir.SOUTH":
         if base_dir == "Dir.WEST":
-            if curr_dir < pi * 3 / 2:
+            if pi / 2 <= curr_dir <= pi * 3 / 2 or - 3 * pi / 2 <= curr_dir <= - pi / 2:
                 return "left"
 
         elif base_dir == "Dir.EAST":
@@ -106,22 +108,29 @@ def getDir(dirX, dirY):
     if not -1 <= dirY <= 1:
         dirY = round(dirY)
 
-    if dirX > 0 and dirY > 0:
+    if dirX > 0 and dirY >= 0:
         return acos(dirX)
-    elif dirX < 0 and dirY > 0:
+    elif dirX <= 0 and dirY >= 0:
         return acos(dirX)
     elif dirX < 0 and dirY < 0:
         return pi - asin(dirY)
-    elif dirX > 0 and dirY < 0:
+    elif dirX >= 0 and dirY < 0:
         return asin(dirY)
 
 
+def getNumImg(dir):
+    return len(os.listdir(dir))
+
+
 def main():
-    world = RaycastWorld(320, 240, "../Worlds/maze.txt")
-    print(f"dirX: {acos(world.getDirX())}")
+    img_dir = sys.argv[1] if len(sys.argv) > 1 else "../Images/AutoStraight"
+    maze = sys.argv[2] if len(sys.argv) > 2 else "../Worlds/maze.txt"
+
+    world = RaycastWorld(320, 240, maze)
+    # print(f"dirX: {acos(world.getDirX())}")
 
     # getting directions
-    with open("../Worlds/maze.txt", "r") as in_file:
+    with open(maze, "r") as in_file:
         png_count = int(in_file.readline())
         for i in range(png_count):
             in_file.readline()
@@ -132,6 +141,11 @@ def main():
 
         directions = in_file.readlines()
 
+    # if 100 images in directory, start counting at 101
+    img_num_l = len(os.listdir(f"{img_dir}/left")) + 1
+    img_num_r = len(os.listdir(f"{img_dir}/right")) + 1
+    img_num_s = len(os.listdir(f"{img_dir}/straight")) + 1
+
     i = 0
     while i < len(directions) - 1:
         _, _, base_dir = directions[i].split()
@@ -139,7 +153,7 @@ def main():
         targ_x, targ_y = int(targ_x), int(targ_y)
         curr_x, curr_y = world.getX(), world.getY()
 
-        print(targ_x, targ_y, base_dir)
+        print(targ_x, targ_y, targ_dir)
 
         # moving forward
         while pos_check(curr_x, curr_y, targ_x, targ_y, base_dir):
@@ -148,9 +162,13 @@ def main():
             world.walk(Walk.Forward)
             world.update()
 
-            image_data = np.array(world)
-            plt.imshow(image_data)
-            plt.show()
+            # saving image straight
+            world.savePNG(f"{img_dir}/straight/{img_num_s:05}")
+            img_num_s += 1
+
+            # image_data = np.array(world)
+            # plt.imshow(image_data)
+            # plt.show()
 
             curr_x, curr_y = world.getX(), world.getY()
 
@@ -163,14 +181,23 @@ def main():
 
             if decide == "right":
                 world.turn(Turn.Right)
+                world.update()
+
+                # save image right
+                world.savePNG(f"{img_dir}/right/{img_num_r:05}")
+                img_num_r += 1
+
             elif decide == "left":
                 world.turn(Turn.Left)
+                world.update()
+                
+                # save image left
+                world.savePNG(f"{img_dir}/left/{img_num_l:05}")
+                img_num_l += 1
 
-            world.update()
-
-            image_data = np.array(world)
-            plt.imshow(image_data)
-            plt.show()
+            # image_data = np.array(world)
+            # plt.imshow(image_data)
+            # plt.show()
 
             curr_dir = getDir(world.getDirX(), world.getDirY())
             decide = turn_check(curr_dir, base_dir, targ_dir)

@@ -158,6 +158,9 @@ public:
     auto getDirX() { return dirX; }
     auto getDirY() { return dirY; }
 
+    auto getTurnSpeed() { return turnSpeed; }
+    auto getWalkSpeed() { return walkSpeed; }
+
     void setX(double x)
     {
         posX = x;
