@@ -17,11 +17,16 @@ from pycaster import PycastWorld, Turn, Walk
 
 # functions defined for model required by fastai
 
+
 def parent_to_deg(f):
     parent = parent_label(f)
-    if parent == 'left': return 90.
-    elif parent == 'right': return -90.
-    else: return 0.
+    if parent == "left":
+        return 90.0
+    elif parent == "right":
+        return -90.0
+    else:
+        return 0.0
+
 
 def sin_cos_loss(preds, targs):
     rad_targs = targs / 180 * np.pi
@@ -29,23 +34,28 @@ def sin_cos_loss(preds, targs):
     y_targs = torch.sin(rad_targs)
     x_preds = preds[:, 0]
     y_preds = preds[:, 1]
-    return ((x_preds - x_targs)**2 + (y_preds - y_targs)**2).mean()
+    return ((x_preds - x_targs) ** 2 + (y_preds - y_targs) ** 2).mean()
+
 
 def within_angle(preds, targs, angle):
     rad_targs = targs / 180 * np.pi
-    angle_pred = torch.atan2(preds[:,1], preds[:,0])
+    angle_pred = torch.atan2(preds[:, 1], preds[:, 0])
     abs_diff = torch.abs(rad_targs - angle_pred)
-    angle_diff = torch.where(abs_diff > np.pi, np.pi*2. - abs_diff, abs_diff)
-    return torch.where(angle_diff < angle, 1., 0.).mean()
+    angle_diff = torch.where(abs_diff > np.pi, np.pi * 2.0 - abs_diff, abs_diff)
+    return torch.where(angle_diff < angle, 1.0, 0.0).mean()
+
 
 def within_45_deg(preds, targs):
     return within_angle(preds, targs, np.pi / 4)
 
+
 def within_30_deg(preds, targs):
     return within_angle(preds, targs, np.pi / 6)
 
+
 def within_15_deg(preds, targs):
     return within_angle(preds, targs, np.pi / 12)
+
 
 # TODO: this stuff probably shouldn't be hardcoded
 world = PycastWorld(320, 240, "../Worlds/maze.txt")
