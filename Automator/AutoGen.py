@@ -10,7 +10,7 @@ sys.path.append("../PycastWorld")
 from math import acos, asin, atan, cos, sin, tan, pi
 from math import floor
 from math import radians
-from pycaster import RaycastWorld, Turn, Walk
+from pycaster import PycastWorld, Turn, Walk
 from numpy.random import default_rng
 
 rng = default_rng()
@@ -20,7 +20,7 @@ rng = default_rng()
 rand_angle_scale = pi/36  # 5 degree s.d.
 
 # the minimum of the uniform distribution that random distances (to move) are drawn from 
-rand_step_scale = 0.3
+rand_step_scale = 0.4
 
 enws = {"Dir.EAST": 0, "Dir.NORTH": 90, "Dir.WEST": 180, "Dir.SOUTH": 270}
 
@@ -187,25 +187,33 @@ class Driver:
         if self.targ_dir == 0:
             if (3*pi/2) <= self.direction <= (2*pi):
                 a = self.world.getY() - (self.c_targ_y - 0.5)
+                theta = self.direction - (3*pi/2)
             else:
                 a = (self.c_targ_y + 0.5) - self.world.getY()
+                theta = self.direction
         elif self.targ_dir == 90:
             if 0 <= self.direction <= (pi/2):
                 a = (self.c_targ_x + 0.5) - self.world.getX()
+                theta = self.direction
             else:
                 a = self.world.getX() - (self.c_targ_x - 0.5)
+                theta = pi - self.direction
         elif self.targ_dir == 180:
             if (pi/2) <= self.direction <= pi:
                 a = (self.c_targ_y + 0.5) - self.world.getY()
+                theta = self.direction - (pi/2)
             else:
                 a = self.world.getY() - (self.c_targ_y - 0.5)
+                theta = (3*pi/2) - self.direction
         elif self.targ_dir == 270:
             if pi <= self.direction <= 3*pi/2:
                 a = self.world.getX() - (self.c_targ_x - 0.5)
+                theta = self.direction - pi
             else:
                 a = (self.c_targ_x + 0.5) - self.world.getX()
+                theta = (2*pi) - self.direction
 
-        b, c = self.solve_triangle(self.direction, a)
+        b, c = self.solve_triangle(theta, a)
 
         if b < self.dist:
             return c
@@ -216,7 +224,7 @@ class Driver:
     def move_to_step(self):
         self.world.turn(Turn.Stop)
         i = 0
-        while self.dist > 0.1 and self.step > 0.1:
+        while self.dist > 0.4 and self.step > 0.1:
             
             if self.img_dir != None:
                 self.world.savePNG(os.path.join(self.img_dir, 'straight', f"{self.img_num_s:05}.png"))
@@ -241,7 +249,7 @@ class Driver:
 class Navigator:
 
     def __init__(self, maze, img_dir=None):
-        self.world = RaycastWorld(320, 240, maze)
+        self.world = PycastWorld(320, 240, maze)
         self.img_dir = img_dir
 
         # getting directions
@@ -285,14 +293,15 @@ class Navigator:
 
 
 def main():
-    maze = sys.argv[1] if len(sys.argv) > 1 else "../Worlds/new_maze.txt"
+    maze = sys.argv[1] if len(sys.argv) > 1 else "../Worlds/maze.txt"
     img_dir = sys.argv[2] if len(sys.argv) > 2 else None
 
     navigator = Navigator(maze, img_dir)
 
     j = 0
     while j < navigator.num_directions - 1:
-        navigator.navigate(j, show_dir=True, show_freq=1)
+        navigator.navigate(j, show_dir=True, show_freq=None)
+        j += 1
 
 
 if __name__ == "__main__":
