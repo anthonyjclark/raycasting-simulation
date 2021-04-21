@@ -1,10 +1,11 @@
 // TODO:
 // - take into account dt
-// - use gpu?
+// - use gpu? parallelize rays?
 // - set ceiling and floor textures
 // - license
 // - generalize floor, ceiling, and checkerboard
 // - allow solid colors (use something other than int for each cell?)
+// - allow to set turn and walk speeds
 
 #if !defined(_RAYCAST_WORLD_H_)
 #define _RAYCAST_WORLD_H_
@@ -130,6 +131,12 @@ private:
     double dirX, dirY;
     double planeX, planeY;
 
+    // Initial view
+    double initialX, initialY, initialAngle;
+
+    // Goal view
+    double goalX, goalY;
+
     // Motion
     Turn turnDirection;
     double turnSpeed;
@@ -199,6 +206,17 @@ public:
         planeY = -planeLength * cos(radians);
 
         needToRender = true;
+    }
+
+    void reset()
+    {
+        setPosition(initialX, initialY);
+        setDirection(initialAngle);
+    }
+
+    bool atGoal()
+    {
+        return fabs(posX - goalX) < 1 && fabs(posY - goalY) < 1;
     }
 
     void toggleMiniMap()
@@ -295,6 +313,9 @@ RaycastWorld::RaycastWorld(usize width, usize height, std::string mazeFilePath)
     posX += 0.5;
     posY += 0.5;
 
+    initialX = posX;
+    initialY = posY;
+
     // Vertical camera strafing up/down, for jumping/crouching.
     // 0 means standard height.
     // Expressed in screen pixels a wall at distance 1 shifts
@@ -320,22 +341,32 @@ RaycastWorld::RaycastWorld(usize width, usize height, std::string mazeFilePath)
     // Set direction
     if (direction == "Dir.NORTH")
     {
-        setDirection(deg2rad(90));
+        initialAngle = deg2rad(90);
     }
     else if (direction == "Dir.EAST")
     {
-        setDirection(deg2rad(0));
+        initialAngle = deg2rad(0);
     }
     else if (direction == "Dir.SOUTH")
     {
-        setDirection(deg2rad(270));
+        initialAngle = deg2rad(270);
     }
     else
     {
-        setDirection(deg2rad(180));
+        initialAngle = deg2rad(180);
     }
+    setDirection(initialAngle);
 
-    std::cout << "Initial pose: " << posX << ", " << posY << " " << direction << std::endl;
+    std::cout << "Initial pose: "
+              << initialX << ", " << initialY << " "
+              << initialAngle << " (" << direction << ")" << std::endl;
+
+    // Loop through maze file to get coordinates of the goal
+    std::string goalDir;
+    while (mazeFile >> goalX >> goalY >> goalDir)
+        ;
+    std::cout << "Goal position: "
+              << goalX << ", " << goalY << std::endl;
 
     needToRender = true;
     renderView();

@@ -346,6 +346,9 @@ def generate_block_maze(
             # print("From:", cdir, "To:", ndir, "Is a:", turn)
         cdir = ndir
 
+    # Append the end position
+    path_cells.append((sc(cto.x), sc(cto.y), cdir))
+
     return np_maze, path_cells
 
 

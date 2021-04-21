@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+# TODO: add gif output using matplotlib animation
+
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -11,7 +13,7 @@ import sys
 
 sys.path.append("../PycastWorld")
 sys.path.append("../Models")
-from pycaster import RaycastWorld, Turn, Walk
+from pycaster import PycastWorld, Turn, Walk
 
 # functions defined for model required by fastai
 
@@ -46,7 +48,7 @@ def within_15_deg(preds, targs):
     return within_angle(preds, targs, np.pi / 12)
 
 # TODO: this stuff probably shouldn't be hardcoded
-world = RaycastWorld(320, 240, "../Worlds/maze.txt")
+world = PycastWorld(320, 240, "../Worlds/maze.txt")
 world.direction(0, 1.152)
 
 path = Path("../")

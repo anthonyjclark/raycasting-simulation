@@ -6,11 +6,19 @@ Generate mazes and navigate through them with turn-by-turn directions.
 
 # Requirements
 
-`RaycastWorld/RaycastWorld.cpp` does not have any dependencies not found in this repository (`lodepng` is a submodule).
+`RaycastWorld/RaycastWorld.cpp` requires `lodepng`, which is included as a submodule.
+
+`PycastWorld/pycaster...` requires `pybind11`, which is included as a submodule.
+
+Download both submodules with the following command (run it from the root of this project):
+
+```bash
+git submodule update --init --recursive
+```
 
 `Game/Game.cpp` depends on [GLFW3](https://www.glfw.org/).
 
-`MazeGen/MazeGen.py` depends on NumPy, but this dependency can be removed.
+`MazeGen/MazeGen.py` depends on NumPy, but this dependency can be avoided if you don't need to view the output.
 
 # Getting Started
 
