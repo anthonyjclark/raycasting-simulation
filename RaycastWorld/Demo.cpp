@@ -5,7 +5,7 @@ int main(/*int argc, char const *argv[]*/)
     const unsigned int IMAGE_WIDTH = 640;
     const unsigned int IMAGE_HEIGHT = 480;
 
-    RaycastWorld world(IMAGE_WIDTH, IMAGE_HEIGHT, "../Mazes/maze.txt");
+    RaycastWorld world(IMAGE_WIDTH, IMAGE_HEIGHT, "../Worlds/maze.txt");
 
     world.toggleMiniMap();
     world.setPosition(1.5, 1.5);

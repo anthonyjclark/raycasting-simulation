@@ -6,11 +6,15 @@ MAIN = Game
 GLAD = ../extern/glad/src/glad.cpp
 LODE = ../extern/lodepng/lodepng.cpp
 
-release: $(MAIN).cpp
-	$(CXX) -O3 $(CXXFLAGS) $(INCLUDES) $(GLAD) $(LODE) $(LIBS) $(MAIN).cpp -o $(MAIN)
+.PHONY: release
+release: $(MAIN)
+$(MAIN): $(MAIN).cpp
+	$(CXX) -O3 $(CXXFLAGS) $(INCLUDES) $(GLAD) $(LODE) $(LIBS) $(MAIN).cpp -o $@
 
-debug: $(MAIN).cpp
-	$(CXX) -g  $(CXXFLAGS) $(INCLUDES) $(GLAD) $(LODE) $(LIBS) $(MAIN).cpp -o $(MAIN)-Debug
+.PHONY: debug
+debug: $(MAIN)-Debug
+$(MAIN)-Debug: $(MAIN).cpp
+	$(CXX) -g  $(CXXFLAGS) $(INCLUDES) $(GLAD) $(LODE) $(LIBS) $(MAIN).cpp -o $@
 
 clean:
 	$(RM) -r $(MAIN)-Debug.dSYM $(MAIN)-Debug $(MAIN)

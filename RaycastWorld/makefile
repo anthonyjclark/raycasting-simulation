@@ -4,11 +4,15 @@ CXXFLAGS = -W -Wall -Wextra -std=c++17
 MAIN = Demo
 LODE = ../extern/lodepng/lodepng.cpp
 
-release: $(MAIN).cpp
-	$(CXX) -O3 $(CXXFLAGS) $(INCLUDES) $(LODE) $(MAIN).cpp -o $(MAIN)
+.PHONY: release
+release: $(MAIN)
+$(MAIN): $(MAIN).cpp
+	$(CXX) -O3 $(CXXFLAGS) $(INCLUDES) $(LODE) $(MAIN).cpp -o $@
 
-debug: $(MAIN).cpp
-	$(CXX) -g  $(CXXFLAGS) $(INCLUDES) $(LODE) $(MAIN).cpp -o $(MAIN)-Debug
+.PHONY: debug
+debug: $(MAIN)-Debug
+$(MAIN)-Debug: $(MAIN).cpp
+	$(CXX) -g  $(CXXFLAGS) $(INCLUDES) $(LODE) $(MAIN).cpp -o $@
 
 clean:
-	$(RM) $(MAIN)-Debug.dSYM $(MAIN)-Debug $(MAIN)
+	$(RM) -r $(MAIN)-Debug.dSYM $(MAIN)-Debug $(MAIN) frame*.png

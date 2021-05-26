@@ -1,12 +1,26 @@
-INCLUDES = -I../extern/lodepng -I../extern/pybind11/include `python3-config --includes`
-CXXFLAGS = -O3 -W -Wall -Wextra -std=c++17 -shared -undefined dynamic_lookup
+PY_INC_DIR := $(shell python3-config --includes)
+PY_LIB_EXT := $(shell python3-config --extension-suffix)
+
+INCLUDES = -I../extern/lodepng -I../extern/pybind11/include $(PY_INC_DIR)
+CXXFLAGS = -O3 -W -Wall -Wextra -std=c++17 -shared
+
+OS_NAME := $(shell uname)
+
+ifeq ($(OS_NAME), Darwin)
+	CXXFLAGS += -undefined dynamic_lookup
+endif
+ifeq ($(OS_NAME), Linux)
+	CXXFLAGS += -fPIC
+endif
 
 MAIN = pycaster
-EXT = `python3-config --extension-suffix`
+LIBNAME = $(MAIN)$(PY_LIB_EXT)
 LODE = ../extern/lodepng/lodepng.cpp
 
-library:
-	$(CXX) $(CXXFLAGS) $(INCLUDES) $(LODE) $(MAIN).cpp -o $(MAIN)$(EXT)
+.PHONY: library
+library: $(LIBNAME)
+$(LIBNAME):
+	$(CXX) $(CXXFLAGS) $(INCLUDES) $(LODE) $(MAIN).cpp -o $@
 
 clean:
-	$(RM) $(MAIN)$(EXT)
+	$(RM) $(LIBNAME)
