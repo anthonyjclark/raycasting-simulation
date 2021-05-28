@@ -3,13 +3,14 @@
 1. Fork this repository
 2. Connect to the server (VPN and SSH)
 3. Clone your forked repository
+4. Clone the submodules (`git submodule update --init --recursive`)
 4. Add remote
     - `git remote add anthonyjclark https://github.com/anthonyjclark/raycasting-simulation.git`
 
 # Development Workflow
 
 1. Connect to the server (VPN and SSH)
-2. Pull changes (`git pull anthonyjclark`)
+2. Pull changes (`git pull anthonyjclark master`)
 3. Development Loop
     1. Copy the demo notebook or create a new one from scratch
     2. Make changes to your copy
