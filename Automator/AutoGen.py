@@ -24,7 +24,6 @@ rand_step_scale = 0.4
 
 enws = {"Dir.EAST": 0, "Dir.NORTH": 90, "Dir.WEST": 180, "Dir.SOUTH": 270}
 
-# @staticmethod
 def in_targ_cell(base_dir, c_targ_x, c_targ_y, x, y):
     if base_dir == 0 or base_dir == 180:
         if abs(c_targ_x - x) < 0.4:
@@ -43,7 +42,7 @@ class Driver:
         targ_dir,
         world,
         img_dir=None,
-        show_freq=None,
+        show_freq=0,
     ):
         self.c_targ_x = c_targ_x
         self.c_targ_y = c_targ_y
@@ -215,7 +214,7 @@ class Driver:
 
                 prev_turn = "left"
 
-            if self.show_freq != None:
+            if self.show_freq != 0:
                 if i % self.show_freq == 0:
                     image_data = np.array(self.world)
                     plt.imshow(image_data)
@@ -286,7 +285,7 @@ class Driver:
             self.curr_x = self.world.getX()
             self.curr_y = self.world.getY()
 
-            if self.show_freq != None:
+            if self.show_freq != 0:
                 if i % self.show_freq == 0:
                     image_data = np.array(self.world)
                     plt.imshow(image_data)
@@ -318,7 +317,7 @@ class Navigator:
 
         self.num_directions = len(self.directions)
 
-    def navigate(self, index, show_dir=False, show_freq=None):
+    def navigate(self, index, show_dir=False, show_freq=0):
         _, _, s_base_dir = self.directions[index].split()
         targ_x, targ_y, s_targ_dir = self.directions[index + 1].split()
         targ_x, targ_y = int(targ_x), int(targ_y)
@@ -338,7 +337,6 @@ class Navigator:
             c_targ_x, c_targ_y, base_dir, targ_dir, self.world, self.img_dir, show_freq
         )
 
-        # while driver.dist > 0.4:
         while not in_targ_cell(base_dir, c_targ_x, c_targ_y, driver.curr_x, driver.curr_y):
             driver.set_rand_angle()
             driver.turn_to_angle()
@@ -348,7 +346,7 @@ class Navigator:
 
 def main():
     maze = sys.argv[1] if len(sys.argv) > 1 else "../Worlds/maze.txt"
-    show_freq = int(sys.argv[2]) if len(sys.argv) > 2 else None  # frequency to show frames
+    show_freq = int(sys.argv[2]) if len(sys.argv) > 2 else 0  # frequency to show frames
     img_dir = sys.argv[3] if len(sys.argv) > 3 else None  # directory to save images to
 
     navigator = Navigator(maze, img_dir)
