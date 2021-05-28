@@ -24,6 +24,19 @@ rand_step_scale = 0.4
 
 enws = {"Dir.EAST": 0, "Dir.NORTH": 90, "Dir.WEST": 180, "Dir.SOUTH": 270}
 
+# @staticmethod
+def in_targ_cell(base_dir, c_targ_x, c_targ_y, x, y):
+    # if abs(c_targ_x - x) < 0.5 and abs(c_targ_y - y) < 0.5:
+    #     return True
+    # else:
+    #     return False
+    if base_dir == 0 or base_dir == 180:
+        if abs(c_targ_x - x) < 0.4:
+            return True
+    else:
+        if abs(c_targ_y - y) < 0.4:
+            return True
+    return False
 
 class Driver:
     def __init__(
@@ -89,41 +102,56 @@ class Driver:
             dir = asin(dir_y)
 
         self.direction = dir % (2 * pi)
+    
+    # adjust for smoother path
+    def modified_targ(self, delta):
+        if self.base_dir == 0 or self.base_dir == 180:
+            if self.targ_dir == 90:
+                return self.c_targ_x, self.c_targ_y + delta
+            elif self.targ_dir == 270:
+                return self.c_targ_x, self.c_targ_y - delta
+        elif self.base_dir == 90 or self.base_dir == 270:
+            if self.targ_dir == 0:
+                return self.c_targ_x + delta, self.c_targ_y
+            elif self.targ_dir == 180:
+                return self.c_targ_x - delta, self.c_targ_y
+        return self.c_targ_x, self.c_targ_y
 
     def get_angle(self):
-        if self.curr_x <= self.c_targ_x and self.curr_y <= self.c_targ_y:
-            if self.c_targ_x == self.curr_x:
+        mod_x, mod_y = self.modified_targ(0.15)
+        if self.curr_x <= mod_x and self.curr_y <= mod_y:
+            if mod_x == self.curr_x:
                 theta = pi / 2
             else:
                 theta = (
-                    atan((self.c_targ_y - self.curr_y) / (self.c_targ_x - self.curr_x))
+                    atan((mod_y - self.curr_y) / (mod_x - self.curr_x))
                 ) % (2 * pi)
 
         # case where target pos is up and to the left
-        elif self.curr_x > self.c_targ_x and self.curr_y <= self.c_targ_y:
-            if self.c_targ_y == self.curr_y:
+        elif self.curr_x > mod_x and self.curr_y <= mod_y:
+            if mod_y == self.curr_y:
                 theta = pi
             else:
                 theta = (
-                    atan((self.curr_x - self.c_targ_x) / (self.c_targ_y - self.curr_y))
+                    atan((self.curr_x - mod_x) / (mod_y - self.curr_y))
                 ) % (2 * pi) + pi / 2
 
         # case where target pos is down and to the left
-        elif self.curr_x > self.c_targ_x and self.curr_y > self.c_targ_y:
-            if self.c_targ_x == self.curr_x:
+        elif self.curr_x > mod_x and self.curr_y > mod_y:
+            if mod_x == self.curr_x:
                 theta = 3 * pi / 2
             else:
                 theta = (
-                    atan((self.curr_y - self.c_targ_y) / (self.curr_x - self.c_targ_x))
+                    atan((self.curr_y - mod_y) / (self.curr_x - mod_x))
                 ) % (2 * pi) + pi
 
         # case where target pos is down and to the right
         else:
-            if self.curr_y == self.c_targ_y:
+            if self.curr_y == mod_y:
                 theta = 0
             else:
                 theta = (
-                    atan((self.c_targ_x - self.curr_x) / (self.curr_y - self.c_targ_y))
+                    atan((mod_x - self.curr_x) / (self.curr_y - mod_y))
                 ) % (2 * pi) + 3 * pi / 2
 
         return theta
@@ -154,8 +182,13 @@ class Driver:
     def turn_to_angle(self):
         self.world.walk(Walk.Stopped)
         i = 0
+        prev_turn = None
         while self.abs_angle_diff(self.angle) > 0.1:
             if self.turn_right(self.angle):
+                
+                if prev_turn == "left":
+                    print("no left to right allowed")
+                    break
 
                 # save image right
                 if self.img_dir != None:
@@ -167,7 +200,12 @@ class Driver:
                 self.world.turn(Turn.Right)
                 self.world.update()
 
+                prev_turn = "right"
+
             else:
+                if prev_turn == "right":
+                    print("no right to left allowed")
+                    break
 
                 # save image left
                 if self.img_dir != None:
@@ -178,6 +216,8 @@ class Driver:
 
                 self.world.turn(Turn.Left)
                 self.world.update()
+
+                prev_turn = "left"
 
             if self.show_freq != None:
                 if i % self.show_freq == 0:
@@ -236,7 +276,7 @@ class Driver:
     def move_to_step(self):
         self.world.turn(Turn.Stop)
         i = 0
-        while self.dist > 0.4 and self.step > 0.1:
+        while not in_targ_cell(self.base_dir, self.c_targ_x, self.c_targ_y, self.curr_x, self.curr_y) and self.step > 0.1:
 
             if self.img_dir != None:
                 self.world.savePNG(
@@ -246,6 +286,9 @@ class Driver:
 
             self.world.walk(Walk.Forward)
             self.world.update()
+
+            self.curr_x = self.world.getX()
+            self.curr_y = self.world.getY()
 
             if self.show_freq != None:
                 if i % self.show_freq == 0:
@@ -299,7 +342,8 @@ class Navigator:
             c_targ_x, c_targ_y, base_dir, targ_dir, self.world, self.img_dir, show_freq
         )
 
-        while driver.dist > 0.4:
+        # while driver.dist > 0.4:
+        while not in_targ_cell(base_dir, c_targ_x, c_targ_y, driver.curr_x, driver.curr_y):
             driver.set_rand_angle()
             driver.turn_to_angle()
             driver.set_rand_step()
@@ -308,13 +352,14 @@ class Navigator:
 
 def main():
     maze = sys.argv[1] if len(sys.argv) > 1 else "../Worlds/maze.txt"
-    img_dir = sys.argv[2] if len(sys.argv) > 2 else None
+    show_freq = int(sys.argv[2]) if len(sys.argv) > 2 else None  # frequency to show frames
+    img_dir = sys.argv[3] if len(sys.argv) > 3 else None  # directory to save images to
 
     navigator = Navigator(maze, img_dir)
 
     j = 0
     while j < navigator.num_directions - 1:
-        navigator.navigate(j, show_dir=True, show_freq=None)
+        navigator.navigate(j, show_dir=True, show_freq=show_freq)
         j += 1
 
 
