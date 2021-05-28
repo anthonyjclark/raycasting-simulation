@@ -16,8 +16,6 @@ sys.path.append("../Models")
 from pycaster import PycastWorld, Turn, Walk
 
 # functions defined for model required by fastai
-
-
 def parent_to_deg(f):
     parent = parent_label(f)
     if parent == "left":
@@ -57,36 +55,65 @@ def within_15_deg(preds, targs):
     return within_angle(preds, targs, np.pi / 12)
 
 
-# TODO: this stuff probably shouldn't be hardcoded
-world = PycastWorld(320, 240, "../Worlds/maze.txt")
-world.direction(0, 1.152)
+def main():
+    maze = sys.argv[1] if len(sys.argv) > 1 else "../Worlds/maze.txt"
+    model = sys.argv[2] if len(sys.argv) > 2 else "../Models/auto-gen-c.pkl"
+    show_freq = int(sys.argv[3]) if len(sys.argv) > 3 else 0  # frequency to show frames
+    model_type = sys.argv[4] if len(sys.argv) > 4 else 'c'  # 'c' for classification, 'r' for regresssion
 
-path = Path("../")
-model_inf = load_learner(path / "Models/export3.pkl")
 
-for frame in range(400):
+    world = PycastWorld(320, 240, maze)
 
-    # Get image
-    image_data = np.array(world)
+    path = Path("../")
+    model_inf = load_learner(path / model)
+    prev_move = None
 
-    # Convert image_data and give to network
-    move = model_inf.predict(image_data)[0]
-    # print(move)
+    for frame in range(2000):
 
-    # Move in world
-    if move == "forward":
-        world.walk(Walk.Forward)
-        world.turn(Turn.Stop)
-    elif move == "left":
-        world.walk(Walk.Stopped)
-        world.turn(Turn.Left)
-    else:
-        world.walk(Walk.Stopped)
-        world.turn(Turn.Right)
+        # Get image
+        image_data = np.array(world)
 
-    world.update()
+        # Convert image_data and give to network
+        if model_type == "c":
+            move = model_inf.predict(image_data)[0]
+        elif model_type == "r":
+            pred_coords, _, _ = model_inf.predict(image_data)
+            pred_angle = np.arctan2(pred_coords[1], pred_coords[0]) / np.pi * 180
+            pred_angle = pred_angle % (360)
 
-    if frame % 1 == 0:
-        print("Showing frame", frame)
-        plt.imshow(image_data)
-        plt.show()
+            if pred_angle > 45 and pred_angle <= 180:
+                move = "left"
+            elif pred_angle > 180 and pred_angle < 315:
+                move = "right"
+            else: 
+                move = "straight"
+
+        print(move)
+
+        if move == "left" and prev_move == "right":
+            move = "straight"
+        elif move =="right" and prev_move == "left":
+            move = "straight"
+
+        # Move in world
+        if move == "straight":
+            world.walk(Walk.Forward)
+            world.turn(Turn.Stop)
+        elif move == "left":
+            world.walk(Walk.Stopped)
+            world.turn(Turn.Left)
+        else:
+            world.walk(Walk.Stopped)
+            world.turn(Turn.Right)
+        
+        prev_move = move
+
+        world.update()
+
+        if show_freq != 0 and frame % show_freq == 0:
+            print("Showing frame", frame)
+            plt.imshow(image_data)
+            plt.show()
+
+if __name__ == "__main__":
+    main()
