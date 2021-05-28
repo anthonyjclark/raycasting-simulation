@@ -26,10 +26,6 @@ enws = {"Dir.EAST": 0, "Dir.NORTH": 90, "Dir.WEST": 180, "Dir.SOUTH": 270}
 
 # @staticmethod
 def in_targ_cell(base_dir, c_targ_x, c_targ_y, x, y):
-    # if abs(c_targ_x - x) < 0.5 and abs(c_targ_y - y) < 0.5:
-    #     return True
-    # else:
-    #     return False
     if base_dir == 0 or base_dir == 180:
         if abs(c_targ_x - x) < 0.4:
             return True
