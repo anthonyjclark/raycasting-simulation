@@ -65,7 +65,7 @@ def main():
     world = PycastWorld(320, 240, maze)
 
     path = Path("../")
-    model_inf = load_learner(path / model)
+    model_inf = load_learner(model)
     prev_move = None
 
     for frame in range(2000):
