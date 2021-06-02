@@ -5,6 +5,7 @@
 from matplotlib import image
 import matplotlib.pyplot as plt
 import numpy as np
+import distutils.util
 
 from fastai.vision.all import *
 from math import radians
@@ -62,6 +63,8 @@ def name_to_deg(f):
     elif label == 'right': return -90.
     else: return 0.
 
+def get_label(o):
+    return o.name[6:-4]
 
 def get_pair_2(o):
     curr_im_num = Path(o).name[:5]
@@ -92,7 +95,7 @@ def get_pair_2(o):
     
     return img3_arr.T.astype(np.float32)
 
-
+# helper functions
 def stacked_input(prev_im, curr_im):
     if prev_im is None:
         prev_im = curr_im
@@ -123,8 +126,8 @@ def main():
     maze = sys.argv[1] if len(sys.argv) > 1 else "../Worlds/maze.txt"
     model = sys.argv[2] if len(sys.argv) > 2 else "../Models/auto-gen-c.pkl"
     show_freq = int(sys.argv[3]) if len(sys.argv) > 3 else 0  # frequency to show frames
-    model_type = sys.argv[4] if len(sys.argv) > 4 else 'c'  # 'c' for classification, 'r' for regresssion, 's' for stacked regression
-
+    model_type = sys.argv[4] if len(sys.argv) > 4 else 'c'  # 'c' for classification, 'r' for regresssion
+    stacked = bool(distutils.util.strtobool(sys.argv[5])) if len(sys.argv) > 5 else False  # True for stacked input
 
     world = PycastWorld(320, 240, maze)
 
@@ -132,28 +135,33 @@ def main():
     model_inf = load_learner(model)
     prev_move = None
     prev_image_data = None
+    frame = 0
 
-    for frame in range(2000):
+    # for frame in range(2000):
+    while not world.atGoal():
 
         # Get image
         image_data = np.array(world)
 
         # Convert image_data and give to network
         if model_type == "c":
-            move = model_inf.predict(image_data)[0]
+            if stacked:
+                move = model_inf.predict(stacked_input(prev_image_data, image_data))[0]
+            else:    
+                move = model_inf.predict(image_data)[0]
         elif model_type == "r":
-            pred_coords, _, _ = model_inf.predict(image_data)
-            move = reg_predict(pred_coords)
-        elif model_type == "s":
-            pred_coords, _, _ = model_inf.predict(stacked_input(prev_image_data, image_data))
+            if stacked:
+                pred_coords, _, _ = model_inf.predict(stacked_input(prev_image_data, image_data))
+            else:
+                pred_coords, _, _ = model_inf.predict(image_data)
             move = reg_predict(pred_coords)
 
         print(move)
 
-        # if move == "left" and prev_move == "right":
-        #     move = "straight"
-        # elif move =="right" and prev_move == "left":
-        #     move = "straight"
+        if move == "left" and prev_move == "right":
+            move = "straight"
+        elif move =="right" and prev_move == "left":
+            move = "straight"
 
         # Move in world
         if move == "straight":
@@ -170,12 +178,18 @@ def main():
 
         world.update()
 
+        
         if show_freq != 0 and frame % show_freq == 0:
             print("Showing frame", frame)
             plt.imshow(image_data)
             plt.show()
+        
+        frame += 1
 
         prev_image_data = image_data
+    
+    plt.imshow(image_data)
+    plt.show()
 
 if __name__ == "__main__":
     main()

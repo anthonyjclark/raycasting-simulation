@@ -1,3 +1,4 @@
+import distutils.util
 import numpy as np
 import matplotlib.pyplot as plt
 import sys
@@ -371,12 +372,13 @@ def main():
     maze = sys.argv[1] if len(sys.argv) > 1 else "../Worlds/maze.txt"
     show_freq = int(sys.argv[2]) if len(sys.argv) > 2 else 0  # frequency to show frames
     img_dir = sys.argv[3] if len(sys.argv) > 3 else None  # directory to save images to
+    show_dir = bool(distutils.util.strtobool(sys.argv[4])) if len(sys.argv) > 4 else False
 
     navigator = Navigator(maze, img_dir)
 
     j = 0
     while j < navigator.num_directions - 1:
-        navigator.navigate(j, show_dir=True, show_freq=show_freq)
+        navigator.navigate(j, show_dir=show_dir, show_freq=show_freq)
         j += 1
 
 
