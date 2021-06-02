@@ -1,12 +1,15 @@
 INCLUDES = -I../extern/glad/include -I../extern/lodepng
-LIBS = -lglfw
 CXXFLAGS = -W -Wall -Wextra -std=c++17
 
 OS_NAME := $(shell uname)
 
-ifeq ($(OS_NAME), Linux)
-	LIBS += -ldl
+ifeq ($(OS_NAME), Darwin)
+	LIBS = -lglfw
 endif
+ifeq ($(OS_NAME), Linux)
+	LIBS = $(shell pkg-config --static --libs glfw3)
+endif
+
 
 MAIN = Game
 GLAD = ../extern/glad/src/glad.cpp
