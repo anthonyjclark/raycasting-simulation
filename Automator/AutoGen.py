@@ -1,3 +1,4 @@
+import distutils.util
 import numpy as np
 import matplotlib.pyplot as plt
 import sys
@@ -64,9 +65,20 @@ class Driver:
 
         self.img_dir = img_dir
         if self.img_dir != None:
-            self.img_num_l = len(os.listdir(os.path.join(img_dir, "left")))
-            self.img_num_r = len(os.listdir(os.path.join(img_dir, "right")))
-            self.img_num_s = len(os.listdir(os.path.join(img_dir, "straight")))
+            stack_conds = []
+            stack_conds.append(os.path.isdir(os.path.join(img_dir, "left")))
+            stack_conds.append(os.path.isdir(os.path.join(img_dir, "right")))
+            stack_conds.append(os.path.isdir(os.path.join(img_dir, "straight")))
+
+            # if subdirectories exist, then stacking method not used
+            if all(stack_conds):
+                self.img_num_l = len(os.listdir(os.path.join(img_dir, "left")))
+                self.img_num_r = len(os.listdir(os.path.join(img_dir, "right")))
+                self.img_num_s = len(os.listdir(os.path.join(img_dir, "straight")))
+                self.stack_dir = False
+            else:
+                self.img_num = len(os.listdir(img_dir))
+                self.stack_dir = True
 
         self.show_freq = show_freq
 
@@ -187,10 +199,14 @@ class Driver:
 
                 # save image right
                 if self.img_dir != None:
-                    self.world.savePNG(
-                        os.path.join(self.img_dir, "right", f"{self.img_num_r:05}.png")
-                    )
-                    self.img_num_r += 1
+                    if self.stack_dir:
+                        self.world.savePNG(os.path.join(self.img_dir, f"{self.img_num:05}_right.png"))
+                        self.img_num += 1
+                    else:    
+                        self.world.savePNG(
+                            os.path.join(self.img_dir, "right", f"{self.img_num_r:05}.png")
+                        )
+                        self.img_num_r += 1
 
                 self.world.turn(Turn.Right)
                 self.world.update()
@@ -204,10 +220,14 @@ class Driver:
 
                 # save image left
                 if self.img_dir != None:
-                    self.world.savePNG(
-                        os.path.join(self.img_dir, "left", f"{self.img_num_l:05}.png")
-                    )
-                    self.img_num_l += 1
+                    if self.stack_dir:
+                        self.world.savePNG(os.path.join(self.img_dir, f"{self.img_num:05}_left.png"))
+                        self.img_num += 1
+                    else:
+                        self.world.savePNG(
+                            os.path.join(self.img_dir, "left", f"{self.img_num_l:05}.png")
+                        )
+                        self.img_num_l += 1
 
                 self.world.turn(Turn.Left)
                 self.world.update()
@@ -274,10 +294,14 @@ class Driver:
         while not in_targ_cell(self.base_dir, self.c_targ_x, self.c_targ_y, self.curr_x, self.curr_y) and self.step > 0.1:
 
             if self.img_dir != None:
-                self.world.savePNG(
-                    os.path.join(self.img_dir, "straight", f"{self.img_num_s:05}.png")
-                )
-                self.img_num_s += 1
+                if self.stack_dir:
+                    self.world.savePNG(os.path.join(self.img_dir, f"{self.img_num:05}_straight.png"))
+                    self.img_num += 1
+                else:
+                    self.world.savePNG(
+                        os.path.join(self.img_dir, "straight", f"{self.img_num_s:05}.png")
+                    )
+                    self.img_num_s += 1
 
             self.world.walk(Walk.Forward)
             self.world.update()
@@ -348,12 +372,13 @@ def main():
     maze = sys.argv[1] if len(sys.argv) > 1 else "../Worlds/maze.txt"
     show_freq = int(sys.argv[2]) if len(sys.argv) > 2 else 0  # frequency to show frames
     img_dir = sys.argv[3] if len(sys.argv) > 3 else None  # directory to save images to
+    show_dir = bool(distutils.util.strtobool(sys.argv[4])) if len(sys.argv) > 4 else False
 
     navigator = Navigator(maze, img_dir)
 
     j = 0
     while j < navigator.num_directions - 1:
-        navigator.navigate(j, show_dir=True, show_freq=show_freq)
+        navigator.navigate(j, show_dir=show_dir, show_freq=show_freq)
         j += 1
 
 
