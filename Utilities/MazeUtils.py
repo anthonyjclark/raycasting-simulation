@@ -25,22 +25,23 @@ Same thing when using this as a library
 
 from argparse import ArgumentParser
 from math import inf
+from typing import List, Tuple
 
 
 def read_maze_file(
     filepath: str,
-) -> tuple[list[list[int]], int, int, list[tuple[int, int, str]], list[str]]:
+) -> Tuple[List[List[int]], int, int, List[Tuple[int, int, str]], List[str]]:
     """Read a maze file and return values
 
     Args:
         filepath (str): path to a maze file
 
     Returns:
-        tuple[list[list[int]]: a maze
+        Tuple[List[List[int]]: a maze
         int: maze width
         int: maze height
-        list[tuple[int, int, str]]: turn by turn directions
-        list[str]]: texture names
+        List[Tuple[int, int, str]]: turn by turn directions
+        List[str]]: texture names
     """
     with open(filepath, "r") as maze_file:
         num_textures = int(maze_file.readline())
@@ -58,11 +59,11 @@ def read_maze_file(
     return list(reversed(maze)), maze_x_dim, maze_y_dim, maze_directions, texture_names
 
 
-def bfs_dist_maze(maze: list[list[int]], x1: int, y1: int, x2: int, y2: int) -> float:
+def bfs_dist_maze(maze: List[List[int]], x1: int, y1: int, x2: int, y2: int) -> float:
     """Compute the number of hops from (x1,y1) to (x2,y2).
 
     Args:
-        maze (list[list[int]]): A grid based maze
+        maze (List[List[int]]): A grid based maze
         x1 (int): starting x location
         y1 (int): starting y location
         x2 (int): ending x location
@@ -115,13 +116,7 @@ def bfs_dist_maze(maze: list[list[int]], x1: int, y1: int, x2: int, y2: int) -> 
 
 
 def percent_through_maze(
-    maze,
-    x: int,
-    y: int,
-    x_start: int,
-    y_start: int,
-    x_end: int,
-    y_end: int,
+    maze, x: int, y: int, x_start: int, y_start: int, x_end: int, y_end: int,
 ) -> float:
     """Compute distance traveled along optimal path through maze.
 
