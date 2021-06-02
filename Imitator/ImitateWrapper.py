@@ -34,11 +34,10 @@ def main():
     data = {model_name: [] for model_name in model_names}
     for i in range(num_mazes):
         size = random.randint(min_size, max_size)
-        # maze_file = os.path.join(maze_sub_dir, f"maze_{i+1}.txt")
-        maze_file = "./maze.txt"
+        maze_file = os.path.join(maze_sub_dir, f"maze_{i+1}.txt")
 
         print(f"Creating maze {i+1} with size {size}")
-        # os.system(f"python3 ../MazeGen/MazeGen.py --width {size} --height {size} --out > {maze_file}")
+        os.system(f"python3 ../MazeGen/MazeGen.py --width {size} --height {size} --out > {maze_file}")
 
         for j, m in enumerate(models):
             model, model_type, stacked = m
