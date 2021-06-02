@@ -122,12 +122,12 @@ def reg_predict(pred_coords):
         return "straight"
 
 
-def main():
-    maze = sys.argv[1] if len(sys.argv) > 1 else "../Worlds/maze.txt"
-    model = sys.argv[2] if len(sys.argv) > 2 else "../Models/auto-gen-c.pkl"
-    show_freq = int(sys.argv[3]) if len(sys.argv) > 3 else 0  # frequency to show frames
-    model_type = sys.argv[4] if len(sys.argv) > 4 else 'c'  # 'c' for classification, 'r' for regresssion
-    stacked = bool(distutils.util.strtobool(sys.argv[5])) if len(sys.argv) > 5 else False  # True for stacked input
+def main(argv):
+    maze = argv[0] if len(argv) > 0 else "../Worlds/maze.txt"
+    model = argv[1] if len(argv) > 1 else "../Models/auto-gen-c.pkl"
+    show_freq = int(argv[2]) if len(argv) > 2 else 0  # frequency to show frames
+    model_type = argv[3] if len(argv) > 3 else 'c'  # 'c' for classification, 'r' for regresssion
+    stacked = bool(distutils.util.strtobool(argv[4])) if len(argv) > 4 else False  # True for stacked input
 
     world = PycastWorld(320, 240, maze)
 
@@ -136,9 +136,11 @@ def main():
     prev_move = None
     prev_image_data = None
     frame = 0
+    num_static = 0
+    prev_x, prev_y = world.getX(), world.getY()
 
     # for frame in range(2000):
-    while not world.atGoal():
+    while not world.atGoal() and num_static < 5:
 
         # Get image
         image_data = np.array(world)
@@ -156,7 +158,7 @@ def main():
                 pred_coords, _, _ = model_inf.predict(image_data)
             move = reg_predict(pred_coords)
 
-        print(move)
+        # print(move)
 
         if move == "left" and prev_move == "right":
             move = "straight"
@@ -175,9 +177,13 @@ def main():
             world.turn(Turn.Right)
         
         prev_move = move
-
         world.update()
 
+        curr_x, curr_y = world.getX(), world.getY()
+        if curr_x == prev_x and curr_y == prev_y:
+            num_static += 1
+        else:
+            num_static = 0
         
         if show_freq != 0 and frame % show_freq == 0:
             print("Showing frame", frame)
@@ -185,11 +191,19 @@ def main():
             plt.show()
         
         frame += 1
-
         prev_image_data = image_data
     
     plt.imshow(image_data)
     plt.show()
 
+    # TODO: add utility that measures percentage of maze completed upon failure
+    # TODO: add additional criteria for failing to navigate maze (network might go wrong direction, but keep moving)
+    # TODO: any other metrics besides number of frames that we care about?
+
+    if num_static >= 5 and not world.atGoal():  # model failed to navigate maze
+        return frame, False
+    else:  # model successfully navigated maze
+        return frame, True
+
 if __name__ == "__main__":
-    main()
+    main(sys.argv[1:])
