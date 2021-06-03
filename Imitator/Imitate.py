@@ -138,13 +138,15 @@ def reg_predict(pred_coords):
         return "straight"
 
 # Animation function.TODO: make it output an embedded HTML figure 
-def animate(image_frames):    
+def animate(image_frames, name):    
     """
     Generate a GIF animation of the saved frames
     
     Keyword arguments:
     image_frames -- array of frames    
+    name -- name of model
     """
+    name = str(name).split('/')[-1]
     fig, ax = plt.subplots()
     ln = plt.imshow(image_frames[0])
     def init():
@@ -158,7 +160,7 @@ def animate(image_frames):
 
     ani = FuncAnimation(fig, update, image_frames, init_func=init, interval=100)
     # plt.show()
-    ani.save("prediction_" + datetime.now().strftime("%d-%m-%Y_%H-%M") + ".gif")
+    ani.save(name + "_" + datetime.now().strftime("%d-%m-%Y_%H-%M") + ".gif")
     
 def main(argv):
     maze = argv[0] if len(argv) > 0 else "../Worlds/maze.txt"
@@ -166,7 +168,6 @@ def main(argv):
     show_freq = int(argv[2]) if len(argv) > 2 else 0  # frequency to show frames
     model_type = argv[3] if len(argv) > 3 else 'c'  # 'c' for classification, 'r' for regresssion
     stacked = bool(distutils.util.strtobool(argv[4])) if len(argv) > 4 else False  # True for stacked input
-
     world = PycastWorld(320, 240, maze)
 
     path = Path("../")
@@ -243,6 +244,7 @@ def main(argv):
             break
             
     # this chunk gets the completion percentage
+    print(f"at goal?: {world.atGoal()}")
     maze_rvs, _, _, maze_directions, _ = read_maze_file(maze)
     start_x, start_y, _ = maze_directions[0]
     end_x, end_y, _ = maze_directions[-1]
@@ -250,7 +252,7 @@ def main(argv):
 
     plt.imshow(image_data)
     plt.show()
-    animate(animation_frames)
+    animate(animation_frames, model)
     # TODO: add utility that measures percentage of maze completed upon failure
     # TODO: add additional criteria for failing to navigate maze (network might go wrong direction, but keep moving)
     # TODO: any other metrics besides number of frames that we care about?

@@ -17,10 +17,12 @@ colors = ["tab:blue", "tab:orange", "tab:green", "tab:red", "tab:purple", "tab:b
 # assume running from Imitator dir
 def main():
     num_mazes = int(sys.argv[1]) if len(sys.argv) > 1 else 1
-    # replace with local models of your choice
-    models = [("../Models/auto-gen-r.pkl", 'r', 'n'),
+    #
+    models = [("../Models/learner_2021-06-01 16:40:23.194027.pkl", 'c', 'n'),
+              ("../Models/auto-stack-r.pkl", 'r', 'y'),
               ("../Models/auto-stack-c.pkl", 'c', 'y'),
-              ("../Models/auto-stack-r.pkl", 'r', 'y')]
+              ("../Models/auto-gen-c.pkl", 'c', 'n'),
+              ("../Models/auto-gen-r.pkl", 'r', 'n')]
 
     maze_dir = "../Worlds/"
     now = datetime.now().strftime("%d-%m-%Y_%H-%M")
@@ -70,6 +72,7 @@ def main():
     
     # Generate Completion bar plot
     plt.clf()
+    bars = []
     for k, model_name in enumerate(model_names):
         xvals = completion_data[model_name]
         color = colors[k]
