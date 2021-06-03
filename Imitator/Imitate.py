@@ -17,6 +17,8 @@ sys.path.append("../PycastWorld")
 sys.path.append("../Models")
 from pycaster import PycastWorld, Turn, Walk
 
+import signal
+
 # functions defined for model required by fastai
 def parent_to_deg(f):
     parent = parent_label(f)
@@ -111,6 +113,8 @@ def stacked_input(prev_im, curr_im):
 
 
 def reg_predict(pred_coords):
+    print(f"type: {type(pred_coords[1])} ")
+    print(f"pred_coord[1]: {pred_coords} ")
     pred_angle = np.arctan2(pred_coords[1], pred_coords[0]) / np.pi * 180
     pred_angle = pred_angle % (360)
 
@@ -120,7 +124,17 @@ def reg_predict(pred_coords):
         return "right"
     else: 
         return "straight"
+    
+# Register an handler for the timeout
+def handler(signum, frame):
+    print("Robot Taking Forever")
+    raise Exception("Stop Running")
+    
+# Register the signal function handler
+signal.signal(signal.SIGALRM, handler)
 
+# Define a timeout for your function
+signal.alarm(60)
 
 def main(argv):
     maze = argv[0] if len(argv) > 0 else "../Worlds/maze.txt"
@@ -140,58 +154,61 @@ def main(argv):
     prev_x, prev_y = world.getX(), world.getY()
 
     # for frame in range(2000):
-    while not world.atGoal() and num_static < 5:
+    try: 
+        while not world.atGoal() and num_static < 5:
 
-        # Get image
-        image_data = np.array(world)
+            # Get image
+            image_data = np.array(world)
 
-        # Convert image_data and give to network
-        if model_type == "c":
-            if stacked:
-                move = model_inf.predict(stacked_input(prev_image_data, image_data))[0]
-            else:    
-                move = model_inf.predict(image_data)[0]
-        elif model_type == "r":
-            if stacked:
-                pred_coords, _, _ = model_inf.predict(stacked_input(prev_image_data, image_data))
+            # Convert image_data and give to network
+            if model_type == "c":
+                if stacked:
+                    move = model_inf.predict(stacked_input(prev_image_data, image_data))[0]
+                else:    
+                    move = model_inf.predict(image_data)[0]
+            elif model_type == "r":
+                if stacked:
+                    pred_coords, _, _ = model_inf.predict(stacked_input(prev_image_data, image_data))
+                else:
+                    pred_coords, _, _ = model_inf.predict(image_data)
+                move = reg_predict(pred_coords)
+
+            # print(move)
+
+            if move == "left" and prev_move == "right":
+                move = "straight"
+            elif move =="right" and prev_move == "left":
+                move = "straight"
+
+            # Move in world
+            if move == "straight":
+                world.walk(Walk.Forward)
+                world.turn(Turn.Stop)
+            elif move == "left":
+                world.walk(Walk.Stopped)
+                world.turn(Turn.Left)
             else:
-                pred_coords, _, _ = model_inf.predict(image_data)
-            move = reg_predict(pred_coords)
+                world.walk(Walk.Stopped)
+                world.turn(Turn.Right)
 
-        # print(move)
+            prev_move = move
+            world.update()
 
-        if move == "left" and prev_move == "right":
-            move = "straight"
-        elif move =="right" and prev_move == "left":
-            move = "straight"
+            curr_x, curr_y = world.getX(), world.getY()
+            if curr_x == prev_x and curr_y == prev_y:
+                num_static += 1
+            else:
+                num_static = 0
 
-        # Move in world
-        if move == "straight":
-            world.walk(Walk.Forward)
-            world.turn(Turn.Stop)
-        elif move == "left":
-            world.walk(Walk.Stopped)
-            world.turn(Turn.Left)
-        else:
-            world.walk(Walk.Stopped)
-            world.turn(Turn.Right)
-        
-        prev_move = move
-        world.update()
+            if show_freq != 0 and frame % show_freq == 0:
+                print("Showing frame", frame)
+                plt.imshow(image_data)
+                plt.show()
 
-        curr_x, curr_y = world.getX(), world.getY()
-        if curr_x == prev_x and curr_y == prev_y:
-            num_static += 1
-        else:
-            num_static = 0
-        
-        if show_freq != 0 and frame % show_freq == 0:
-            print("Showing frame", frame)
-            plt.imshow(image_data)
-            plt.show()
-        
-        frame += 1
-        prev_image_data = image_data
+            frame += 1
+            prev_image_data = image_data
+    except Exception as exc: 
+        print(exc)
     
     plt.imshow(image_data)
     plt.show()
