@@ -17,7 +17,19 @@ sys.path.append("../PycastWorld")
 sys.path.append("../Models")
 from pycaster import PycastWorld, Turn, Walk
 
+# Needed for Timeout 
 import signal
+
+# Needed to calculate maze percentage
+import sys
+sys.path.append("../Utilities")
+from MazeUtils import read_maze_file, percent_through_maze
+
+# for animation
+from matplotlib.animation import FuncAnimation
+from IPython.display import HTML
+import time
+
 
 # functions defined for model required by fastai
 def parent_to_deg(f):
@@ -113,8 +125,8 @@ def stacked_input(prev_im, curr_im):
 
 
 def reg_predict(pred_coords):
-    print(f"type: {type(pred_coords[1])} ")
-    print(f"pred_coord[1]: {pred_coords} ")
+#     print(f"type: {type(pred_coords[1])} ")
+#     print(f"pred_coord[1]: {pred_coords} ")
     pred_angle = np.arctan2(pred_coords[1], pred_coords[0]) / np.pi * 180
     pred_angle = pred_angle % (360)
 
@@ -124,18 +136,23 @@ def reg_predict(pred_coords):
         return "right"
     else: 
         return "straight"
-    
-# Register an handler for the timeout
-def handler(signum, frame):
-    print("Robot Taking Forever")
-    raise Exception("Stop Running")
-    
-# Register the signal function handler
-signal.signal(signal.SIGALRM, handler)
 
-# Define a timeout for your function
-signal.alarm(60)
+def animate(image_frames):    
+    fig, ax = plt.subplots()
+    ln = plt.imshow(image_frames[0])
+    def init():
+        ln.set_data(image_frames[0])
+        return [ln]
 
+    def update(frame):
+    #     print(frame)
+        ln.set_array(frame)
+        return [ln]
+
+    ani = FuncAnimation(fig, update, image_frames, init_func=init, interval=90)
+    # plt.show()
+    ani.save("prediction_" + datetime.now().strftime("%d-%m-%Y_%H-%M") + ".gif")
+    
 def main(argv):
     maze = argv[0] if len(argv) > 0 else "../Worlds/maze.txt"
     model = argv[1] if len(argv) > 1 else "../Models/auto-gen-c.pkl"
@@ -152,75 +169,91 @@ def main(argv):
     frame = 0
     num_static = 0
     prev_x, prev_y = world.getX(), world.getY()
-
-    # for frame in range(2000):
-    try: 
-        while not world.atGoal() and num_static < 5:
-
-            # Get image
-            image_data = np.array(world)
-
-            # Convert image_data and give to network
-            if model_type == "c":
-                if stacked:
-                    move = model_inf.predict(stacked_input(prev_image_data, image_data))[0]
-                else:    
-                    move = model_inf.predict(image_data)[0]
-            elif model_type == "r":
-                if stacked:
-                    pred_coords, _, _ = model_inf.predict(stacked_input(prev_image_data, image_data))
-                else:
-                    pred_coords, _, _ = model_inf.predict(image_data)
-                move = reg_predict(pred_coords)
-
-            # print(move)
-
-            if move == "left" and prev_move == "right":
-                move = "straight"
-            elif move =="right" and prev_move == "left":
-                move = "straight"
-
-            # Move in world
-            if move == "straight":
-                world.walk(Walk.Forward)
-                world.turn(Turn.Stop)
-            elif move == "left":
-                world.walk(Walk.Stopped)
-                world.turn(Turn.Left)
-            else:
-                world.walk(Walk.Stopped)
-                world.turn(Turn.Right)
-
-            prev_move = move
-            world.update()
-
-            curr_x, curr_y = world.getX(), world.getY()
-            if curr_x == prev_x and curr_y == prev_y:
-                num_static += 1
-            else:
-                num_static = 0
-
-            if show_freq != 0 and frame % show_freq == 0:
-                print("Showing frame", frame)
-                plt.imshow(image_data)
-                plt.show()
-
-            frame += 1
-            prev_image_data = image_data
-    except Exception as exc: 
-        print(exc)
+    animation_frames = []
     
+    max_steps = 2200
+    step_count = 0
+    while not world.atGoal() and num_static < 5:
+
+        # Get image
+        image_data = np.array(world)
+
+        # Convert image_data and give to network
+        if model_type == "c":
+            if stacked:
+                move = model_inf.predict(stacked_input(prev_image_data, image_data))[0]
+            else:    
+                move = model_inf.predict(image_data)[0]
+        elif model_type == "r":
+            if stacked:
+                pred_coords, _, _ = model_inf.predict(stacked_input(prev_image_data, image_data))
+            else:
+                pred_coords, _, _ = model_inf.predict(image_data)
+            move = reg_predict(pred_coords)
+
+        # print(move)
+
+        if move == "left" and prev_move == "right":
+            move = "straight"
+        elif move =="right" and prev_move == "left":
+            move = "straight"
+
+        # Move in world
+        if move == "straight":
+            world.walk(Walk.Forward)
+            world.turn(Turn.Stop)
+        elif move == "left":
+            world.walk(Walk.Stopped)
+            world.turn(Turn.Left)
+        else:
+            world.walk(Walk.Stopped)
+            world.turn(Turn.Right)
+
+        prev_move = move
+        world.update()
+                
+        curr_x, curr_y = round(world.getX(), 2), round(world.getY(), 2)
+        
+        print(f"curr_x: {curr_x}, curr_y {curr_y}")
+        print(f"prev: {prev_x}, curr_y {prev_y}")
+        if curr_x == prev_x and curr_y == prev_y:
+            num_static += 1
+            print(f"num static: {num_static}")
+        else:
+            num_static = 0
+        
+        prev_x = curr_x
+        prev_y = curr_y
+        
+        if show_freq != 0 and frame % show_freq == 0:
+#             print("Showing frame", frame)
+            animation_frames.append(image_data.copy())
+            plt.imshow(image_data)
+            plt.show()
+
+        frame += 1
+        prev_image_data = image_data
+        if frame == max_steps:
+            print("Exceeds step limit")
+            break
+    maze_rvs, _, _, maze_directions, _ = read_maze_file(maze)
+    start_x, start_y, _ = maze_directions[0]
+    end_x, end_y, _ = maze_directions[-1]
+    completion_per = percent_through_maze(maze_rvs, int(world.getX()), int(world.getY()), start_x, start_y, end_x, end_y)
+    print(
+        f"Percent through maze: {completion_per}"
+    )
     plt.imshow(image_data)
     plt.show()
-
+    animate(animation_frames)
     # TODO: add utility that measures percentage of maze completed upon failure
     # TODO: add additional criteria for failing to navigate maze (network might go wrong direction, but keep moving)
     # TODO: any other metrics besides number of frames that we care about?
 
     if num_static >= 5 and not world.atGoal():  # model failed to navigate maze
-        return frame, False
+        return frame, False, completion_per
     else:  # model successfully navigated maze
-        return frame, True
+        return frame, True, completion_per
 
 if __name__ == "__main__":
     main(sys.argv[1:])

@@ -17,9 +17,8 @@ colors = ["tab:blue", "tab:orange", "tab:green", "tab:red", "tab:purple", "tab:b
 # assume running from Imitator dir
 def main():
     num_mazes = int(sys.argv[1]) if len(sys.argv) > 1 else 1
-    
-    models = [("../Models/auto-gen-r.pkl", 'r', 'n'),
-              ("../Models/auto-stack-c.pkl", 'c', 'y'),
+    #
+    models = [("../Models/learner_2021-06-01 16:40:23.194027.pkl", 'c', 'n'),
               ("../Models/auto-stack-r.pkl", 'r', 'y')]
 
     maze_dir = "../Worlds/"
@@ -42,14 +41,15 @@ def main():
         for j, m in enumerate(models):
             model, model_type, stacked = m
             print(f"Testing model {j} on maze {i}")
-            input_args = [maze_file, model, 0, model_type, stacked]
-            num_frames, success = Imitate.main(input_args)
+            input_args = [maze_file, model, 10, model_type, stacked]
+            num_frames, success, completion_per = Imitate.main(input_args)
             data[Path(model).name].append(num_frames)
             
     mazes = [f"maze {i+1}" for i in range(num_mazes)]
     ind = np.arange(num_mazes)
     width = 0.25
     bars = []
+    plt.clf()
     for k, model_name in enumerate(model_names):
         xvals = data[model_name]
         color = colors[k]
