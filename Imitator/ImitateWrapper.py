@@ -17,7 +17,7 @@ colors = ["tab:blue", "tab:orange", "tab:green", "tab:red", "tab:purple", "tab:b
 # assume running from Imitator dir
 def main():
     num_mazes = int(sys.argv[1]) if len(sys.argv) > 1 else 1
-    # replace with local models
+    # replace with local models of your choice
     models = [("../Models/auto-gen-r.pkl", 'r', 'n'),
               ("../Models/auto-stack-c.pkl", 'c', 'y'),
               ("../Models/auto-stack-r.pkl", 'r', 'y')]
