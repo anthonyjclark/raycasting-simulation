@@ -1,15 +1,12 @@
 import unreal
 from unreal import Vector
 
-import sys
-
-sys.path.append("../Utilities")
-from MazeUtils import read_maze_file  # type: ignore
+from typing import List, Tuple
 
 """
 Drag texture pngs to content browser
 Right-click texture png and create material
-Double-click material, add TextureCoordinate and adjust
+Double-click material, add TextureCoordinate and adjust (20 for floor)
 Drag cube to content browser
 Double-click cube, add created material
 (This script does the rest)
@@ -17,6 +14,36 @@ Double-click cube, add created material
 
 maze_filepath = "/home/ajc/Documents/Repositories/raycasting-simulation/Worlds/maze.txt"
 
+
+def read_maze_file(
+    filepath: str,
+) -> Tuple[List[List[int]], int, int, List[Tuple[int, int, str]], List[str]]:
+    """Read a maze file and return values
+
+    Args:
+        filepath (str): path to a maze file
+
+    Returns:
+        Tuple[List[List[int]]: a maze
+        int: maze width
+        int: maze height
+        List[Tuple[int, int, str]]: turn by turn directions
+        List[str]]: texture names
+    """
+    with open(filepath, "r") as maze_file:
+        num_textures = int(maze_file.readline())
+        texture_names = [maze_file.readline() for _ in range(num_textures)]
+        maze_x_dim, maze_y_dim = [int(dim) for dim in maze_file.readline().split()]
+        maze = [
+            [int(cell) for cell in maze_file.readline().split()]
+            for _ in range(maze_y_dim)
+        ]
+        maze_directions = [
+            (int(line.split()[0]), int(line.split()[1]), line.split()[2])
+            for line in maze_file.readlines()
+        ]
+
+    return list(reversed(maze)), maze_x_dim, maze_y_dim, maze_directions, texture_names
 
 def spawn_actor(location, meshpath):
 
@@ -30,7 +57,7 @@ def spawn_actor(location, meshpath):
     return new_actor
 
 
-maze, maze_x_dim, maze_y_dim, _ = read_maze_file(maze_filepath)
+maze, maze_x_dim, maze_y_dim, _, _ = read_maze_file(maze_filepath)
 
 CUBE_SCALE = 100
 WALL_Z_OFFSET = CUBE_SCALE
@@ -44,7 +71,7 @@ WALL_RIGHT = 3
 WALL_LEFT = 4
 WALL_GOAL = 5
 
-floor = spawn_actor(Vector(0, 0, 0), "/Game/Floor.Floor")
+floor = spawn_actor(Vector(8, 8, 0), "/Game/Floor.Floor")
 floor.set_actor_scale3d(Vector(maze_x_dim, maze_y_dim, 1))  # type: ignore
 
 walls = []
