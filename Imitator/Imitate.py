@@ -137,7 +137,14 @@ def reg_predict(pred_coords):
     else: 
         return "straight"
 
+# Animation function.TODO: make it output an embedded HTML figure 
 def animate(image_frames):    
+    """
+    Generate a GIF animation of the saved frames
+    
+    Keyword arguments:
+    image_frames -- array of frames    
+    """
     fig, ax = plt.subplots()
     ln = plt.imshow(image_frames[0])
     def init():
@@ -149,7 +156,7 @@ def animate(image_frames):
         ln.set_array(frame)
         return [ln]
 
-    ani = FuncAnimation(fig, update, image_frames, init_func=init, interval=90)
+    ani = FuncAnimation(fig, update, image_frames, init_func=init, interval=100)
     # plt.show()
     ani.save("prediction_" + datetime.now().strftime("%d-%m-%Y_%H-%M") + ".gif")
     
@@ -171,7 +178,8 @@ def main(argv):
     prev_x, prev_y = world.getX(), world.getY()
     animation_frames = []
     
-    max_steps = 2200
+    # Initialize maximum number of steps in case the robot travels in a completely incorrect direction
+    max_steps = 3000 
     step_count = 0
     while not world.atGoal() and num_static < 5:
 
@@ -212,37 +220,34 @@ def main(argv):
         prev_move = move
         world.update()
                 
-        curr_x, curr_y = round(world.getX(), 2), round(world.getY(), 2)
+        curr_x, curr_y = round(world.getX(), 5), round(world.getY(), 5)
         
-        print(f"curr_x: {curr_x}, curr_y {curr_y}")
-        print(f"prev: {prev_x}, curr_y {prev_y}")
-        if curr_x == prev_x and curr_y == prev_y:
-            num_static += 1
-            print(f"num static: {num_static}")
-        else:
-            num_static = 0
-        
-        prev_x = curr_x
-        prev_y = curr_y
-        
+        # For every 5 frames, check if robot is stuck and append frame to animation array
         if show_freq != 0 and frame % show_freq == 0:
-#             print("Showing frame", frame)
+            if curr_x == prev_x and curr_y == prev_y:
+                num_static += 1
+            else:
+                num_static = 0
+            
             animation_frames.append(image_data.copy())
             plt.imshow(image_data)
             plt.show()
+            # update previous coordinates
+            prev_x = curr_x
+            prev_y = curr_y        
 
         frame += 1
         prev_image_data = image_data
         if frame == max_steps:
             print("Exceeds step limit")
             break
+            
+    # this chunk gets the completion percentage
     maze_rvs, _, _, maze_directions, _ = read_maze_file(maze)
     start_x, start_y, _ = maze_directions[0]
     end_x, end_y, _ = maze_directions[-1]
     completion_per = percent_through_maze(maze_rvs, int(world.getX()), int(world.getY()), start_x, start_y, end_x, end_y)
-    print(
-        f"Percent through maze: {completion_per}"
-    )
+
     plt.imshow(image_data)
     plt.show()
     animate(animation_frames)

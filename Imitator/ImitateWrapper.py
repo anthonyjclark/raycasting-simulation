@@ -17,8 +17,9 @@ colors = ["tab:blue", "tab:orange", "tab:green", "tab:red", "tab:purple", "tab:b
 # assume running from Imitator dir
 def main():
     num_mazes = int(sys.argv[1]) if len(sys.argv) > 1 else 1
-    #
-    models = [("../Models/learner_2021-06-01 16:40:23.194027.pkl", 'c', 'n'),
+    # replace with local models
+    models = [("../Models/auto-gen-r.pkl", 'r', 'n'),
+              ("../Models/auto-stack-c.pkl", 'c', 'y'),
               ("../Models/auto-stack-r.pkl", 'r', 'y')]
 
     maze_dir = "../Worlds/"
@@ -31,6 +32,7 @@ def main():
     
     model_names = [Path(m_path).name for m_path, _, _ in models]
     data = {model_name: [] for model_name in model_names}
+    completion_data = {model_name: [] for model_name in model_names}
     for i in range(num_mazes):
         size = random.randint(min_size, max_size)
         maze_file = os.path.join(maze_sub_dir, f"maze_{i+1}.txt")
@@ -44,7 +46,9 @@ def main():
             input_args = [maze_file, model, 10, model_type, stacked]
             num_frames, success, completion_per = Imitate.main(input_args)
             data[Path(model).name].append(num_frames)
+            completion_data[Path(model).name].append(completion_per)
             
+    # Generate frame bar plot
     mazes = [f"maze {i+1}" for i in range(num_mazes)]
     ind = np.arange(num_mazes)
     width = 0.25
@@ -63,7 +67,22 @@ def main():
     plt.xticks(ind+width, mazes)
     plt.legend(bars, model_names)
     plt.savefig(os.path.join(".", f"barchart_{now}.png"))
+    
+    # Generate Completion bar plot
+    plt.clf()
+    for k, model_name in enumerate(model_names):
+        xvals = completion_data[model_name]
+        color = colors[k]
+        bar = plt.bar(ind+width*k, xvals, width, color=color)
+        bars.append(bar)
+    
+    plt.xlabel("Mazes")
+    plt.ylabel("Percentage Complete")
+    plt.title("Percentage Navigated")
 
+    plt.xticks(ind+width, mazes)
+    plt.legend(bars, model_names)
+    plt.savefig(os.path.join(".", f"completionchart_{now}.png"))
 
 
 if __name__ == "__main__":
