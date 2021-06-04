@@ -5,7 +5,7 @@
 3. Enable plugins (Editor -> Plugins)
     - Editor Scripting Utilities
     - Python Editor Script Plugin
-    - UnrealCV Plugin
+    - UnrealCV Plugin (HamiltonHuaji/unrealcv)
 4. Create the actors. Drag the Cube to the "Content Browser" five times.
 	- Floor
 	- Wall
@@ -20,7 +20,22 @@
 	- Connect to UVs
 8. Double click on Actors and apply materials
 9. Add camera
+10. Create `./Config/DefaultGameUserSettings.ini` with:
 
+```ini
+[/Script/Engine.GameUserSettings]
+ResolutionSizeX=320
+ResolutionSizeY=240
+LastUserConfirmedResolutionSizeX=320
+LastUserConfirmedResolutionSizeY=240
+WindowPosX=-1
+WindowPosY=-1
+bUseDesktopResolutionForFullscreen=False
+FullscreenMode=2
+LastConfirmedFullscreenMode=2
+Version=5
+```
+11. Package the game (File->Package Project->[Platform])
 
 # Building and Installing UnrealCV Plugin On Linux
 
