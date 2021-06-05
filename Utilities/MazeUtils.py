@@ -5,7 +5,7 @@ You can use this file as a command line script, or as a library.
 
 Example of computing the percent a location is through the maze:
 
-    python MazeUtils.py ../Worlds/maze.txt --percent 1.5 7.5
+    python MazeUtils.py ../Mazes/maze01.txt --percent 1.5 7.5
 
 Same thing when using this as a library
 
@@ -116,7 +116,13 @@ def bfs_dist_maze(maze: List[List[int]], x1: int, y1: int, x2: int, y2: int) -> 
 
 
 def percent_through_maze(
-    maze, x: int, y: int, x_start: int, y_start: int, x_end: int, y_end: int,
+    maze,
+    x: int,
+    y: int,
+    x_start: int,
+    y_start: int,
+    x_end: int,
+    y_end: int,
 ) -> float:
     """Compute distance traveled along optimal path through maze.
 

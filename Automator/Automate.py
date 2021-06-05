@@ -123,7 +123,7 @@ def getNumImg(dir):
 
 def main():
     img_dir = sys.argv[1] if len(sys.argv) > 1 else "../Images/AutoStraight"
-    maze = sys.argv[2] if len(sys.argv) > 2 else "../Worlds/maze.txt"
+    maze = sys.argv[2] if len(sys.argv) > 2 else "../Mazes/maze01.txt"
 
     world = PycastWorld(320, 240, maze)
     # print(f"dirX: {acos(world.getDirX())}")

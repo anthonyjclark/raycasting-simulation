@@ -97,7 +97,7 @@ int main(int argc, char const *argv[])
 {
     const unsigned int DEFAULT_WINDOW_WIDTH = 320;
     const unsigned int DEFAULT_WINDOW_HEIGHT = 240;
-    const auto DEFAULT_WORLD_FILE = "../Worlds/maze.txt";
+    const auto DEFAULT_WORLD_FILE = "../Mazes/maze01.txt";
 
     // Process program arguments (must be given in this order)
     std::string worldFilepath = argc >= 2 ? argv[1] : DEFAULT_WORLD_FILE;

@@ -14,7 +14,7 @@ def main():
 
     start = time.time()
 
-    maze_dir = "../Worlds/"
+    maze_dir = "../Mazes/"
     image_dir = "../Images/"
 
     now = datetime.now().strftime("%d-%m-%Y_%H-%M")
@@ -37,13 +37,15 @@ def main():
     for i in range(num_mazes):
         size = random.randint(min_size, max_size)
         new_file = os.path.join(maze_sub_dir, f"maze_{i+1}.txt")
-        
+
         print(f"Creating maze {i+1} with size {size}")
-        os.system(f"python3 ../MazeGen/MazeGen.py --width {size} --height {size} --out > {new_file}")
-        
+        os.system(
+            f"python3 ../MazeGen/MazeGen.py --width {size} --height {size} --out > {new_file}"
+        )
+
         print(f"Generating data from maze {i+1}")
         os.system(f"python3 AutoGen.py {new_file} 0 {image_sub_dir}")
-    
+
     if not stack:
         num_straight = len(os.listdir(os.path.join(image_sub_dir, "straight")))
         num_right = len(os.listdir(os.path.join(image_sub_dir, "right")))
@@ -61,7 +63,7 @@ def main():
     print(f"Total images: {num_total}")
 
     end = time.time()
-    seconds = int(end-start)
+    seconds = int(end - start)
     min, sec = divmod(seconds, 60)
     print(f"Total time: {min} minutes {sec} seconds")
 

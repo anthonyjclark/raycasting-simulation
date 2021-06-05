@@ -26,7 +26,7 @@ class PycastWorldEnv(gym.Env):
         image_width = 320
         image_height = 240
 
-        self.world = PycastWorld(image_width, image_height, "../Worlds/maze.txt")
+        self.world = PycastWorld(image_width, image_height, "../Mazes/maze01.txt")
         self.world.direction(0, 1.152)  # TODO: remove?
 
         self.seed()

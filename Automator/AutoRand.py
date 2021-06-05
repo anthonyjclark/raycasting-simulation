@@ -332,7 +332,7 @@ def check_past(curr_x, curr_y, c_targ_x, c_targ_y, base_dir, targ_dir):
 
 def main():
     img_dir = sys.argv[1] if len(sys.argv) > 1 else "../Images"
-    maze = sys.argv[2] if len(sys.argv) > 2 else "../Worlds/new_maze.txt"
+    maze = sys.argv[2] if len(sys.argv) > 2 else "../Mazes/new_maze.txt"
 
     world = PycastWorld(320, 240, maze)
 
