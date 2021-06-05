@@ -41,7 +41,6 @@ class Driver:
         base_dir,
         targ_dir,
         world,
-        moves,
         img_dir=None,
         show_freq=0,
     ):
@@ -63,14 +62,15 @@ class Driver:
         self.angle = 0
         self.step = math.inf
         
-        # Adding default moves
-        self.moves = []
+        # Adding variable to keep track of the previous move
+        self.prev_move = "straight"
 
         self.img_dir = img_dir
         if self.img_dir != None:
             self.img_num_l = len(os.listdir(os.path.join(img_dir, "left")))
             self.img_num_r = len(os.listdir(os.path.join(img_dir, "right")))
             self.img_num_s = len(os.listdir(os.path.join(img_dir, "straight")))
+            self.img_num = self.img_num_l + self.img_num_r + self.img_num_s
 
         self.show_freq = show_freq
 
@@ -193,10 +193,10 @@ class Driver:
                 # save image right
                 if self.img_dir != None:
                     self.world.savePNG(
-                        os.path.join(self.img_dir, "right", f"{self.img_num_r:05}.png")
+                        os.path.join(self.img_dir, "right", f"{self.img_num:05}-{self.prev_move}.png")
                     )
-                    self.moves.append(["right", f"{self.img_num_r:05}.png"])
-                    self.img_num_r += 1
+                    self.prev_move = 'right'
+                    self.img_num += 1
                 
                 self.world.turn(Turn.Right)
                 self.world.update()
@@ -211,10 +211,10 @@ class Driver:
                 # save image left
                 if self.img_dir != None:
                     self.world.savePNG(
-                        os.path.join(self.img_dir, "left", f"{self.img_num_l:05}.png")
+                        os.path.join(self.img_dir, "left", f"{self.img_num:05}-{self.prev_move}.png")
                     )
-                    self.moves.append(["left", f"{self.img_num_l:05}.png"])
-                    self.img_num_l += 1
+                    self.prev_move = 'left'
+                    self.img_num += 1
 
                 self.world.turn(Turn.Left)
                 self.world.update()
@@ -282,10 +282,10 @@ class Driver:
 
             if self.img_dir != None:
                 self.world.savePNG(
-                    os.path.join(self.img_dir, "straight", f"{self.img_num_s:05}.png")
+                    os.path.join(self.img_dir, "straight", f"{self.img_num:05}-{self.prev_move}.png")
                 )
-                self.moves.append(["straight", f"{self.img_num_s:05}.png"])
-                self.img_num_s += 1
+                self.prev_move = 'straight'
+                self.img_num += 1
             
             self.world.walk(Walk.Forward)
             self.world.update()
@@ -310,7 +310,6 @@ class Navigator:
     def __init__(self, maze, img_dir=None):
         self.world = PycastWorld(320, 240, maze)
         self.img_dir = img_dir
-        self.moves = []
 
         # getting directions
         with open(maze, "r") as in_file:
@@ -343,7 +342,7 @@ class Navigator:
         c_targ_y = targ_y + 0.5
 
         driver = Driver(
-            c_targ_x, c_targ_y, base_dir, targ_dir, self.world, self.moves, self.img_dir, show_freq
+            c_targ_x, c_targ_y, base_dir, targ_dir, self.world, self.img_dir, show_freq
         )
 
         while not in_targ_cell(base_dir, c_targ_x, c_targ_y, driver.curr_x, driver.curr_y):
@@ -351,25 +350,19 @@ class Navigator:
             driver.turn_to_angle()
             driver.set_rand_step()
             driver.move_to_step()
-            
-        return driver.moves
 
 
 def main():
     maze = "../Worlds/maze.txt"
     show_freq = 0  # frequency to show frames
     img_dir = "../Notebooks/data"  # directory to save images to
-    move_list = list()
 
     navigator = Navigator(maze, img_dir)
 
     j = 0
     while j < navigator.num_directions - 1:
-        move_list.extend(navigator.navigate(j, show_dir=True, show_freq=show_freq))                 
+        navigator.navigate(j, show_dir=True, show_freq=show_freq)           
         j += 1
-         
-    print(len(move_list))
-    print(move_list)
 
 if __name__ == "__main__":
     main()
