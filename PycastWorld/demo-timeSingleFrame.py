@@ -11,7 +11,7 @@ WINDOW_HEIGHT = 480
 """
 
 code = """
-world = PycastWorld(WINDOW_WIDTH, WINDOW_HEIGHT, "../Worlds/maze.txt")
+world = PycastWorld(WINDOW_WIDTH, WINDOW_HEIGHT, "../Mazes/maze01.txt")
 """
 
 num_trials = 1
