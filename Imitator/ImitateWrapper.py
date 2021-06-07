@@ -17,12 +17,13 @@ colors = ["tab:blue", "tab:orange", "tab:green", "tab:red", "tab:purple", "tab:b
 # assume running from Imitator dir
 def main():
     num_mazes = int(sys.argv[1]) if len(sys.argv) > 1 else 1
-    #
-    models = [("../Models/learner_2021-06-01 16:40:23.194027.pkl", 'c', 'n'),
+    #("../Models/learner_2021-06-01 16:40:23.194027.pkl", 'c', 'n'),
+#               
+    models = [("../Models/auto-gen-r_large-6-6.pkl", 'c', 'n'),
+              ("../Models/auto-gen-c_large-6-6.pkl", 'r', 'n'),
               ("../Models/auto-stack-r.pkl", 'r', 'y'),
               ("../Models/auto-stack-c.pkl", 'c', 'y'),
-              ("../Models/auto-gen-c.pkl", 'c', 'n'),
-              ("../Models/auto-gen-r.pkl", 'r', 'n')]
+              ("../Models/learner_2021-06-01 16:40:23.194027.pkl", 'c', 'n')]
 
     maze_dir = "../Worlds/"
     now = datetime.now().strftime("%d-%m-%Y_%H-%M")

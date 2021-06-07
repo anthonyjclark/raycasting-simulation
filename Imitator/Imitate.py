@@ -160,7 +160,7 @@ def animate(image_frames, name):
 
     ani = FuncAnimation(fig, update, image_frames, init_func=init, interval=100)
     # plt.show()
-    ani.save(name + "_" + datetime.now().strftime("%d-%m-%Y_%H-%M") + ".gif")
+    ani.save(name + "_" + datetime.now().strftime("%d-%m-%Y_%H-%M") + ".mp4")
     
 def main(argv):
     maze = argv[0] if len(argv) > 0 else "../Worlds/maze.txt"
@@ -179,6 +179,8 @@ def main(argv):
     prev_x, prev_y = world.getX(), world.getY()
     animation_frames = []
     
+    outcome = "At goal? "
+    stuck = False
     # Initialize maximum number of steps in case the robot travels in a completely incorrect direction
     max_steps = 3000 
     step_count = 0
@@ -229,10 +231,9 @@ def main(argv):
                 num_static += 1
             else:
                 num_static = 0
-            
             animation_frames.append(image_data.copy())
-            plt.imshow(image_data)
-            plt.show()
+#             plt.imshow(image_data)
+#             plt.show()
             # update previous coordinates
             prev_x = curr_x
             prev_y = curr_y        
@@ -244,7 +245,13 @@ def main(argv):
             break
             
     # this chunk gets the completion percentage
-    print(f"at goal?: {world.atGoal()}")
+    lost = False
+    if num_static >= 5:
+        stuck = True
+    if frame >= max_steps:
+        lost = True
+    outcome = "At Goal? " + str(world.atGoal()) + ". Stuck? " + str(stuck) + "Exceed step limit? " + str(lost)
+    print(outcome)
     maze_rvs, _, _, maze_directions, _ = read_maze_file(maze)
     start_x, start_y, _ = maze_directions[0]
     end_x, end_y, _ = maze_directions[-1]
@@ -258,9 +265,9 @@ def main(argv):
     # TODO: any other metrics besides number of frames that we care about?
 
     if num_static >= 5 and not world.atGoal():  # model failed to navigate maze
-        return frame, False, completion_per
+        return frame, False, completion_per, outcome
     else:  # model successfully navigated maze
-        return frame, True, completion_per
+        return frame, True, completion_per, outcome
 
 if __name__ == "__main__":
     main(sys.argv[1:])
