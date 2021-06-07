@@ -29,7 +29,7 @@ Here is the process to get the game up and running (all steps assume you are in 
 1. Generate a maze using `MazeGen/MazeGen.py`
 
 ```bash
-MazeGen/MazeGen.py --width 8 --height 8 --out > Worlds/new_maze.txt
+MazeGen/MazeGen.py --width 8 --height 8 --out > Mazes/new_maze.txt
 ```
 
 2. Compile `Game/Game`
@@ -43,7 +43,7 @@ make
 
 ```bash
 cd Game
-./Game ../Worlds/new_maze.txt
+./Game ../Mazes/new_maze.txt
 ```
 
 # Textures

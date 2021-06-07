@@ -1,6 +1,8 @@
 import unreal
 from unreal import Vector
 
+from os.path import realpath
+from pathlib import Path
 from typing import List, Tuple
 
 """
@@ -12,7 +14,8 @@ Double-click cube, add created material
 (This script does the rest)
 """
 
-maze_filepath = "/home/ajc/Documents/Repositories/raycasting-simulation/Worlds/maze.txt"
+# ../Mazes/maze01.txt
+maze_filepath = Path(realpath(__file__)).parents[1] / "Mazes/maze01.txt"
 
 
 def read_maze_file(
@@ -44,6 +47,7 @@ def read_maze_file(
         ]
 
     return list(reversed(maze)), maze_x_dim, maze_y_dim, maze_directions, texture_names
+
 
 def spawn_actor(location, meshpath):
 

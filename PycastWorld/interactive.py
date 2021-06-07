@@ -33,7 +33,7 @@ VIEW_MINIMAP = False
 
 
 def init(data, canvas):
-    data.world = PycastWorld(WIDTH, HEIGHT, "../Worlds/maze.txt")
+    data.world = PycastWorld(WIDTH, HEIGHT, "../Mazes/maze01.txt")
     data.mapWidth = 17  # TODO: hardcoded
     data.mapHeight = 17  # TODO: hardcoded
     data.screenWidth = WIDTH
