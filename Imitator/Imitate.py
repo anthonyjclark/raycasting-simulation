@@ -237,11 +237,7 @@ def main(argv):
         prev_move = move
         world.update()
 
-        curr_x, curr_y = world.getX(), world.getY()
-        if curr_x == prev_x and curr_y == prev_y:
-            num_static += 1
-        else:
-            num_static = 0
+        curr_x, curr_y = round(world.getX(), 5), round(world.getY(), 5)
 
         if show_freq != 0 and frame % show_freq == 0:
             if curr_x == prev_x and curr_y == prev_y:
@@ -267,7 +263,7 @@ def main(argv):
         stuck = True
     if frame >= max_steps:
         lost = True
-    outcome = "At Goal? " + str(world.atGoal()) + ". Stuck? " + str(stuck) + "Exceed step limit? " + str(lost)
+    outcome = "At Goal? " + str(world.atGoal()) + "\n Stuck? " + str(stuck) + "\n Exceed step limit? " + str(lost)
     print(outcome)
     maze_rvs, _, _, maze_directions, _ = read_maze_file(maze)
     start_x, start_y, _ = maze_directions[0]
