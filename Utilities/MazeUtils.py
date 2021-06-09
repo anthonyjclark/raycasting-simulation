@@ -7,20 +7,8 @@ Example of computing the percent a location is through the maze:
 
     python MazeUtils.py ../Mazes/maze01.txt --percent 1.5 7.5
 
-Same thing when using this as a library
-
-    import sys
-    sys.append("Path/to/this/directory/")
-    from MazeUtils import read_maze_file, percent_through_maze
-
-    maze, _, _, maze_directions, _ = read_maze_file(maze_filepath)
-    x_start, y_start, _ = maze_directions[0]
-    x_end, y_end, _ = maze_directions[-1]
-
-    x = location_reached_by_network_or_person.x
-    y = location_reached_by_network_or_person.y
-
-    p = percent_through_maze(maze, x, y, x_start, y_start, x_end, y_end)
+See the main function below to see how to use these functions as
+a library.
 """
 
 from argparse import ArgumentParser
@@ -124,7 +112,7 @@ def bfs_dist_maze(maze: Maze, x1: int, y1: int, x2: int, y2: int) -> Tuple[float
         if x == x2 and y == y2:
             return (
                 distances[(x, y)],
-                path_from_predecessors(predecessors, x1, x2, x2, y2),
+                path_from_predecessors(predecessors, x1, y1, x2, y2),
             )
 
         # Check up and down
@@ -132,23 +120,24 @@ def bfs_dist_maze(maze: Maze, x1: int, y1: int, x2: int, y2: int) -> Tuple[float
             visited.add((x, y + 1))
             queue.append((x, y + 1))
             distances[(x, y + 1)] = distances[(x, y)] + 1
+            predecessors[(x, y + 1)] = (x, y)
         if y_min <= y - 1 and maze[y - 1][x] == 0 and (x, y - 1) not in visited:
             visited.add((x, y - 1))
             queue.append((x, y - 1))
             distances[(x, y - 1)] = distances[(x, y)] + 1
+            predecessors[(x, y - 1)] = (x, y)
 
         # Check right and left
         if x + 1 <= x_max and maze[y][x + 1] == 0 and (x + 1, y) not in visited:
             visited.add((x + 1, y))
             queue.append((x + 1, y))
             distances[(x + 1, y)] = distances[(x, y)] + 1
+            predecessors[(x + 1, y)] = (x, y)
         if x_min <= x - 1 and maze[y][x - 1] == 0 and (x - 1, y) not in visited:
             visited.add((x - 1, y))
             queue.append((x - 1, y))
             distances[(x - 1, y)] = distances[(x, y)] + 1
-
-        if len(queue) > 10:
-            break
+            predecessors[(x - 1, y)] = (x, y)
 
     return inf, []
 
@@ -211,7 +200,7 @@ def main():
         xy_pct_path = percent_through_maze(maze, x, y, x_start, y_start, x_end, y_end)
 
         if xy_on_path:
-            print(f"({x},{y}) is {xy_pct_path*100:.2f}% through the maze")
+            print(f"({x},{y}) is {xy_pct_path:.2f}% through the maze")
         else:
             print(f"({x},{y}) is not on the correct path")
 
