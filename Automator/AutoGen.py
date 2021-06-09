@@ -25,6 +25,7 @@ rand_step_scale = 0.4
 
 enws = {"Dir.EAST": 0, "Dir.NORTH": 90, "Dir.WEST": 180, "Dir.SOUTH": 270}
 
+
 def in_targ_cell(base_dir, c_targ_x, c_targ_y, x, y):
     if base_dir == 0 or base_dir == 180:
         if abs(c_targ_x - x) < 0.4:
@@ -33,6 +34,7 @@ def in_targ_cell(base_dir, c_targ_x, c_targ_y, x, y):
         if abs(c_targ_y - y) < 0.4:
             return True
     return False
+
 
 class Driver:
     def __init__(
@@ -109,7 +111,7 @@ class Driver:
             dir = asin(dir_y)
 
         self.direction = dir % (2 * pi)
-    
+
     # adjust for smoother path
     def modified_targ(self, delta):
         if self.base_dir == 0 or self.base_dir == 180:
@@ -130,36 +132,34 @@ class Driver:
             if mod_x == self.curr_x:
                 theta = pi / 2
             else:
-                theta = (
-                    atan((mod_y - self.curr_y) / (mod_x - self.curr_x))
-                ) % (2 * pi)
+                theta = (atan((mod_y - self.curr_y) / (mod_x - self.curr_x))) % (2 * pi)
 
         # case where target pos is up and to the left
         elif self.curr_x > mod_x and self.curr_y <= mod_y:
             if mod_y == self.curr_y:
                 theta = pi
             else:
-                theta = (
-                    atan((self.curr_x - mod_x) / (mod_y - self.curr_y))
-                ) % (2 * pi) + pi / 2
+                theta = (atan((self.curr_x - mod_x) / (mod_y - self.curr_y))) % (
+                    2 * pi
+                ) + pi / 2
 
         # case where target pos is down and to the left
         elif self.curr_x > mod_x and self.curr_y > mod_y:
             if mod_x == self.curr_x:
                 theta = 3 * pi / 2
             else:
-                theta = (
-                    atan((self.curr_y - mod_y) / (self.curr_x - mod_x))
-                ) % (2 * pi) + pi
+                theta = (atan((self.curr_y - mod_y) / (self.curr_x - mod_x))) % (
+                    2 * pi
+                ) + pi
 
         # case where target pos is down and to the right
         else:
             if self.curr_y == mod_y:
                 theta = 0
             else:
-                theta = (
-                    atan((mod_x - self.curr_x) / (self.curr_y - mod_y))
-                ) % (2 * pi) + 3 * pi / 2
+                theta = (atan((mod_x - self.curr_x) / (self.curr_y - mod_y))) % (
+                    2 * pi
+                ) + 3 * pi / 2
 
         return theta
 
@@ -192,7 +192,7 @@ class Driver:
         prev_turn = None
         while self.abs_angle_diff(self.angle) > 0.1:
             if self.turn_right(self.angle):
-                
+
                 if prev_turn == "left":
                     print("no left to right allowed")
                     break
@@ -200,11 +200,15 @@ class Driver:
                 # save image right
                 if self.img_dir != None:
                     if self.stack_dir:
-                        self.world.savePNG(os.path.join(self.img_dir, f"{self.img_num:05}_right.png"))
-                        self.img_num += 1
-                    else:    
                         self.world.savePNG(
-                            os.path.join(self.img_dir, "right", f"{self.img_num_r:05}.png")
+                            os.path.join(self.img_dir, f"{self.img_num:05}_right.png")
+                        )
+                        self.img_num += 1
+                    else:
+                        self.world.savePNG(
+                            os.path.join(
+                                self.img_dir, "right", f"{self.img_num_r:05}.png"
+                            )
                         )
                         self.img_num_r += 1
 
@@ -221,11 +225,15 @@ class Driver:
                 # save image left
                 if self.img_dir != None:
                     if self.stack_dir:
-                        self.world.savePNG(os.path.join(self.img_dir, f"{self.img_num:05}_left.png"))
+                        self.world.savePNG(
+                            os.path.join(self.img_dir, f"{self.img_num:05}_left.png")
+                        )
                         self.img_num += 1
                     else:
                         self.world.savePNG(
-                            os.path.join(self.img_dir, "left", f"{self.img_num_l:05}.png")
+                            os.path.join(
+                                self.img_dir, "left", f"{self.img_num_l:05}.png"
+                            )
                         )
                         self.img_num_l += 1
 
@@ -291,15 +299,24 @@ class Driver:
     def move_to_step(self):
         self.world.turn(Turn.Stop)
         i = 0
-        while not in_targ_cell(self.base_dir, self.c_targ_x, self.c_targ_y, self.curr_x, self.curr_y) and self.step > 0.1:
+        while (
+            not in_targ_cell(
+                self.base_dir, self.c_targ_x, self.c_targ_y, self.curr_x, self.curr_y
+            )
+            and self.step > 0.1
+        ):
 
             if self.img_dir != None:
                 if self.stack_dir:
-                    self.world.savePNG(os.path.join(self.img_dir, f"{self.img_num:05}_straight.png"))
+                    self.world.savePNG(
+                        os.path.join(self.img_dir, f"{self.img_num:05}_straight.png")
+                    )
                     self.img_num += 1
                 else:
                     self.world.savePNG(
-                        os.path.join(self.img_dir, "straight", f"{self.img_num_s:05}.png")
+                        os.path.join(
+                            self.img_dir, "straight", f"{self.img_num_s:05}.png"
+                        )
                     )
                     self.img_num_s += 1
 
@@ -361,7 +378,9 @@ class Navigator:
             c_targ_x, c_targ_y, base_dir, targ_dir, self.world, self.img_dir, show_freq
         )
 
-        while not in_targ_cell(base_dir, c_targ_x, c_targ_y, driver.curr_x, driver.curr_y):
+        while not in_targ_cell(
+            base_dir, c_targ_x, c_targ_y, driver.curr_x, driver.curr_y
+        ):
             driver.set_rand_angle()
             driver.turn_to_angle()
             driver.set_rand_step()
@@ -369,10 +388,12 @@ class Navigator:
 
 
 def main():
-    maze = sys.argv[1] if len(sys.argv) > 1 else "../Worlds/maze.txt"
+    maze = sys.argv[1] if len(sys.argv) > 1 else "../Mazes/maze01.txt"
     show_freq = int(sys.argv[2]) if len(sys.argv) > 2 else 0  # frequency to show frames
     img_dir = sys.argv[3] if len(sys.argv) > 3 else None  # directory to save images to
-    show_dir = bool(distutils.util.strtobool(sys.argv[4])) if len(sys.argv) > 4 else False
+    show_dir = (
+        bool(distutils.util.strtobool(sys.argv[4])) if len(sys.argv) > 4 else False
+    )
 
     navigator = Navigator(maze, img_dir)
 
