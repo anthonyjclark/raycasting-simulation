@@ -7,40 +7,31 @@ Example of computing the percent a location is through the maze:
 
     python MazeUtils.py ../Mazes/maze01.txt --percent 1.5 7.5
 
-Same thing when using this as a library
-
-    import sys
-    sys.append("Path/to/this/directory/")
-    from MazeUtils import read_maze_file, percent_through_maze
-
-    maze, _, _, maze_directions, _ = read_maze_file(maze_filepath)
-    start_x, start_y, _ = maze_directions[0]
-    end_x, end_y, _ = maze_directions[-1]
-
-    x = location_reached_by_network_or_person.x
-    y = location_reached_by_network_or_person.y
-
-    p = percent_through_maze(maze, x, y, start_x, start_y, end_x, end_y)
+See the main function below to see how to use these functions as
+a library.
 """
 
 from argparse import ArgumentParser
 from math import inf
-from typing import List, Tuple
+from typing import Dict, List, Tuple
+
+Coordinate = Tuple[int, int]
+Maze = List[List[int]]
+Path = List[Coordinate]
+Directions = List[Tuple[int, int, str]]
 
 
-def read_maze_file(
-    filepath: str,
-) -> Tuple[List[List[int]], int, int, List[Tuple[int, int, str]], List[str]]:
+def read_maze_file(filepath: str,) -> Tuple[Maze, int, int, Directions, List[str]]:
     """Read a maze file and return values
 
     Args:
         filepath (str): path to a maze file
 
     Returns:
-        Tuple[List[List[int]]: a maze
+        Tuple[Maze: a maze
         int: maze width
         int: maze height
-        List[Tuple[int, int, str]]: turn by turn directions
+        Directions: turn by turn directions
         List[str]]: texture names
     """
     with open(filepath, "r") as maze_file:
@@ -59,23 +50,55 @@ def read_maze_file(
     return list(reversed(maze)), maze_x_dim, maze_y_dim, maze_directions, texture_names
 
 
-def bfs_dist_maze(maze: List[List[int]], x1: int, y1: int, x2: int, y2: int) -> float:
-    """Compute the number of hops from (x1,y1) to (x2,y2).
+def path_from_predecessors(
+    preds: Dict[Coordinate, Coordinate],
+    x_start: int,
+    y_start: int,
+    x_end: int,
+    y_end: int,
+) -> Path:
+    """Compute the path from (x_start, y_start) to (x_end, y_end).
 
     Args:
-        maze (List[List[int]]): A grid based maze
+        preds (Dict[Coordinate, Coordinate]): Dictionary of predecessors
+        x_start (int): Starting x
+        y_start (int): Starting y
+        x_end (int): Ending x
+        y_end (int): Ending y
+
+    Returns:
+        Path: Optimal path from start to end
+    """
+    x, y = x_end, y_end
+    path = [(x, y)]
+    while (x, y) != (x_start, y_start):
+        x, y = preds[(x, y)]
+        path.append((x, y))
+
+    path.reverse()
+    return path
+
+
+def bfs_dist_maze(maze: Maze, x1: int, y1: int, x2: int, y2: int) -> Tuple[float, Path]:
+    """Compute the number of hops and the path from (x1,y1) to (x2,y2).
+
+    Args:
+        maze (Maze): A grid based maze
         x1 (int): starting x location
         y1 (int): starting y location
         x2 (int): ending x location
         y2 (int): ending y location
+        return_path (bool): retun the computed path
 
     Returns:
         float: The number of hops from start to end returned as a float
+        Path: the computed optimal path
     """
 
     queue = [(x1, y1)]
     visited = {(x1, y1)}
     distances = {(x1, y1): 0}
+    predecessors = {(x1, y1): (x1, y1)}
 
     while queue:
 
@@ -87,42 +110,40 @@ def bfs_dist_maze(maze: List[List[int]], x1: int, y1: int, x2: int, y2: int) -> 
         x, y = queue.pop(0)
 
         if x == x2 and y == y2:
-            return distances[(x, y)]
+            return (
+                distances[(x, y)],
+                path_from_predecessors(predecessors, x1, y1, x2, y2),
+            )
 
         # Check up and down
         if y + 1 <= y_max and maze[y + 1][x] == 0 and (x, y + 1) not in visited:
             visited.add((x, y + 1))
             queue.append((x, y + 1))
             distances[(x, y + 1)] = distances[(x, y)] + 1
+            predecessors[(x, y + 1)] = (x, y)
         if y_min <= y - 1 and maze[y - 1][x] == 0 and (x, y - 1) not in visited:
             visited.add((x, y - 1))
             queue.append((x, y - 1))
             distances[(x, y - 1)] = distances[(x, y)] + 1
+            predecessors[(x, y - 1)] = (x, y)
 
         # Check right and left
         if x + 1 <= x_max and maze[y][x + 1] == 0 and (x + 1, y) not in visited:
             visited.add((x + 1, y))
             queue.append((x + 1, y))
             distances[(x + 1, y)] = distances[(x, y)] + 1
+            predecessors[(x + 1, y)] = (x, y)
         if x_min <= x - 1 and maze[y][x - 1] == 0 and (x - 1, y) not in visited:
             visited.add((x - 1, y))
             queue.append((x - 1, y))
             distances[(x - 1, y)] = distances[(x, y)] + 1
+            predecessors[(x - 1, y)] = (x, y)
 
-        if len(queue) > 10:
-            break
-
-    return inf
+    return inf, []
 
 
 def percent_through_maze(
-    maze,
-    x: int,
-    y: int,
-    x_start: int,
-    y_start: int,
-    x_end: int,
-    y_end: int,
+    maze: Maze, x: int, y: int, x_start: int, y_start: int, x_end: int, y_end: int
 ) -> float:
     """Compute distance traveled along optimal path through maze.
 
@@ -139,12 +160,17 @@ def percent_through_maze(
         float: percent traveled through maze
     """
 
-    dist_start_to_current = bfs_dist_maze(maze, x_start, y_start, x, y)
-    dist_start_to_end = bfs_dist_maze(maze, x_start, y_start, x_end, y_end)
+    # Ignore the computed paths
+    dist_start_to_current, _ = bfs_dist_maze(maze, x_start, y_start, x, y)
+    dist_start_to_end, _ = bfs_dist_maze(maze, x_start, y_start, x_end, y_end)
 
     # TODO: verify that we are actually on the path?
 
     return (dist_start_to_current / dist_start_to_end) * 100
+
+
+def is_on_path(path: Path, x: int, y: int) -> bool:
+    return (x, y) in path
 
 
 def main():
@@ -162,13 +188,21 @@ def main():
 
     if args.percent:
         x, y = args.percent
-        maze, _, _, maze_directions, _ = read_maze_file(args.maze_filepath)
-        start_x, start_y, _ = maze_directions[0]
-        end_x, end_y, _ = maze_directions[-1]
+        x = int(x)
+        y = int(y)
 
-        print(
-            percent_through_maze(maze, int(x), int(y), start_x, start_y, end_x, end_y)
-        )
+        maze, _, _, maze_directions, _ = read_maze_file(args.maze_filepath)
+        x_start, y_start, _ = maze_directions[0]
+        x_end, y_end, _ = maze_directions[-1]
+
+        _, maze_path = bfs_dist_maze(maze, x_start, y_start, x_end, y_end)
+        xy_on_path = is_on_path(maze_path, x, y)
+        xy_pct_path = percent_through_maze(maze, x, y, x_start, y_start, x_end, y_end)
+
+        if xy_on_path:
+            print(f"({x},{y}) is {xy_pct_path:.2f}% through the maze")
+        else:
+            print(f"({x},{y}) is not on the correct path")
 
 
 if __name__ == "__main__":
