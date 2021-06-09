@@ -14,7 +14,7 @@ def main():
 
     start = time.time()
 
-    maze_dir = "../Worlds/"
+    maze_dir = "../Mazes/"
     image_dir = "/raid/Images/"
 
     now = datetime.now().strftime("%d-%m-%Y_%H-%M")
