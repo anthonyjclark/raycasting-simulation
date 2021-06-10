@@ -50,7 +50,27 @@ Version=5
 2. cd into unrealCV/client/python/
 3. run `python setup.py install`
 
-# Unreal Tasks
+    
+# SSH Port-Forwarding the UE Simulation
+
+These instruction will make it so that anyone on a Windows machine can run the UE Maze Simulation with the UnrealCV plugin. Afterwards, you should be able to call unrealcv commands to your local instance of the simulation. 
+
+1. Unzip the WindowsNoEditor folder, which contains an executable called 'Arcs.exe'. 
+2. Run 'Arcs.exe'
+3. SSH port-forward to the server. Here, we are remote forwarding our UE simulator, which should be at port 9000, and local forwading jupyter notebook. `ssh -L <port>:localhost:<port> -R 9000:localhost:9000 user@pom-itb-dgx01.campus.pomona.edu`
+4. Install unrealcv
+    1. Clone the working [UnrealCV reporitory](https://github.com/HamiltonHuaji/unrealcv) outside of your raycasting-simulation directory
+    2. cd into unrealCV/client/python/
+    3. run `python setup.py install`
+5. Check if the connection is established: 
+    1. Open a python interpreter in your terminal
+    2. `import unrealcv`
+    3. `client = unrealcv.client.connect(timeout=5)`
+    4. `client`. You should get a message that says 'connected to Arcs'
+After following these steps you can run any jupyter notebook and use the UnrealUtils.py wrapper.
+
+
+# Further Tasks
 
 - Clean up ImitateInUnreal notebook i.e. add documentation and make it easy to interact with code 
 - Add multiple levels to the Unreal Project; generate 20 mazes under the mazes directory
@@ -58,3 +78,5 @@ Version=5
 	- look at `vset /action/game/level [level_name]`
 - Cycle-GAN: 
 	- create paired images(exact same coordinates and pose) from raycasting and unreal 
+
+

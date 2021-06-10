@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 
 import sys
 
-sys.path.append("/home/ajc/UE4/unrealcv/client/python")
+sys.path.append("/home/eoca2018/unrealcv/client/python")
 from unrealcv import client as ue4  # type: ignore
 from unrealcv.util import read_png  # type: ignore
 
@@ -13,7 +13,7 @@ from unrealcv.util import read_png  # type: ignore
 class UE4EnvWrapper:
     def __init__(self):
 
-        ue4.connect()
+        ue4.connect(timeout=5)
 
         self.connected = False
         if not ue4.isconnected():
