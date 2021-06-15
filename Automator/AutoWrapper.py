@@ -15,7 +15,7 @@ def main():
     start = time.time()
 
     maze_dir = "../Mazes/"
-    image_dir = "../Images/"
+    image_dir = "/raid/Images/"
 
     now = datetime.now().strftime("%d-%m-%Y_%H-%M")
     subdir = f"{num_mazes}_mazes_{now}"
