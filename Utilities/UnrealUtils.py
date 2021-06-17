@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 
 import sys
 
-sys.path.append("/home/ajc/UE4/unrealcv/client/python")
+sys.path.append("/home/eoca2018/unrealcv/client/python")
 from unrealcv import client as ue4  # type: ignore
 from unrealcv.util import read_png  # type: ignore
 
@@ -13,7 +13,7 @@ from unrealcv.util import read_png  # type: ignore
 class UE4EnvWrapper:
     def __init__(self):
 
-        ue4.connect()
+        ue4.connect(timeout=5)
 
         self.connected = False
         if not ue4.isconnected():
@@ -48,17 +48,19 @@ class UE4EnvWrapper:
         self.y = y if y else self.y
         self.angle = angle if angle else self.angle
         ue4.request(f"vset /camera/0/pose {self.x} {self.y} 100 0 {self.angle} 0")
+    
+    def set_rotation(self, *, angle = None):
+        self.angle = angle if angle else self.angle
+        ue4.request(f"vset /camera/0/rotation 0 {self.angle} 0")
 
     def left(self):
-        self.set_pose(angle=self.angle - self.turn_speed)
+        self.set_rotation(angle=self.angle - self.turn_speed)
 
     def right(self):
-        self.set_pose(angle=self.angle + self.turn_speed)
+        self.set_rotation(angle=self.angle + self.turn_speed)
 
     def forward(self):
-        new_x = self.x + cos(self.angle * pi / 180.0) * self.walk_speed
-        new_y = self.y + sin(self.angle * pi / 180.0) * self.walk_speed
-        self.set_pose(x=new_x, y=new_y)
+        ue4.request(f"vset /action/keyboard up .1")
 
     def request_image(self):
         image_data = ue4.request(f"vget /camera/0/lit png")

@@ -25,12 +25,12 @@ colors = [
 # assume running from Imitator dir
 def main():
     num_mazes = int(sys.argv[1]) if len(sys.argv) > 1 else 1
-
-    models = [
-        ("../Models/auto-gen-r.pkl", "r", "n"),
-        ("../Models/auto-stack-c.pkl", "c", "y"),
-        ("../Models/auto-stack-r.pkl", "r", "y"),
-    ]
+    
+#     ("../Models/auto-gen-r_large-6-6.pkl", 'c', 'n'),
+#               ("../Models/auto-gen-c_large-6-6.pkl", 'r', 'n'),
+#               ("../Models/auto-stack-r.pkl", 'r', 'y'),
+#               ("../Models/auto-stack-c3.pkl", 'c', 'y'),
+    models = [("../Models/learner_2021-06-01 16:40:23.194027.pkl", 'c', 'n')]
 
     maze_dir = "../Mazes/"
     now = datetime.now().strftime("%d-%m-%Y_%H-%M")
@@ -42,6 +42,7 @@ def main():
 
     model_names = [Path(m_path).name for m_path, _, _ in models]
     data = {model_name: [] for model_name in model_names}
+    completion_data = {model_name: [] for model_name in model_names}
     for i in range(num_mazes):
         size = random.randint(min_size, max_size)
         maze_file = os.path.join(maze_sub_dir, f"maze_{i+1}.txt")
@@ -54,28 +55,70 @@ def main():
         for j, m in enumerate(models):
             model, model_type, stacked = m
             print(f"Testing model {j} on maze {i}")
-            input_args = [maze_file, model, 0, model_type, stacked]
-            num_frames, success = Imitate.main(input_args)
+            input_args = [maze_file, model, 10, model_type, stacked]
+            num_frames, success, completion_per = Imitate.main(input_args)
             data[Path(model).name].append(num_frames)
 
+            completion_data[Path(model).name].append(completion_per)
+    # Generate frame bar plot
     mazes = [f"maze {i+1}" for i in range(num_mazes)]
     ind = np.arange(num_mazes)
-    width = 0.25
+    width = 0.15
     bars = []
+    plt.clf()
+    plt.figure(figsize=(15, 10)) 
     for k, model_name in enumerate(model_names):
         xvals = data[model_name]
         color = colors[k]
-        bar = plt.bar(ind + width * k, xvals, width, color=color)
+        bar = plt.bar(ind+width*k, xvals, width, color=color)
         bars.append(bar)
 
     plt.xlabel("Mazes")
+    plt.xticks(rotation=90)
     plt.ylabel("Number of frames")
     plt.title("Frames to navigate")
-
-    plt.xticks(ind + width, mazes)
+    plt.xticks(ind+width, mazes)
     plt.legend(bars, model_names)
     plt.savefig(os.path.join(".", f"barchart_{now}.png"))
+    plt.show()
 
+    # Generate Completion bar plot
+    plt.clf()
+    plt.figure(figsize=(10, 5)) 
+    bars = []
+    for k, model_name in enumerate(model_names):
+        xvals = completion_data[model_name]
+        color = colors[k]
+        bar = plt.bar(ind+width*k, xvals, width, color=color)
+        bars.append(bar)
+
+    plt.xlabel("Mazes")
+    plt.xticks(rotation=90)
+    plt.ylabel("Percentage Complete")
+    plt.title("Percentage Navigated")
+
+    plt.xticks(ind+width, mazes)
+    plt.legend(bars, model_names)
+    plt.savefig(os.path.join(".", f"completionchart_{now}.png"))
+    plt.show()
+    
+    # Generate completion boxplots
+    plt.clf()
+    plt.figure(figsize=(10, 5)) 
+    bars = []
+    boxplot_dict = {}
+    for k, model_name in enumerate(model_names):
+        xvals = completion_data[model_name]
+        color = colors[k]
+        bar = ind+width*k
+        bars.append(bar)
+    plt.boxplot(x=bars, labels=model_names);
+    plt.xlabel("Models")
+    plt.xticks(rotation=45)
+    plt.ylabel("Percentage Complete")
+    plt.title("Percentage Navigated")
+    plt.savefig(os.path.join(".", f"boxplots_{now}.png"))
+    plt.show()
 
 if __name__ == "__main__":
     main()
