@@ -4,8 +4,7 @@ import matplotlib.pyplot as plt
 
 import sys
 
-sys.path.append("../Utilities")
-from UnrealUtilities import UE4EnvWrapper  # type: ignore
+from UnrealUtilities import UE4EnvWrapper
 
 
 def main():
