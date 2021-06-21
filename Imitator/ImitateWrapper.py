@@ -30,7 +30,7 @@ def main():
 #               ("../Models/auto-gen-c_large-6-6.pkl", 'r', 'n'),
 #               ("../Models/auto-stack-r.pkl", 'r', 'y'),
 #               ("../Models/auto-stack-c3.pkl", 'c', 'y'),
-    models = [("../Models/proxy_model.pkl", 'c', 'n')]
+    models = [("../Models/perturbed_model_3.pkl", 'c', 'n')]
 
     maze_dir = "../Mazes/"
     now = datetime.now().strftime("%d-%m-%Y_%H-%M")

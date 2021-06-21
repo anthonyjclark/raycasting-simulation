@@ -150,8 +150,9 @@ def animate(image_frames, name, dir_name):
     image_frames -- array of frames    
     name -- name of model
     """
-    now = datetime.now().strftime("%d-%m-%Y_%H-%M")
-    os.mkdir(dir_name)
+    now = datetime.now()
+    if not os.path.isdir(dir_name):
+        os.mkdir(dir_name)
     os.system(dir_name)
     save_path = os.path.abspath(dir_name)
     name = str(name).split('/')[-1][:-4]
@@ -168,7 +169,7 @@ def animate(image_frames, name, dir_name):
 
     ani = FuncAnimation(fig, update, image_frames, init_func=init, interval=100)
     # plt.show()
-    ani.save(os.path.join(save_path, name + "_.mp4"))
+    ani.save(os.path.join(save_path, name + "_" +  str(now) +  ".mp4"))
     
 def main(argv):
     maze = argv[0] if len(argv) > 0 else "../Mazes/maze01.txt"
