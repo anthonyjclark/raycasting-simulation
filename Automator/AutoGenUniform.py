@@ -208,7 +208,8 @@ def main():
             action = "FORWARD"
 
         print(
-            f"{i:>6}" f"{x:5.2f}",
+            f"{i:>6} : ",
+            f"{x:5.2f}",
             f"{y:5.2f}",
             heading.rjust(5),
             f"{degrees(angle_to_right): 7.2f}",
@@ -226,6 +227,8 @@ def main():
         world.savePNG(str(Path(args.save_dir) / action.lower() / filename))
 
     for i in range(args.num_turn_images):
+
+        i += args.num_straight_images
 
         pos, heading, turn = choice(turn_cells)
 
@@ -245,6 +248,15 @@ def main():
         # image = np.array(world)
         # plt.imshow(image)
         # plt.show()
+
+        print(
+            f"{i:>6} : ",
+            f"{x:5.2f}",
+            f"{y:5.2f}",
+            heading.rjust(5),
+            f"{degrees(angle): 7.2f}",
+            action.rjust(7),
+        )
 
         # Save the image
         filename = f"{i:>06}.png"
