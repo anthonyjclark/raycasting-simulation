@@ -72,24 +72,24 @@ class Coord(object):
 Path = List[Coord]
 
 
-def isPath(cell: int, dir: Dir) -> bool:
+def is_path(cell: int, dir: Dir) -> bool:
     return (cell & dir) != 0
 
 
-def isPathNorth(cell: int) -> bool:
-    return isPath(cell, Dir.NORTH)
+def is_path_north(cell: int) -> bool:
+    return is_path(cell, Dir.NORTH)
 
 
-def isPathEast(cell: int) -> bool:
-    return isPath(cell, Dir.EAST)
+def is_path_east(cell: int) -> bool:
+    return is_path(cell, Dir.EAST)
 
 
-def isPathSouth(cell: int) -> bool:
-    return isPath(cell, Dir.SOUTH)
+def is_path_south(cell: int) -> bool:
+    return is_path(cell, Dir.SOUTH)
 
 
-def isPathWest(cell: int) -> bool:
-    return isPath(cell, Dir.WEST)
+def is_path_west(cell: int) -> bool:
+    return is_path(cell, Dir.WEST)
 
 
 class Maze(object):
@@ -120,20 +120,20 @@ class Maze(object):
             row_str = "|"
             for x, cell in enumerate(row):
                 xy = Coord(x, y)
-                is_zero = self.coordIsZero(xy)
-                xynorth = self.northNeighborZero(xy)
+                is_zero = self.coord_is_zero(xy)
+                xynorth = self.north_is_zero(xy)
 
-                if (is_zero and xynorth) or isPathSouth(cell):
+                if (is_zero and xynorth) or is_path_south(cell):
                     row_str += " "
                 else:
                     row_str += "_"
 
-                if is_zero and self.eastNeighborZero(xy):
+                if is_zero and self.east_is_zero(xy):
                     xynortheast = y + 1 < h and self[Coord(x + 1, y + 1)] == 0
                     row_str += " " if (xynorth or xynortheast) else "_"
 
-                elif isPathEast(cell):
-                    row_str += " " if isPathSouth(cell | row[x + 1]) else "_"
+                elif is_path_east(cell):
+                    row_str += " " if is_path_south(cell | row[x + 1]) else "_"
 
                 else:
                     row_str += "|"
@@ -141,50 +141,50 @@ class Maze(object):
             rows.append(row_str)
         return "\n".join(rows)
 
-    def coordIsZero(self, xy: Coord) -> bool:
+    def coord_is_zero(self, xy: Coord) -> bool:
         return self[xy] == 0
 
-    def coordIfZero(self, xy: Coord) -> Optional[Coord]:
-        return xy if self.coordIsZero(xy) else None
+    def coord_if_zero(self, xy: Coord) -> Optional[Coord]:
+        return xy if self.coord_is_zero(xy) else None
 
-    def northOf(self, xy: Coord) -> Optional[Coord]:
+    def north_of(self, xy: Coord) -> Optional[Coord]:
         return Coord(xy.x, xy.y + 1) if xy.y < self.height - 1 else None
 
-    def eastOf(self, xy: Coord) -> Optional[Coord]:
+    def east_of(self, xy: Coord) -> Optional[Coord]:
         return Coord(xy.x + 1, xy.y) if xy.x < self.width - 1 else None
 
-    def southOf(self, xy: Coord) -> Optional[Coord]:
+    def south_of(self, xy: Coord) -> Optional[Coord]:
         return Coord(xy.x, xy.y - 1) if xy.y > self.min else None
 
-    def westOf(self, xy: Coord) -> Optional[Coord]:
+    def west_of(self, xy: Coord) -> Optional[Coord]:
         return Coord(xy.x - 1, xy.y) if xy.x > self.min else None
 
-    def northNeighborZero(self, xy: Coord) -> Optional[Coord]:
-        northerner = self.northOf(xy)
+    def north_is_zero(self, xy: Coord) -> Optional[Coord]:
+        northerner = self.north_of(xy)
         return northerner if northerner and self[northerner] == 0 else None
 
-    def eastNeighborZero(self, xy: Coord) -> Optional[Coord]:
-        easterner = self.eastOf(xy)
+    def east_is_zero(self, xy: Coord) -> Optional[Coord]:
+        easterner = self.east_of(xy)
         return easterner if easterner and self[easterner] == 0 else None
 
-    def southNeighborZero(self, xy: Coord) -> Optional[Coord]:
-        southerner = self.southOf(xy)
+    def south_is_zero(self, xy: Coord) -> Optional[Coord]:
+        southerner = self.south_of(xy)
         return southerner if southerner and self[southerner] == 0 else None
 
-    def westNeighborZero(self, xy: Coord) -> Optional[Coord]:
-        westerner = self.westOf(xy)
+    def west_is_zero(self, xy: Coord) -> Optional[Coord]:
+        westerner = self.west_of(xy)
         return westerner if westerner and self[westerner] == 0 else None
 
     def get_random_neighbor(self, xy: Coord) -> Optional[Tuple[Dir, Coord]]:
 
         neighbors = []
-        if northerner := self.northNeighborZero(xy):
+        if northerner := self.north_is_zero(xy):
             neighbors.append((Dir.NORTH, northerner))
-        if easterner := self.eastNeighborZero(xy):
+        if easterner := self.east_is_zero(xy):
             neighbors.append((Dir.EAST, easterner))
-        if southerner := self.southNeighborZero(xy):
+        if southerner := self.south_is_zero(xy):
             neighbors.append((Dir.SOUTH, southerner))
-        if westerner := self.westNeighborZero(xy):
+        if westerner := self.west_is_zero(xy):
             neighbors.append((Dir.WEST, westerner))
 
         return choice((neighbors)) if len(neighbors) else None
@@ -239,10 +239,10 @@ class Maze(object):
             if xy == end:
                 break
 
-            visit_coord_if(isPathNorth(cell), xy, self.northOf(xy))
-            visit_coord_if(isPathEast(cell), xy, self.eastOf(xy))
-            visit_coord_if(isPathSouth(cell), xy, self.southOf(xy))
-            visit_coord_if(isPathWest(cell), xy, self.westOf(xy))
+            visit_coord_if(is_path_north(cell), xy, self.north_of(xy))
+            visit_coord_if(is_path_east(cell), xy, self.east_of(xy))
+            visit_coord_if(is_path_south(cell), xy, self.south_of(xy))
+            visit_coord_if(is_path_west(cell), xy, self.west_of(xy))
 
         path = [end]
         while True:
@@ -306,9 +306,9 @@ def generate_block_maze(
 
     for y, row in enumerate(maze.maze):
         for x, cell in enumerate(row):
-            if not isPathSouth(cell):
+            if not is_path_south(cell):
                 np_maze[sc(y) + S, sc(x)] = colors.wall
-            if not isPathEast(cell):
+            if not is_path_east(cell):
                 np_maze[sc(y), sc(x) + E] = colors.wall
             np_maze[2 * y, 2 * x] = colors.wall
 

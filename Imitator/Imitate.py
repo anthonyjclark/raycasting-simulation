@@ -17,12 +17,13 @@ sys.path.append("../PycastWorld")
 sys.path.append("../Models")
 from pycaster import PycastWorld, Turn, Walk
 
-# Needed for Timeout 
+# Needed for Timeout
 import signal
 
 # Needed to calculate maze percentage
 import sys
-sys.path.append("../Utilities")
+
+sys.path.append("../MazeGen")
 from MazeUtils import read_maze_file, percent_through_maze
 
 # for animation
@@ -131,8 +132,8 @@ def stacked_input(prev_im, curr_im):
 
 
 def reg_predict(pred_coords):
-#     print(f"type: {type(pred_coords[1])} ")
-#     print(f"pred_coord[1]: {pred_coords} ")
+    #     print(f"type: {type(pred_coords[1])} ")
+    #     print(f"pred_coord[1]: {pred_coords} ")
     pred_angle = np.arctan2(pred_coords[1], pred_coords[0]) / np.pi * 180
     pred_angle = pred_angle % (360)
 
@@ -143,31 +144,34 @@ def reg_predict(pred_coords):
     else:
         return "straight"
 
-# Animation function.TODO: make it output an embedded HTML figure 
-def animate(image_frames, name):    
+
+# Animation function.TODO: make it output an embedded HTML figure
+def animate(image_frames, name):
     """
     Generate a GIF animation of the saved frames
-    
+
     Keyword arguments:
-    image_frames -- array of frames    
+    image_frames -- array of frames
     name -- name of model
     """
-    name = str(name).split('/')[-1]
+    name = str(name).split("/")[-1]
     fig, ax = plt.subplots()
     ln = plt.imshow(image_frames[0])
+
     def init():
         ln.set_data(image_frames[0])
         return [ln]
 
     def update(frame):
-    #     print(frame)
+        #     print(frame)
         ln.set_array(frame)
         return [ln]
 
     ani = FuncAnimation(fig, update, image_frames, init_func=init, interval=100)
     # plt.show()
     ani.save(name + "_" + datetime.now().strftime("%d-%m-%Y_%H-%M") + ".mp4")
-    
+
+
 def main(argv):
     maze = argv[0] if len(argv) > 0 else "../Mazes/maze01.txt"
     model = argv[1] if len(argv) > 1 else "../Models/auto-gen-c.pkl"
@@ -190,11 +194,11 @@ def main(argv):
     num_static = 0
     prev_x, prev_y = world.getX(), world.getY()
     animation_frames = []
-    
+
     outcome = "At goal? "
     stuck = False
     # Initialize maximum number of steps in case the robot travels in a completely incorrect direction
-    max_steps = 3000 
+    max_steps = 3000
     step_count = 0
     while not world.atGoal() and num_static < 5:
 
@@ -245,30 +249,39 @@ def main(argv):
             else:
                 num_static = 0
             animation_frames.append(image_data.copy())
-#             plt.imshow(image_data)
-#             plt.show()
+            #             plt.imshow(image_data)
+            #             plt.show()
             # update previous coordinates
             prev_x = curr_x
-            prev_y = curr_y        
+            prev_y = curr_y
 
         frame += 1
         prev_image_data = image_data
         if frame == max_steps:
             print("Exceeds step limit")
             break
-            
+
     # this chunk gets the completion percentage
     lost = False
     if num_static >= 5:
         stuck = True
     if frame >= max_steps:
         lost = True
-    outcome = "At Goal? " + str(world.atGoal()) + "\n Stuck? " + str(stuck) + "\n Exceed step limit? " + str(lost)
+    outcome = (
+        "At Goal? "
+        + str(world.atGoal())
+        + "\n Stuck? "
+        + str(stuck)
+        + "\n Exceed step limit? "
+        + str(lost)
+    )
     print(outcome)
     maze_rvs, _, _, maze_directions, _ = read_maze_file(maze)
     start_x, start_y, _ = maze_directions[0]
     end_x, end_y, _ = maze_directions[-1]
-    completion_per = percent_through_maze(maze_rvs, int(world.getX()), int(world.getY()), start_x, start_y, end_x, end_y)
+    completion_per = percent_through_maze(
+        maze_rvs, int(world.getX()), int(world.getY()), start_x, start_y, end_x, end_y
+    )
 
     plt.imshow(image_data)
     plt.show()
