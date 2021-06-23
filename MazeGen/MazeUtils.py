@@ -21,18 +21,18 @@ Path = List[Coordinate]
 Directions = List[Tuple[int, int, str]]
 
 
-def read_maze_file(filepath: str,) -> Tuple[Maze, int, int, Directions, List[str]]:
+def read_maze_file(filepath: str) -> Tuple[Maze, int, int, Directions, List[str]]:
     """Read a maze file and return values
 
     Args:
         filepath (str): path to a maze file
 
     Returns:
-        Tuple[Maze: a maze
+        Maze: a maze
         int: maze width
         int: maze height
         Directions: turn by turn directions
-        List[str]]: texture names
+        List[str]: texture names
     """
     with open(filepath, "r") as maze_file:
         num_textures = int(maze_file.readline())
@@ -170,6 +170,7 @@ def percent_through_maze(
 
 
 def is_on_path(path: Path, x: int, y: int) -> bool:
+    # TODO: path should probably be a set for efficiency sake
     return (x, y) in path
 
 
