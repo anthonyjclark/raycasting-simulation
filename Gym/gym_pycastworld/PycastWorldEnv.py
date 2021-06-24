@@ -20,13 +20,14 @@ from pycaster import PycastWorld, Turn, Walk  # type: ignore
 class PycastWorldEnv(gym.Env):
     metadata = {"render.modes": ["human", "rgb_array"]}
 
-    def __init__(self) -> None:
+    def __init__(self, mazefile=None) -> None:
         super().__init__()
 
         image_width = 320
         image_height = 240
 
-        self.world = PycastWorld(image_width, image_height, "../Mazes/maze01.txt")
+        mazefile = mazefile if mazefile else "../Mazes/maze01.txt"
+        self.world = PycastWorld(image_width, image_height, mazefile)
         self.world.direction(0, 1.152)  # TODO: remove?
 
         self.seed()

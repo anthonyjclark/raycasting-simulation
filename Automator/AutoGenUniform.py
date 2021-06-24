@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 # TODO:
-# - work with regression
+# - work with regression (be pickier about going down middle of hallway)
 # - work with image sequences
 # - radians(30)
 # - give some leeway when in the center of the hall (not close to wall)
@@ -12,10 +12,7 @@ from argparse import ArgumentParser
 from math import atan2, degrees, pi, radians
 from pathlib import Path
 from random import choice, random
-from typing import Tuple
-
-import matplotlib.pyplot as plt
-import numpy as np
+from typing import Tuple, Optional
 
 import sys
 
@@ -48,8 +45,12 @@ class Pt:
         return self.__str__()
 
     @classmethod
-    def rand(cls, lo: float, hi: float) -> Pt:
-        return Pt((hi - lo) * random() + lo, (hi - lo) * random() + lo)
+    def rand(
+        cls, lims: Tuple[float, float], ylims: Optional[Tuple[float, float]] = None
+    ) -> Pt:
+        xlo, xhi = lims
+        ylo, yhi = ylims if ylims else lims
+        return Pt((xhi - xlo) * random() + xlo, (yhi - ylo) * random() + ylo)
 
     @classmethod
     def angle(cls, pt: Pt) -> float:
@@ -81,6 +82,9 @@ def main():
     arg_parser.add_argument(
         "num_turn_images", type=int, help="Number of turning specific images."
     )
+    arg_parser.add_argument(
+        "--demo", action="store_true", help="Display images instead of saving."
+    )
 
     # TODO: currently unused
     arg_parser.add_argument("sequence", type=int, help="Number of images per sequence.")
@@ -111,6 +115,13 @@ def main():
         "SOUTH": radians(270),
     }
 
+    dir_noise = {
+        "EAST": ((-0.5, 0.3), (-0.5, 0.5)),
+        "WEST": ((-0.3, 0.5), (-0.5, 0.5)),
+        "NORTH": ((-0.5, 0.5), (-0.5, 0.3)),
+        "SOUTH": ((-0.5, 0.5), (-0.3, 0.5)),
+    }
+
     # Compute the direction and next_turn cell for each cell along the path
     maze_directions = iter(maze_directions)
     _, _, direction = next(maze_directions)  # First directions
@@ -120,18 +131,20 @@ def main():
     while next_direction == direction:
         turnx, turny, next_direction = next(maze_directions)
 
-    is_turn = False
+    # Set these so that they are at reasonable defaults for the first iteration
+    is_turn_cell = False
     prev_direction = ""
     prev_turn = None
     prev_heading = ""
+    upcoming_turn = None
 
     path_cells = []
     turn_cells = []
     for (x, y) in correct_path[:-1]:  # We don't need images for the final cell
         if x == turnx and y == turny:
-            is_turn = True
+            is_turn_cell = True
             prev_direction = direction
-            prev_turn = upcoming_turn  # type: ignore
+            prev_turn = upcoming_turn
             direction = next_direction
             try:
                 turnx, turny, next_direction = next(maze_directions)
@@ -161,11 +174,11 @@ def main():
 
         path_cells.append((pos, right_corner, left_corner, heading, turnx, turny,))
 
-        if is_turn:
+        if is_turn_cell:
             turn_cells.append((pos, prev_heading, prev_turn))
 
         # Reset for the next cell
-        is_turn = False
+        is_turn_cell = False
 
     # Create world
     world = PycastWorld(320, 240, args.maze_filepath)
@@ -178,7 +191,7 @@ def main():
         pos, right_corner, left_corner, heading, turnx, turny = choice(path_cells)
 
         # Perturb the position and heading
-        perturbed_pos = pos + Pt.rand(-0.5, 0.5)
+        perturbed_pos = pos + Pt.rand((-0.5, 0.5))
         x, y = perturbed_pos.xy
 
         ang_noise_mag = radians(30)
@@ -218,13 +231,20 @@ def main():
             action.rjust(7),
         )
 
-        # image = np.array(world)
-        # plt.imshow(image)
-        # plt.show()
-
-        # Save the image
         filename = f"{i:>06}.png"
-        world.savePNG(str(Path(args.save_dir) / action.lower() / filename))
+
+        if args.demo:
+            import matplotlib.pyplot as plt
+            import numpy as np
+
+            image = np.array(world)
+            plt.imshow(image)
+            plt.show()
+
+            print(f"File not saved in demo mode ({filename}).")
+
+        else:
+            world.savePNG(str(Path(args.save_dir) / action.lower() / filename))
 
     for i in range(args.num_turn_images):
 
@@ -233,21 +253,19 @@ def main():
         pos, heading, turn = choice(turn_cells)
 
         # Perturb the position and heading
-        perturbed_pos = pos + Pt.rand(-0.5, 0.5)
+        perturbed_pos = pos + Pt.rand(*dir_noise[heading])
         x, y = perturbed_pos.xy
 
         ang_noise_mag = radians(30)
         ang_noise = ang_noise_mag * (2 * random() - 1)
         angle = angle_from_zero_to_2pi(dir_to_angle[heading] + ang_noise)
 
+        # TODO: check if arrow is in field of view
+
         world.position(x, y, 0)  # z=0 is at vertical center
         world.direction(angle, FOV)  # 1.152 is the default FOV
 
         action = turn
-
-        # image = np.array(world)
-        # plt.imshow(image)
-        # plt.show()
 
         print(
             f"{i:>6} : ",
@@ -258,9 +276,20 @@ def main():
             action.rjust(7),
         )
 
-        # Save the image
         filename = f"{i:>06}.png"
-        world.savePNG(str(Path(args.save_dir) / action.lower() / filename))
+
+        if args.demo:
+            import matplotlib.pyplot as plt
+            import numpy as np
+
+            image = np.array(world)
+            plt.imshow(image)
+            plt.show()
+
+            print(f"File not saved in demo mode ({filename}).")
+
+        else:
+            world.savePNG(str(Path(args.save_dir) / action.lower() / filename))
 
 
 if __name__ == "__main__":
