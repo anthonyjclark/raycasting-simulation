@@ -73,6 +73,9 @@ def angle_from_zero_to_2pi(angle: float) -> float:
 
 def main():
 
+    ANG_NOISE_MAG = radians(30)
+    POS_NOISE_MAG = 0.4
+
     arg_parser = ArgumentParser("Run a maze utility")
     arg_parser.add_argument("maze_filepath", help="Path to a maze file.")
     arg_parser.add_argument("save_dir", help="Save location (directory must exist).")
@@ -113,13 +116,6 @@ def main():
         "WEST": radians(180),
         "NORTH": radians(90),
         "SOUTH": radians(270),
-    }
-
-    dir_noise = {
-        "EAST": ((-0.5, 0.3), (-0.5, 0.5)),
-        "WEST": ((-0.3, 0.5), (-0.5, 0.5)),
-        "NORTH": ((-0.5, 0.5), (-0.5, 0.3)),
-        "SOUTH": ((-0.5, 0.5), (-0.3, 0.5)),
     }
 
     # Compute the direction and next_turn cell for each cell along the path
@@ -191,11 +187,10 @@ def main():
         pos, right_corner, left_corner, heading, turnx, turny = choice(path_cells)
 
         # Perturb the position and heading
-        perturbed_pos = pos + Pt.rand((-0.5, 0.5))
+        perturbed_pos = pos + Pt.rand((-POS_NOISE_MAG, POS_NOISE_MAG))
         x, y = perturbed_pos.xy
 
-        ang_noise_mag = radians(30)
-        ang_noise = ang_noise_mag * (2 * random() - 1)
+        ang_noise = ANG_NOISE_MAG * (2 * random() - 1)
         angle = angle_from_zero_to_2pi(dir_to_angle[heading] + ang_noise)
 
         world.position(x, y, 0)  # z=0 is at vertical center
@@ -253,7 +248,7 @@ def main():
         pos, heading, turn = choice(turn_cells)
 
         # Perturb the position and heading
-        perturbed_pos = pos + Pt.rand(*dir_noise[heading])
+        perturbed_pos = pos + Pt.rand((-POS_NOISE_MAG, POS_NOISE_MAG))
         x, y = perturbed_pos.xy
 
         ang_noise_mag = radians(30)
