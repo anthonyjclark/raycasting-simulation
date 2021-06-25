@@ -126,7 +126,7 @@ def main():
     maze = sys.argv[2] if len(sys.argv) > 2 else "../Mazes/maze01.txt"
 
     world = PycastWorld(320, 240, maze)
-    # print(f"dirX: {acos(world.getDirX())}")
+    # print(f"dirX: {acos(world.get_dir_x())}")
 
     # getting directions
     with open(maze, "r") as in_file:
@@ -150,7 +150,7 @@ def main():
         _, _, base_dir = directions[i].split()
         targ_x, targ_y, targ_dir = directions[i + 1].split()
         targ_x, targ_y = int(targ_x), int(targ_y)
-        curr_x, curr_y = world.getX(), world.getY()
+        curr_x, curr_y = world.x(), world.y()
 
         print(targ_x, targ_y, targ_dir)
 
@@ -162,16 +162,16 @@ def main():
             world.update()
 
             # saving image straight
-            world.savePNG(f"{img_dir}/straight/{img_num_s:05}")
+            world.save_png(f"{img_dir}/straight/{img_num_s:05}")
             img_num_s += 1
 
             # image_data = np.array(world)
             # plt.imshow(image_data)
             # plt.show()
 
-            curr_x, curr_y = world.getX(), world.getY()
+            curr_x, curr_y = world.x(), world.y()
 
-        curr_dir = getDir(world.getDirX(), world.getDirY())
+        curr_dir = getDir(world.get_dir_x(), world.get_dir_y())
         decide = turn_check(curr_dir, base_dir, targ_dir)
 
         # turning
@@ -183,7 +183,7 @@ def main():
                 world.update()
 
                 # save image right
-                world.savePNG(f"{img_dir}/right/{img_num_r:05}")
+                world.save_png(f"{img_dir}/right/{img_num_r:05}")
                 img_num_r += 1
 
             elif decide == "left":
@@ -191,14 +191,14 @@ def main():
                 world.update()
 
                 # save image left
-                world.savePNG(f"{img_dir}/left/{img_num_l:05}")
+                world.save_png(f"{img_dir}/left/{img_num_l:05}")
                 img_num_l += 1
 
             # image_data = np.array(world)
             # plt.imshow(image_data)
             # plt.show()
 
-            curr_dir = getDir(world.getDirX(), world.getDirY())
+            curr_dir = getDir(world.get_dir_x(), world.get_dir_y())
             decide = turn_check(curr_dir, base_dir, targ_dir)
 
         i += 1

@@ -40,7 +40,7 @@ for episode in range(num_episodes):
             print(f"  Found goal in {t+1} steps")
             break
 
-    print(f"  Ended at position {env.world.getX()}, {env.world.getY()}")
+    print(f"  Ended at position {env.world.x()}, {env.world.y()}")
 env.close()
 
 

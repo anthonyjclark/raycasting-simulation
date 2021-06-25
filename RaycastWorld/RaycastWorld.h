@@ -140,10 +140,10 @@ private:
 
     // Motion
     Turn turn_direction;
-    double turn_rate;
+    double turn_speed;
 
     Walk walk_direction;
-    double walk_rate;
+    double walk_speed;
 
     bool need_to_render;
 
@@ -168,8 +168,8 @@ public:
     auto get_dir_y() { return dir_y; }
     auto get_direction() { return atan2(dir_y, dir_x); }
 
-    auto get_turn_rate() { return turn_rate; }
-    auto get_walk_rate() { return walk_rate; }
+    auto get_turn_speed() { return turn_speed; }
+    auto get_walk_speed() { return walk_speed; }
 
     void set_x(double x)
     {
@@ -196,6 +196,9 @@ public:
         pos_z = z;
         need_to_render = true;
     }
+
+    // Useful for Python bindings
+    void set_position_xy(double x, double y) { set_position(x, y); }
 
     void set_direction(double radians)
     {
@@ -337,9 +340,9 @@ RaycastWorld::RaycastWorld(usize width, usize height, std::string maze_file_path
 
     // Motion and rendering
     turn_direction = Turn::STOP;
-    turn_rate = 2.5 * (3.1415926 / 180);
+    turn_speed = 2.5 * (3.1415926 / 180);
     walk_direction = Walk::STOP;
-    walk_rate = 0.05;
+    walk_speed = 0.05;
 
     // Set direction
     if (direction == "Dir.NORTH")
@@ -382,7 +385,7 @@ void RaycastWorld::update_pose()
 {
     if (turn_direction != Turn::STOP)
     {
-        double rot_speed = static_cast<int>(turn_direction) * turn_rate;
+        double rot_speed = static_cast<int>(turn_direction) * turn_speed;
         double old_dir_x = dir_x;
         dir_x = old_dir_x * cos(-rot_speed) - dir_y * sin(-rot_speed);
         dir_y = old_dir_x * sin(-rot_speed) + dir_y * cos(-rot_speed);
@@ -396,7 +399,7 @@ void RaycastWorld::update_pose()
 
     if (walk_direction != Walk::STOP)
     {
-        double step = static_cast<int>(walk_direction) * walk_rate;
+        double step = static_cast<int>(walk_direction) * walk_speed;
         double new_x = pos_x + dir_x * step;
         double new_y = pos_y + dir_y * step;
 

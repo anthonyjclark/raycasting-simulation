@@ -7,48 +7,49 @@ namespace py = pybind11;
 PYBIND11_MODULE(pycaster, m)
 {
     py::enum_<Turn>(m, "Turn", py::arithmetic(), "Turning enumeration")
-        .value("Left", LEFT)
-        .value("Stop", STOP)
-        .value("Right", RIGHT);
+        .value("Left", Turn::LEFT)
+        .value("Stop", Turn::STOP)
+        .value("Right", Turn::RIGHT);
 
     py::enum_<Walk>(m, "Walk", py::arithmetic(), "Walking enumeration")
-        .value("Backward", BACKWARD)
-        .value("Stopped", STOPPED)
-        .value("Forward", FORWARD);
+        .value("Backward", Walk::BACKWARD)
+        .value("Stopped", Walk::STOP)
+        .value("Forward", Walk::FORWARD);
 
     py::class_<RaycastWorld>(m, "PycastWorld", py::buffer_protocol())
         .def(py::init<usize, usize, std::string>())
-        .def("turn", &RaycastWorld::setTurn)
-        .def("walk", &RaycastWorld::setWalk)
-        .def("update", &RaycastWorld::updatePose)
-        .def("render", &RaycastWorld::renderView)
+        .def("update", &RaycastWorld::update_pose)
+        .def("render", &RaycastWorld::render_view)
         .def("reset", &RaycastWorld::reset)
-        .def("atGoal", &RaycastWorld::atGoal)
-        .def("savePNG", &RaycastWorld::savePNG)
-        .def("getX", &RaycastWorld::getX)
-        .def("getY", &RaycastWorld::getY)
-        .def("getDirX", &RaycastWorld::getDirX)
-        .def("getDirY", &RaycastWorld::getDirY)
-        .def("getDirection", &RaycastWorld::getDirection)
-        .def("position", &RaycastWorld::setPosition)
-        .def("direction", &RaycastWorld::setDirection)
-        .def("getTurnSpeed", &RaycastWorld::getTurnSpeed)
-        .def("getWalkSpeed", &RaycastWorld::getWalkSpeed)
-        .def_buffer([](RaycastWorld &caster) -> py::buffer_info {
-            return py::buffer_info(
-                caster.getBuffer(),                       // Pointer to data
-                sizeof(uint8_t),                          // Size of data type
-                py::format_descriptor<uint8_t>::format(), // Data type for messages
-                3,                                        // Number of dimensions
-                {
-                    static_cast<int>(caster.getHeight()), // Height of buffer
-                    static_cast<int>(caster.getWidth()),  // Width of buffer
-                    3                                     // Number of color channels
-                },
-                {
-                    sizeof(uint8_t) * caster.getWidth() * 3, // Stride for height
-                    sizeof(uint8_t) * 3,                     // Stride for width
-                    sizeof(uint8_t)                          // Stride for pixels
-                });
-        });
+        .def("save_png", &RaycastWorld::save_png)
+        .def("at_goal", &RaycastWorld::at_goal)
+        .def("turn", &RaycastWorld::set_turn)
+        .def("walk", &RaycastWorld::set_walk)
+        .def("x", &RaycastWorld::get_x)
+        .def("y", &RaycastWorld::get_y)
+        .def("set_position", &RaycastWorld::set_position_xy)
+        .def("direction", &RaycastWorld::get_direction)
+        .def("set_direction", &RaycastWorld::set_direction)
+        .def("turn_speed", &RaycastWorld::get_turn_speed)
+        .def("walk_speed", &RaycastWorld::get_walk_speed)
+        .def("get_dir_x", &RaycastWorld::get_dir_x)
+        .def("get_dir_y", &RaycastWorld::get_dir_y)
+        .def_buffer([](RaycastWorld &caster) -> py::buffer_info
+                    {
+                        return py::buffer_info(
+                            caster.get_buffer(),                      // Pointer to data
+                            sizeof(uint8_t),                          // Size of data type
+                            py::format_descriptor<uint8_t>::format(), // Data type for messages
+                            3,                                        // Number of dimensions
+                            {
+                                static_cast<int>(caster.get_screen_height()), // Height of buffer
+                                static_cast<int>(caster.get_screen_width()),  // Width of buffer
+                                3                                             // Number of color channels
+                            },
+                            {
+                                sizeof(uint8_t) * caster.get_screen_width() * 3, // Stride for height
+                                sizeof(uint8_t) * 3,                             // Stride for width
+                                sizeof(uint8_t)                                  // Stride for pixels
+                            });
+                    });
 }

@@ -24,6 +24,7 @@ rand_step_scale = 0.4
 
 enws = {"Dir.EAST": 0, "Dir.NORTH": 90, "Dir.WEST": 180, "Dir.SOUTH": 270}
 
+
 def in_targ_cell(base_dir, c_targ_x, c_targ_y, x, y):
     if base_dir == 0 or base_dir == 180:
         if abs(c_targ_x - x) < 0.4:
@@ -33,16 +34,10 @@ def in_targ_cell(base_dir, c_targ_x, c_targ_y, x, y):
             return True
     return False
 
+
 class Driver:
     def __init__(
-        self,
-        c_targ_x,
-        c_targ_y,
-        base_dir,
-        targ_dir,
-        world,
-        img_dir=None,
-        show_freq=0,
+        self, c_targ_x, c_targ_y, base_dir, targ_dir, world, img_dir=None, show_freq=0,
     ):
         self.c_targ_x = c_targ_x
         self.c_targ_y = c_targ_y
@@ -50,8 +45,8 @@ class Driver:
         self.targ_dir = targ_dir
 
         self.world = world
-        self.curr_x = self.world.getX()
-        self.curr_y = self.world.getY()
+        self.curr_x = self.world.x()
+        self.curr_y = self.world.y()
 
         self.direction = 0
         self.update_direction()
@@ -61,7 +56,7 @@ class Driver:
 
         self.angle = 0
         self.step = math.inf
-        
+
         # Adding variable to keep track of the previous move
         self.prev_move = "straight"
 
@@ -76,20 +71,20 @@ class Driver:
 
     def update_dist(self):
         self.dist = math.sqrt(
-            (self.c_targ_x - self.world.getX()) ** 2
-            + (self.c_targ_y - self.world.getY()) ** 2
+            (self.c_targ_x - self.world.x()) ** 2
+            + (self.c_targ_y - self.world.y()) ** 2
         )
 
     def update_direction(self):
-        if not -1 <= self.world.getDirX() <= 1:
-            dir_x = round(self.world.getDirX())
+        if not -1 <= self.world.get_dir_x() <= 1:
+            dir_x = round(self.world.get_dir_x())
         else:
-            dir_x = self.world.getDirX()
+            dir_x = self.world.get_dir_x()
 
-        if not -1 <= self.world.getDirY() <= 1:
-            dir_y = round(self.world.getDirY())
+        if not -1 <= self.world.get_dir_y() <= 1:
+            dir_y = round(self.world.get_dir_y())
         else:
-            dir_y = self.world.getDirY()
+            dir_y = self.world.get_dir_y()
 
         if dir_x > 0 and dir_y >= 0:
             dir = acos(dir_x)
@@ -101,7 +96,7 @@ class Driver:
             dir = asin(dir_y)
 
         self.direction = dir % (2 * pi)
-    
+
     # adjust for smoother path
     def modified_targ(self, delta):
         if self.base_dir == 0 or self.base_dir == 180:
@@ -122,36 +117,34 @@ class Driver:
             if mod_x == self.curr_x:
                 theta = pi / 2
             else:
-                theta = (
-                    atan((mod_y - self.curr_y) / (mod_x - self.curr_x))
-                ) % (2 * pi)
+                theta = (atan((mod_y - self.curr_y) / (mod_x - self.curr_x))) % (2 * pi)
 
         # case where target pos is up and to the left
         elif self.curr_x > mod_x and self.curr_y <= mod_y:
             if mod_y == self.curr_y:
                 theta = pi
             else:
-                theta = (
-                    atan((self.curr_x - mod_x) / (mod_y - self.curr_y))
-                ) % (2 * pi) + pi / 2
+                theta = (atan((self.curr_x - mod_x) / (mod_y - self.curr_y))) % (
+                    2 * pi
+                ) + pi / 2
 
         # case where target pos is down and to the left
         elif self.curr_x > mod_x and self.curr_y > mod_y:
             if mod_x == self.curr_x:
                 theta = 3 * pi / 2
             else:
-                theta = (
-                    atan((self.curr_y - mod_y) / (self.curr_x - mod_x))
-                ) % (2 * pi) + pi
+                theta = (atan((self.curr_y - mod_y) / (self.curr_x - mod_x))) % (
+                    2 * pi
+                ) + pi
 
         # case where target pos is down and to the right
         else:
             if self.curr_y == mod_y:
                 theta = 0
             else:
-                theta = (
-                    atan((mod_x - self.curr_x) / (self.curr_y - mod_y))
-                ) % (2 * pi) + 3 * pi / 2
+                theta = (atan((mod_x - self.curr_x) / (self.curr_y - mod_y))) % (
+                    2 * pi
+                ) + 3 * pi / 2
 
         return theta
 
@@ -181,23 +174,27 @@ class Driver:
     def turn_to_angle(self):
         self.world.walk(Walk.Stopped)
         i = 0
-        prev_turn = None        
-        
+        prev_turn = None
+
         while self.abs_angle_diff(self.angle) > 0.1:
             if self.turn_right(self.angle):
-                
+
                 if prev_turn == "left":
                     print("no left to right allowed")
                     break
 
                 # save image right
                 if self.img_dir != None:
-                    self.world.savePNG(
-                        os.path.join(self.img_dir, "right", f"{self.img_num:05}-{self.prev_move}.png")
+                    self.world.save_png(
+                        os.path.join(
+                            self.img_dir,
+                            "right",
+                            f"{self.img_num:05}-{self.prev_move}.png",
+                        )
                     )
-                    self.prev_move = 'right'
+                    self.prev_move = "right"
                     self.img_num += 1
-                
+
                 self.world.turn(Turn.Right)
                 self.world.update()
 
@@ -210,10 +207,14 @@ class Driver:
 
                 # save image left
                 if self.img_dir != None:
-                    self.world.savePNG(
-                        os.path.join(self.img_dir, "left", f"{self.img_num:05}-{self.prev_move}.png")
+                    self.world.save_png(
+                        os.path.join(
+                            self.img_dir,
+                            "left",
+                            f"{self.img_num:05}-{self.prev_move}.png",
+                        )
                     )
-                    self.prev_move = 'left'
+                    self.prev_move = "left"
                     self.img_num += 1
 
                 self.world.turn(Turn.Left)
@@ -241,31 +242,31 @@ class Driver:
     def dist_to_wall(self):
         if self.targ_dir == 0:
             if (3 * pi / 2) <= self.direction <= (2 * pi):
-                a = self.world.getY() - (self.c_targ_y - 0.5)
+                a = self.world.y() - (self.c_targ_y - 0.5)
                 theta = self.direction - (3 * pi / 2)
             else:
-                a = (self.c_targ_y + 0.5) - self.world.getY()
+                a = (self.c_targ_y + 0.5) - self.world.y()
                 theta = self.direction
         elif self.targ_dir == 90:
             if 0 <= self.direction <= (pi / 2):
-                a = (self.c_targ_x + 0.5) - self.world.getX()
+                a = (self.c_targ_x + 0.5) - self.world.x()
                 theta = self.direction
             else:
-                a = self.world.getX() - (self.c_targ_x - 0.5)
+                a = self.world.x() - (self.c_targ_x - 0.5)
                 theta = pi - self.direction
         elif self.targ_dir == 180:
             if (pi / 2) <= self.direction <= pi:
-                a = (self.c_targ_y + 0.5) - self.world.getY()
+                a = (self.c_targ_y + 0.5) - self.world.y()
                 theta = self.direction - (pi / 2)
             else:
-                a = self.world.getY() - (self.c_targ_y - 0.5)
+                a = self.world.y() - (self.c_targ_y - 0.5)
                 theta = (3 * pi / 2) - self.direction
         elif self.targ_dir == 270:
             if pi <= self.direction <= 3 * pi / 2:
-                a = self.world.getX() - (self.c_targ_x - 0.5)
+                a = self.world.x() - (self.c_targ_x - 0.5)
                 theta = self.direction - pi
             else:
-                a = (self.c_targ_x + 0.5) - self.world.getX()
+                a = (self.c_targ_x + 0.5) - self.world.x()
                 theta = (2 * pi) - self.direction
 
         b, c = self.solve_triangle(theta, a)
@@ -278,20 +279,29 @@ class Driver:
     def move_to_step(self):
         self.world.turn(Turn.Stop)
         i = 0
-        while not in_targ_cell(self.base_dir, self.c_targ_x, self.c_targ_y, self.curr_x, self.curr_y) and self.step > 0.1:
+        while (
+            not in_targ_cell(
+                self.base_dir, self.c_targ_x, self.c_targ_y, self.curr_x, self.curr_y
+            )
+            and self.step > 0.1
+        ):
 
             if self.img_dir != None:
-                self.world.savePNG(
-                    os.path.join(self.img_dir, "straight", f"{self.img_num:05}-{self.prev_move}.png")
+                self.world.save_png(
+                    os.path.join(
+                        self.img_dir,
+                        "straight",
+                        f"{self.img_num:05}-{self.prev_move}.png",
+                    )
                 )
-                self.prev_move = 'straight'
+                self.prev_move = "straight"
                 self.img_num += 1
-            
+
             self.world.walk(Walk.Forward)
             self.world.update()
 
-            self.curr_x = self.world.getX()
-            self.curr_y = self.world.getY()
+            self.curr_x = self.world.x()
+            self.curr_y = self.world.y()
 
             if self.show_freq != 0:
                 if i % self.show_freq == 0:
@@ -300,7 +310,7 @@ class Driver:
                     plt.show()
                 i += 1
 
-            self.step -= self.world.getWalkSpeed()
+            self.step -= self.world.walk_speed()
             self.update_dist()
 
         self.world.walk(Walk.Stopped)
@@ -345,7 +355,9 @@ class Navigator:
             c_targ_x, c_targ_y, base_dir, targ_dir, self.world, self.img_dir, show_freq
         )
 
-        while not in_targ_cell(base_dir, c_targ_x, c_targ_y, driver.curr_x, driver.curr_y):
+        while not in_targ_cell(
+            base_dir, c_targ_x, c_targ_y, driver.curr_x, driver.curr_y
+        ):
             driver.set_rand_angle()
             driver.turn_to_angle()
             driver.set_rand_step()
@@ -361,8 +373,9 @@ def main():
 
     j = 0
     while j < navigator.num_directions - 1:
-        navigator.navigate(j, show_dir=True, show_freq=show_freq)           
+        navigator.navigate(j, show_dir=True, show_freq=show_freq)
         j += 1
+
 
 if __name__ == "__main__":
     main()

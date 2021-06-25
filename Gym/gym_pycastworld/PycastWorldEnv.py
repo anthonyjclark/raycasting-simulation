@@ -31,7 +31,7 @@ class PycastWorldEnv(gym.Env):
 
         mazefile = mazefile if mazefile else "../Mazes/maze01.txt"
         self.world = PycastWorld(image_width, image_height, mazefile)
-        self.world.direction(0, 1.152)  # TODO: remove?
+        self.world.set_direction(0)  # TODO: remove?
 
         self.seed()
 
@@ -66,7 +66,7 @@ class PycastWorldEnv(gym.Env):
         ob = np.array(self.world)
 
         # Reward with 1 if at the end
-        reward = 1 if self.world.atGoal() else -1
+        reward = 1 if self.world.at_goal() else -1
 
         # Episode is over if we reached the goal
         episode_over = reward == 1

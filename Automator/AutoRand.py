@@ -358,7 +358,7 @@ def main():
         _, _, s_base_dir = directions[i].split()
         targ_x, targ_y, s_targ_dir = directions[i + 1].split()
         targ_x, targ_y = int(targ_x), int(targ_y)
-        curr_x, curr_y = world.getX(), world.getY()
+        curr_x, curr_y = world.x(), world.y()
 
         # convert from string
         base_dir = enws[s_base_dir]
@@ -374,7 +374,7 @@ def main():
         abs_dist = l2_dist(curr_x, curr_y, c_targ_x, c_targ_y)
         while abs_dist > 0.4:
 
-            curr_dir = getDir(world.getDirX(), world.getDirY())
+            curr_dir = getDir(world.get_dir_x(), world.get_dir_y())
             curr_dir = curr_dir % (2 * pi)
 
             # getting random angle to turn towards
@@ -396,7 +396,7 @@ def main():
                 if turn_right(curr_dir, rand_angle):
 
                     # save image right
-                    # world.savePNG(f"{img_dir}/right/{img_num_r:05}.png")
+                    # world.save_png(f"{img_dir}/right/{img_num_r:05}.png")
 
                     img_num_r += 1
                     world.turn(Turn.Right)
@@ -405,7 +405,7 @@ def main():
                 else:
 
                     # save image left
-                    # world.savePNG(f"{img_dir}/left/{img_num_l:05}.png")
+                    # world.save_png(f"{img_dir}/left/{img_num_l:05}.png")
                     img_num_l += 1
 
                     world.turn(Turn.Left)
@@ -415,7 +415,7 @@ def main():
                 # plt.imshow(image_data)
                 # plt.show()
 
-                curr_dir = getDir(world.getDirX(), world.getDirY())
+                curr_dir = getDir(world.get_dir_x(), world.get_dir_y())
                 curr_dir = curr_dir % (2 * pi)
 
             world.turn(Turn.Stop)
@@ -430,7 +430,7 @@ def main():
             while move_straight and abs_dist > 0.4:
 
                 # saving image straight
-                # world.savePNG(f"{img_dir}/straight/{img_num_s:05}.png")
+                # world.save_png(f"{img_dir}/straight/{img_num_s:05}.png")
 
                 img_num_s += 1
                 world.walk(Walk.Forward)
@@ -440,9 +440,9 @@ def main():
                 # plt.imshow(image_data)
                 # plt.show()
 
-                step -= world.getWalkSpeed()
-                curr_x, curr_y = world.getX(), world.getY()
-                curr_dir = getDir(world.getDirX(), world.getDirY())
+                step -= world.walk_speed()
+                curr_x, curr_y = world.x(), world.y()
+                curr_dir = getDir(world.get_dir_x(), world.get_dir_y())
                 curr_dir = curr_dir % (2 * pi)
 
                 move_straight = keep_straight(
