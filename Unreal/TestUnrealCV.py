@@ -1,10 +1,12 @@
 import sys
 
-sys.path.append("/home/ajc/UE4/unrealcv/client/python")
+sys.path.append("/home/eoca2018/unrealcv/client/python")
 
-from unrealcv import client  # type: ignore
+#from unrealcv import client  # type: ignore
+import unrealcv
 
-client.connect()
+client = unrealcv.Client(("localhost", 9000), None)
+client.connect(timeout=5)
 
 if not client.isconnected():
     print("UnrealCV server is not running.")

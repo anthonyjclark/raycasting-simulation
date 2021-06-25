@@ -160,7 +160,6 @@ class Driver:
                 theta = (atan((mod_x - self.curr_x) / (self.curr_y - mod_y))) % (
                     2 * pi
                 ) + 3 * pi / 2
-
         return theta
 
     def set_rand_angle(self):
@@ -305,7 +304,6 @@ class Driver:
             )
             and self.step > 0.1
         ):
-
             if self.img_dir != None:
                 if self.stack_dir:
                     self.world.savePNG(
@@ -357,6 +355,8 @@ class Navigator:
             self.directions = in_file.readlines()
 
         self.num_directions = len(self.directions)
+        
+        self.angles = []
 
     def navigate(self, index, show_dir=False, show_freq=0):
         _, _, s_base_dir = self.directions[index].split()
@@ -385,6 +385,11 @@ class Navigator:
             driver.turn_to_angle()
             driver.set_rand_step()
             driver.move_to_step()
+            self.angles.append(driver.get_angle())
+            
+    def plot_angles(self):
+        for a in self.angles:
+            print(a)
 
 
 def main():
@@ -396,12 +401,13 @@ def main():
     )
 
     navigator = Navigator(maze, img_dir)
-
+    
     j = 0
     while j < navigator.num_directions - 1:
         navigator.navigate(j, show_dir=show_dir, show_freq=show_freq)
         j += 1
-
+    
+    navigator.plot_angles()
 
 if __name__ == "__main__":
     main()

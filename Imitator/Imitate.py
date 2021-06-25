@@ -1,7 +1,5 @@
 #!/usr/bin/env python
 
-# TODO: add gif output using matplotlib animation
-
 from matplotlib import image
 import matplotlib.pyplot as plt
 import numpy as np
@@ -21,10 +19,11 @@ from pycaster import PycastWorld, Turn, Walk
 import signal
 
 # Needed to calculate maze percentage
+
 import sys
 
 sys.path.append("../MazeGen")
-from MazeUtils import read_maze_file, percent_through_maze
+from MazeUtils import read_maze_file, percent_through_maze, bfs_dist_maze, is_on_path
 
 # for animation
 from matplotlib.animation import FuncAnimation
@@ -154,10 +153,14 @@ def animate(image_frames, name):
     image_frames -- array of frames
     name -- name of model
     """
-    name = str(name).split("/")[-1]
+    now = datetime.now()
+    if not os.path.isdir(dir_name):
+        os.mkdir(dir_name)
+    os.system(dir_name)
+    save_path = os.path.abspath(dir_name)
+    name = str(name).split('/')[-1][:-4]
     fig, ax = plt.subplots()
     ln = plt.imshow(image_frames[0])
-
     def init():
         ln.set_data(image_frames[0])
         return [ln]
@@ -169,13 +172,15 @@ def animate(image_frames, name):
 
     ani = FuncAnimation(fig, update, image_frames, init_func=init, interval=100)
     # plt.show()
-    ani.save(name + "_" + datetime.now().strftime("%d-%m-%Y_%H-%M") + ".mp4")
-
+    ani.save(os.path.join(save_path, name + "_" +  str(now) +  ".mp4"))
+    
 
 def main(argv):
     maze = argv[0] if len(argv) > 0 else "../Mazes/maze01.txt"
     model = argv[1] if len(argv) > 1 else "../Models/auto-gen-c.pkl"
     show_freq = int(argv[2]) if len(argv) > 2 else 0  # frequency to show frames
+    directory_name = argv[5] if len(argv) > 5 else "tmp_diagnostics"
+    print("DIR NAME: " + directory_name)
 
     model_type = (
         argv[3] if len(argv) > 3 else "c"
@@ -200,7 +205,18 @@ def main(argv):
     # Initialize maximum number of steps in case the robot travels in a completely incorrect direction
     max_steps = 3000
     step_count = 0
+    
+    # Initialize Maze Check
+    maze_rvs, _, _, maze_directions, _ = read_maze_file(maze)
+    start_x, start_y, _ = maze_directions[0]
+    end_x, end_y, _ = maze_directions[-1]
+    _, maze_path = bfs_dist_maze(maze_rvs, start_x, start_y, end_x, end_y)
+    
     while not world.atGoal() and num_static < 5:
+        
+        if is_on_path(maze_path, int(world.getX()), int(world.getY())) is False:
+            print("Off Path")
+            break
 
         # Get image
         image_data = np.array(world)
@@ -276,24 +292,19 @@ def main(argv):
         + str(lost)
     )
     print(outcome)
-    maze_rvs, _, _, maze_directions, _ = read_maze_file(maze)
-    start_x, start_y, _ = maze_directions[0]
-    end_x, end_y, _ = maze_directions[-1]
-    completion_per = percent_through_maze(
-        maze_rvs, int(world.getX()), int(world.getY()), start_x, start_y, end_x, end_y
-    )
+
+    completion_per = percent_through_maze(maze_rvs, int(world.getX()), int(world.getY()), start_x, start_y, end_x, end_y)
 
     plt.imshow(image_data)
     plt.show()
-    animate(animation_frames, model)
-    # TODO: add utility that measures percentage of maze completed upon failure
-    # TODO: add additional criteria for failing to navigate maze (network might go wrong direction, but keep moving)
-    # TODO: any other metrics besides number of frames that we care about?
+    print("DIR NAME: ")
+ 
+    animate(animation_frames, model, directory_name)
 
     if num_static >= 5 and not world.atGoal():  # model failed to navigate maze
-        return frame, False, completion_per, outcome
+        return frame, False, completion_per
     else:  # model successfully navigated maze
-        return frame, True, completion_per, outcome
+        return frame, True, completion_per
 
 
 if __name__ == "__main__":

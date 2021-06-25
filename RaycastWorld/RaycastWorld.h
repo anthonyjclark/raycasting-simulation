@@ -169,6 +169,14 @@ public:
 
     auto getTurnSpeed() { return turnSpeed; }
     auto getWalkSpeed() { return walkSpeed; }
+    
+    // maybe this will work? 
+//     void setDirXY(double x, double y)
+//     {
+//         dirX = x;
+//         dirY = y;
+//         needToRender = true;
+//     }
 
     void setX(double x)
     {
