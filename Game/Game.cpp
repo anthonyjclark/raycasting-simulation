@@ -85,7 +85,8 @@ void keyCallback(GLFWwindow *window, int key, int, int action, int)
     }
     else if (key == GLFW_KEY_P && action == GLFW_PRESS)
     {
-        std::cout << world->getX() << ", " << world->getY() << std::endl;
+        auto angle = world->getDirection() * 180 / 3.141529;
+        std::cout << world->getX() << ", " << world->getY() << " @ " << angle << std::endl;
     }
     else if (key == GLFW_KEY_M && action == GLFW_PRESS)
     {
