@@ -1,5 +1,6 @@
 from pathlib import Path
 from torch.utils.data import DataLoader, Dataset, SubsetRandomSampler
+import torchvision.models as models
 from PIL import Image
 import matplotlib.pyplot as plt
 import numpy as np
@@ -9,6 +10,7 @@ fastbook.setup_book()
 
 from fastbook import *
 from fastai.vision.widgets import *
+from fastai.vision.models.xresnet import *
 
 
 class ImageWithCmdDataset(Dataset):
@@ -52,6 +54,7 @@ class MyModel(nn.Module):
         self.cnn = models.resnet18(pretrained=pretrained)
         
         self.fc1 = nn.Linear(self.cnn.fc.out_features + 1, 512)
+        self.r1 = nn.ReLU(inplace=True)
         self.fc2 = nn.Linear(512, 3)
         
     def forward(self, data):
@@ -60,9 +63,481 @@ class MyModel(nn.Module):
         x2 = cmd.unsqueeze(1)
         
         x = torch.cat((x1, x2), dim=1)
-        x = F.relu(self.fc1(x))
+        x = self.r1(self.fc1(x))
         x = self.fc2(x)
         return x
+    
+class MyModel1(nn.Module):
+    def __init__(self, pretrained=True):
+        super(MyModel1, self).__init__()
+        self.cnn = models.resnet18(pretrained=pretrained)
+        
+        self.dr1 = nn.Dropout(p=0.25, inplace=False)
+        self.fc1 = nn.Linear(self.cnn.fc.out_features + 1, 512)
+        self.r1 = nn.ReLU(inplace=True)
+        self.dr2 = nn.Dropout(p=0.5, inplace=False)
+        self.fc2 = nn.Linear(512, 3)
+        
+    def forward(self, data):
+        img, cmd = data
+        x1 = self.cnn(img)
+        x2 = cmd.unsqueeze(1)
+        
+        x1 = self.dr1(x1)
+        
+        x = torch.cat((x1, x2), dim=1)
+        x = self.r1(self.fc1(x))
+        x = self.dr2(x)
+        x = self.fc2(x)
+        return x
+    
+class MyModel2(nn.Module):
+    def __init__(self, pretrained=True):
+        super(MyModel2, self).__init__()
+        self.cnn = models.resnet18(pretrained=pretrained)
+        
+        self.bn1 = nn.BatchNorm1d(1000)
+        self.dr1 = nn.Dropout(p=0.25, inplace=False)
+        self.fc1 = nn.Linear(self.cnn.fc.out_features + 1, 512)
+        self.r1 = nn.ReLU(inplace=True)
+        self.bn2 = nn.BatchNorm1d(512)
+        self.dr2 = nn.Dropout(p=0.5, inplace=False)
+        self.fc2 = nn.Linear(512, 3)
+        
+    def forward(self, data):
+        img, cmd = data
+        x1 = self.cnn(img)
+        x2 = cmd.unsqueeze(1)
+        
+        x1 = self.bn1(x1)
+        x1 = self.dr1(x1)
+        
+        x = torch.cat((x1, x2), dim=1)
+        x = self.r1(self.fc1(x))
+        x = self.bn2(x)
+        x = self.dr2(x)
+        x = self.fc2(x)
+        return x
+    
+class MyModel34(nn.Module):
+    def __init__(self, pretrained=True):
+        super(MyModel34, self).__init__()
+        self.cnn = models.resnet34(pretrained=pretrained)
+        
+        self.bn1 = nn.BatchNorm1d(1000)
+        self.dr1 = nn.Dropout(p=0.25, inplace=False)
+        self.fc1 = nn.Linear(self.cnn.fc.out_features + 1, 512)
+        self.r1 = nn.ReLU(inplace=True)
+        self.bn2 = nn.BatchNorm1d(512)
+        self.dr2 = nn.Dropout(p=0.5, inplace=False)
+        self.fc2 = nn.Linear(512, 3)
+        
+    def forward(self, data):
+        img, cmd = data
+        x1 = self.cnn(img)
+        x2 = cmd.unsqueeze(1)
+        
+        x1 = self.bn1(x1)
+        x1 = self.dr1(x1)
+        
+        x = torch.cat((x1, x2), dim=1)
+        x = self.r1(self.fc1(x))
+        x = self.bn2(x)
+        x = self.dr2(x)
+        x = self.fc2(x)
+        return x
+    
+class MyModel50(nn.Module):
+    def __init__(self, pretrained=True):
+        super(MyModel50, self).__init__()
+        self.cnn = models.resnet50(pretrained=pretrained)
+        
+        self.bn1 = nn.BatchNorm1d(1000)
+        self.dr1 = nn.Dropout(p=0.25, inplace=False)
+        self.fc1 = nn.Linear(self.cnn.fc.out_features + 1, 512)
+        self.r1 = nn.ReLU(inplace=True)
+        self.bn2 = nn.BatchNorm1d(512)
+        self.dr2 = nn.Dropout(p=0.5, inplace=False)
+        self.fc2 = nn.Linear(512, 3)
+        
+    def forward(self, data):
+        img, cmd = data
+        x1 = self.cnn(img)
+        x2 = cmd.unsqueeze(1)
+        
+        x1 = self.bn1(x1)
+        x1 = self.dr1(x1)
+        
+        x = torch.cat((x1, x2), dim=1)
+        x = self.r1(self.fc1(x))
+        x = self.bn2(x)
+        x = self.dr2(x)
+        x = self.fc2(x)
+        return x
+    
+class MyModel101(nn.Module):
+    def __init__(self, pretrained=True):
+        super(MyModel101, self).__init__()
+        self.cnn = models.resnet101(pretrained=pretrained)
+        
+        self.bn1 = nn.BatchNorm1d(1000)
+        self.dr1 = nn.Dropout(p=0.25, inplace=False)
+        self.fc1 = nn.Linear(self.cnn.fc.out_features + 1, 512)
+        self.r1 = nn.ReLU(inplace=True)
+        self.bn2 = nn.BatchNorm1d(512)
+        self.dr2 = nn.Dropout(p=0.5, inplace=False)
+        self.fc2 = nn.Linear(512, 3)
+        
+    def forward(self, data):
+        img, cmd = data
+        x1 = self.cnn(img)
+        x2 = cmd.unsqueeze(1)
+        
+        x1 = self.bn1(x1)
+        x1 = self.dr1(x1)
+        
+        x = torch.cat((x1, x2), dim=1)
+        x = self.r1(self.fc1(x))
+        x = self.bn2(x)
+        x = self.dr2(x)
+        x = self.fc2(x)
+        return x
+    
+class MyModelx18(nn.Module):
+    def __init__(self, pretrained=True):
+        super(MyModelx18, self).__init__()
+        self.cnn = xresnet18(pretrained=False)
+        
+        self.bn1 = nn.BatchNorm1d(1000)
+        self.dr1 = nn.Dropout(p=0.25, inplace=False)
+        self.fc1 = nn.Linear(1000 + 1, 512)
+        self.r1 = nn.ReLU(inplace=True)
+        self.bn2 = nn.BatchNorm1d(512)
+        self.dr2 = nn.Dropout(p=0.5, inplace=False)
+        self.fc2 = nn.Linear(512, 3)
+        
+    def forward(self, data):
+        img, cmd = data
+        x1 = self.cnn(img)
+        x2 = cmd.unsqueeze(1)
+        
+        x1 = self.bn1(x1)
+        x1 = self.dr1(x1)
+        
+        x = torch.cat((x1, x2), dim=1)
+        x = self.r1(self.fc1(x))
+        x = self.bn2(x)
+        x = self.dr2(x)
+        x = self.fc2(x)
+        return x
+    
+class MyModelx34(nn.Module):
+    def __init__(self, pretrained=True):
+        super(MyModelx34, self).__init__()
+        self.cnn = xresnet34(pretrained=False)
+        
+        self.bn1 = nn.BatchNorm1d(1000)
+        self.dr1 = nn.Dropout(p=0.25, inplace=False)
+        self.fc1 = nn.Linear(1000 + 1, 512)
+        self.r1 = nn.ReLU(inplace=True)
+        self.bn2 = nn.BatchNorm1d(512)
+        self.dr2 = nn.Dropout(p=0.5, inplace=False)
+        self.fc2 = nn.Linear(512, 3)
+        
+    def forward(self, data):
+        img, cmd = data
+        x1 = self.cnn(img)
+        x2 = cmd.unsqueeze(1)
+        
+        x1 = self.bn1(x1)
+        x1 = self.dr1(x1)
+        
+        x = torch.cat((x1, x2), dim=1)
+        x = self.r1(self.fc1(x))
+        x = self.bn2(x)
+        x = self.dr2(x)
+        x = self.fc2(x)
+        return x
+    
+class MyModelx50(nn.Module):
+    def __init__(self, pretrained=True):
+        super(MyModelx50, self).__init__()
+        self.cnn = xresnet50(pretrained=False)
+        
+        self.bn1 = nn.BatchNorm1d(1000)
+        self.dr1 = nn.Dropout(p=0.25, inplace=False)
+        self.fc1 = nn.Linear(1000 + 1, 512)
+        self.r1 = nn.ReLU(inplace=True)
+        self.bn2 = nn.BatchNorm1d(512)
+        self.dr2 = nn.Dropout(p=0.5, inplace=False)
+        self.fc2 = nn.Linear(512, 3)
+        
+    def forward(self, data):
+        img, cmd = data
+        x1 = self.cnn(img)
+        x2 = cmd.unsqueeze(1)
+        
+        x1 = self.bn1(x1)
+        x1 = self.dr1(x1)
+        
+        x = torch.cat((x1, x2), dim=1)
+        x = self.r1(self.fc1(x))
+        x = self.bn2(x)
+        x = self.dr2(x)
+        x = self.fc2(x)
+        return x
+
+class MyModelx101(nn.Module):
+    def __init__(self, pretrained=True):
+        super(MyModelx101, self).__init__()
+        self.cnn = xresnet101(pretrained=False)
+        
+        self.bn1 = nn.BatchNorm1d(1000)
+        self.dr1 = nn.Dropout(p=0.25, inplace=False)
+        self.fc1 = nn.Linear(1000 + 1, 512)
+        self.r1 = nn.ReLU(inplace=True)
+        self.bn2 = nn.BatchNorm1d(512)
+        self.dr2 = nn.Dropout(p=0.5, inplace=False)
+        self.fc2 = nn.Linear(512, 3)
+        
+    def forward(self, data):
+        img, cmd = data
+        x1 = self.cnn(img)
+        x2 = cmd.unsqueeze(1)
+        
+        x1 = self.bn1(x1)
+        x1 = self.dr1(x1)
+        
+        x = torch.cat((x1, x2), dim=1)
+        x = self.r1(self.fc1(x))
+        x = self.bn2(x)
+        x = self.dr2(x)
+        x = self.fc2(x)
+        return x    
+    
+class MyModel_sq1(nn.Module):
+    def __init__(self, pretrained=True):
+        super(MyModel_sq1, self).__init__()
+        self.cnn = models.squeezenet1_0(pretrained=pretrained)
+        
+        self.bn1 = nn.BatchNorm1d(1000)
+        self.dr1 = nn.Dropout(p=0.25, inplace=False)
+        self.fc1 = nn.Linear(1000 + 1, 512)
+        self.r1 = nn.ReLU(inplace=True)
+        self.bn2 = nn.BatchNorm1d(512)
+        self.dr2 = nn.Dropout(p=0.5, inplace=False)
+        self.fc2 = nn.Linear(512, 3)
+        
+    def forward(self, data):
+        img, cmd = data
+        x1 = self.cnn(img)
+        x2 = cmd.unsqueeze(1)
+        
+        x1 = self.bn1(x1)
+        x1 = self.dr1(x1)
+        
+        x = torch.cat((x1, x2), dim=1)
+        x = self.r1(self.fc1(x))
+        x = self.bn2(x)
+        x = self.dr2(x)
+        x = self.fc2(x)
+        return x    
+
+class MyModel_sq1_1(nn.Module):
+    def __init__(self, pretrained=True):
+        super(MyModel_sq1_1, self).__init__()
+        self.cnn = models.squeezenet1_1(pretrained=pretrained)
+        
+        self.bn1 = nn.BatchNorm1d(1000)
+        self.dr1 = nn.Dropout(p=0.25, inplace=False)
+        self.fc1 = nn.Linear(1000 + 1, 512)
+        self.r1 = nn.ReLU(inplace=True)
+        self.bn2 = nn.BatchNorm1d(512)
+        self.dr2 = nn.Dropout(p=0.5, inplace=False)
+        self.fc2 = nn.Linear(512, 3)
+        
+    def forward(self, data):
+        img, cmd = data
+        x1 = self.cnn(img)
+        x2 = cmd.unsqueeze(1)
+        
+        x1 = self.bn1(x1)
+        x1 = self.dr1(x1)
+        
+        x = torch.cat((x1, x2), dim=1)
+        x = self.r1(self.fc1(x))
+        x = self.bn2(x)
+        x = self.dr2(x)
+        x = self.fc2(x)
+        return x    
+    
+class MyModel_dnet121(nn.Module):
+    def __init__(self, pretrained=True):
+        super(MyModel_dnet121, self).__init__()
+        self.cnn = models.densenet121(pretrained=pretrained)
+        
+        self.bn1 = nn.BatchNorm1d(1000)
+        self.dr1 = nn.Dropout(p=0.25, inplace=False)
+        self.fc1 = nn.Linear(1000 + 1, 512)
+        self.r1 = nn.ReLU(inplace=True)
+        self.bn2 = nn.BatchNorm1d(512)
+        self.dr2 = nn.Dropout(p=0.5, inplace=False)
+        self.fc2 = nn.Linear(512, 3)
+        
+    def forward(self, data):
+        img, cmd = data
+        x1 = self.cnn(img)
+        x2 = cmd.unsqueeze(1)
+        
+        x1 = self.bn1(x1)
+        x1 = self.dr1(x1)
+        
+        x = torch.cat((x1, x2), dim=1)
+        x = self.r1(self.fc1(x))
+        x = self.bn2(x)
+        x = self.dr2(x)
+        x = self.fc2(x)
+        return x    
+    
+class MyModel_dnet161(nn.Module):
+    def __init__(self, pretrained=True):
+        super(MyModel_dnet161, self).__init__()
+        self.cnn = models.densenet161(pretrained=pretrained)
+        
+        self.bn1 = nn.BatchNorm1d(1000)
+        self.dr1 = nn.Dropout(p=0.25, inplace=False)
+        self.fc1 = nn.Linear(1000 + 1, 512)
+        self.r1 = nn.ReLU(inplace=True)
+        self.bn2 = nn.BatchNorm1d(512)
+        self.dr2 = nn.Dropout(p=0.5, inplace=False)
+        self.fc2 = nn.Linear(512, 3)
+        
+    def forward(self, data):
+        img, cmd = data
+        x1 = self.cnn(img)
+        x2 = cmd.unsqueeze(1)
+        
+        x1 = self.bn1(x1)
+        x1 = self.dr1(x1)
+        
+        x = torch.cat((x1, x2), dim=1)
+        x = self.r1(self.fc1(x))
+        x = self.bn2(x)
+        x = self.dr2(x)
+        x = self.fc2(x)
+        return x    
+    
+class MyModel_dnet169(nn.Module):
+    def __init__(self, pretrained=True):
+        super(MyModel_dnet169, self).__init__()
+        self.cnn = models.densenet169(pretrained=pretrained)
+        
+        self.bn1 = nn.BatchNorm1d(1000)
+        self.dr1 = nn.Dropout(p=0.25, inplace=False)
+        self.fc1 = nn.Linear(1000 + 1, 512)
+        self.r1 = nn.ReLU(inplace=True)
+        self.bn2 = nn.BatchNorm1d(512)
+        self.dr2 = nn.Dropout(p=0.5, inplace=False)
+        self.fc2 = nn.Linear(512, 3)
+        
+    def forward(self, data):
+        img, cmd = data
+        x1 = self.cnn(img)
+        x2 = cmd.unsqueeze(1)
+        
+        x1 = self.bn1(x1)
+        x1 = self.dr1(x1)
+        
+        x = torch.cat((x1, x2), dim=1)
+        x = self.r1(self.fc1(x))
+        x = self.bn2(x)
+        x = self.dr2(x)
+        x = self.fc2(x)
+        return x        
+
+class MyModel_dnet201(nn.Module):
+    def __init__(self, pretrained=True):
+        super(MyModel_dnet201, self).__init__()
+        self.cnn = models.densenet201(pretrained=pretrained)
+        
+        self.bn1 = nn.BatchNorm1d(1000)
+        self.dr1 = nn.Dropout(p=0.25, inplace=False)
+        self.fc1 = nn.Linear(1000 + 1, 512)
+        self.r1 = nn.ReLU(inplace=True)
+        self.bn2 = nn.BatchNorm1d(512)
+        self.dr2 = nn.Dropout(p=0.5, inplace=False)
+        self.fc2 = nn.Linear(512, 3)
+        
+    def forward(self, data):
+        img, cmd = data
+        x1 = self.cnn(img)
+        x2 = cmd.unsqueeze(1)
+        
+        x1 = self.bn1(x1)
+        x1 = self.dr1(x1)
+        
+        x = torch.cat((x1, x2), dim=1)
+        x = self.r1(self.fc1(x))
+        x = self.bn2(x)
+        x = self.dr2(x)
+        x = self.fc2(x)
+        return x 
+    
+class MyModel_next50(nn.Module):
+    def __init__(self, pretrained=True):
+        super(MyModel_next50, self).__init__()
+        self.cnn = models.resnext50_32x4d(pretrained=pretrained)
+        
+        self.bn1 = nn.BatchNorm1d(1000)
+        self.dr1 = nn.Dropout(p=0.25, inplace=False)
+        self.fc1 = nn.Linear(1000 + 1, 512)
+        self.r1 = nn.ReLU(inplace=True)
+        self.bn2 = nn.BatchNorm1d(512)
+        self.dr2 = nn.Dropout(p=0.5, inplace=False)
+        self.fc2 = nn.Linear(512, 3)
+        
+    def forward(self, data):
+        img, cmd = data
+        x1 = self.cnn(img)
+        x2 = cmd.unsqueeze(1)
+        
+        x1 = self.bn1(x1)
+        x1 = self.dr1(x1)
+        
+        x = torch.cat((x1, x2), dim=1)
+        x = self.r1(self.fc1(x))
+        x = self.bn2(x)
+        x = self.dr2(x)
+        x = self.fc2(x)
+        return x    
+    
+class MyModel_next101(nn.Module):
+    def __init__(self, pretrained=True):
+        super(MyModel_next101, self).__init__()
+        self.cnn = models.resnext101_32x8d(pretrained=pretrained)
+        
+        self.bn1 = nn.BatchNorm1d(1000)
+        self.dr1 = nn.Dropout(p=0.25, inplace=False)
+        self.fc1 = nn.Linear(1000 + 1, 512)
+        self.r1 = nn.ReLU(inplace=True)
+        self.bn2 = nn.BatchNorm1d(512)
+        self.dr2 = nn.Dropout(p=0.5, inplace=False)
+        self.fc2 = nn.Linear(512, 3)
+        
+    def forward(self, data):
+        img, cmd = data
+        x1 = self.cnn(img)
+        x2 = cmd.unsqueeze(1)
+        
+        x1 = self.bn1(x1)
+        x1 = self.dr1(x1)
+        
+        x = torch.cat((x1, x2), dim=1)
+        x = self.r1(self.fc1(x))
+        x = self.bn2(x)
+        x = self.dr2(x)
+        x = self.fc2(x)
+        return x  
     
 def get_class_labels(img_dir):
     """

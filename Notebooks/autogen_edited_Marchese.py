@@ -353,7 +353,7 @@ class Navigator:
 
 
 def main():
-    maze = "../Worlds/maze.txt"
+    maze = "../Mazes/maze05.txt"
     show_freq = 0  # frequency to show frames
     img_dir = "../Notebooks/data"  # directory to save images to
 
