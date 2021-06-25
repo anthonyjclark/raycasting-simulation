@@ -86,11 +86,20 @@ def main():
         "num_turn_images", type=int, help="Number of turning specific images."
     )
     arg_parser.add_argument(
-        "--demo", action="store_true", help="Display images instead of saving."
+        "--image_width", type=int, default=224, help="Width of generated images."
+    )
+    arg_parser.add_argument(
+        "--image_height", type=int, default=224, help="Height of generated images."
     )
 
     # TODO: currently unused
-    arg_parser.add_argument("sequence", type=int, help="Number of images per sequence.")
+    arg_parser.add_argument(
+        "--sequence", type=int, default=1, help="Number of images per sequence."
+    )
+
+    arg_parser.add_argument(
+        "--demo", action="store_true", help="Display images instead of saving."
+    )
 
     args = arg_parser.parse_args()
 
