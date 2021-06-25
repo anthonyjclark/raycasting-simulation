@@ -6,11 +6,11 @@ LODE = ../extern/lodepng/lodepng.cpp
 
 .PHONY: release
 release: $(MAIN)
-$(MAIN): $(MAIN).cpp
+$(MAIN): $(MAIN).cpp RaycastWorld.h
 	$(CXX) -O3 $(CXXFLAGS) $(INCLUDES) $(LODE) $(MAIN).cpp -o $@
 
 .PHONY: debug
-debug: $(MAIN)-Debug
+debug: $(MAIN)-Debug RaycastWorld.h
 $(MAIN)-Debug: $(MAIN).cpp
 	$(CXX) -g  $(CXXFLAGS) $(INCLUDES) $(LODE) $(MAIN).cpp -o $@
 

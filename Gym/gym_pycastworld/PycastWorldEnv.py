@@ -20,6 +20,9 @@ from pycaster import PycastWorld, Turn, Walk  # type: ignore
 class PycastWorldEnv(gym.Env):
     metadata = {"render.modes": ["human", "rgb_array"]}
 
+    # Maze file
+    # Image width and height
+    # Starting location (optional)
     def __init__(self, mazefile=None) -> None:
         super().__init__()
 
