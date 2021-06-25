@@ -18,7 +18,7 @@ Download both submodules with the following command (run it from the root of thi
 git submodule update --init --recursive
 ```
 
-`Game/Game.cpp` depends on [GLFW3](https://www.glfw.org/).
+`Game/Game.cpp` depends on [GLFW3](https://www.glfw.org/). This is **not** included as a submodule. It will need to be installed separately.
 
 `MazeGen/MazeGen.py` depends on NumPy, but this dependency can be avoided if you don't need to view the output.
 
@@ -45,6 +45,29 @@ make
 cd Game
 ./Game ../Mazes/new_maze.txt
 ```
+
+# Working With Python
+
+Aside from `Game/Game`, you can use the raycasting engine in Python. To do so, you must compile the bindings. The easiest way to do so is to:
+
+```bash
+cd PycastWorld
+make
+```
+
+# Working on the server
+
+When working on `dgx01`:
+
+```bash
+/raid/clark/summer2021/
+├── datasets
+└── models
+```
+
+Save all datasets and models into these folders.
+
+Additionally, pleasure help ensure that we provide a consistent interface for each model+dataset combination. We need to make it easy to load and run a model in `Imitator/Imitate.py`. We might need to create an interface for this (i.e., a base class), but I am not sure if that is necessary.
 
 # Textures
 

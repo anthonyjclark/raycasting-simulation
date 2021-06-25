@@ -17,7 +17,7 @@ LODE = ../extern/lodepng/lodepng.cpp
 
 .PHONY: release
 release: $(MAIN)
-$(MAIN): $(MAIN).cpp DisplayArray.h
+$(MAIN): $(MAIN).cpp ../RaycastWorld/RaycastWorld.h DisplayArray.h
 	$(CXX) -O3 $(CXXFLAGS) $(INCLUDES) $(GLAD) $(LODE) $(LIBS) $(MAIN).cpp -o $@
 
 .PHONY: debug

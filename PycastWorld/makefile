@@ -19,7 +19,7 @@ LODE = ../extern/lodepng/lodepng.cpp
 
 .PHONY: library
 library: $(LIBNAME)
-$(LIBNAME):
+$(LIBNAME): ../RaycastWorld/RaycastWorld.h pycaster.cpp
 	$(CXX) $(CXXFLAGS) $(INCLUDES) $(LODE) $(MAIN).cpp -o $@
 
 clean:

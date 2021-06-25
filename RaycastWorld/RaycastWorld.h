@@ -165,6 +165,8 @@ public:
     auto getDirX() { return dirX; }
     auto getDirY() { return dirY; }
 
+    auto getDirection() { return atan2(dirY, dirX); }
+
     auto getTurnSpeed() { return turnSpeed; }
     auto getWalkSpeed() { return walkSpeed; }
     
@@ -634,9 +636,8 @@ void RaycastWorld::renderSprites()
     }
 
     // Sort by distance
-    std::sort(sprites.begin(), sprites.end(), [](auto a, auto b) {
-        return a.distance2 > b.distance2;
-    });
+    std::sort(sprites.begin(), sprites.end(), [](auto a, auto b)
+              { return a.distance2 > b.distance2; });
 
     // Project and draw sprites
     // for (int i = 0; i < numSprites; i++)
