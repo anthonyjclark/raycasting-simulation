@@ -176,7 +176,7 @@ def main():
 
         # turning
         while decide != "straight":
-            world.walk(Walk.Stopped)
+            world.walk(Walk.Stop)
 
             if decide == "right":
                 world.turn(Turn.Right)

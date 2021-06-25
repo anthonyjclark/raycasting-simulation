@@ -249,10 +249,10 @@ def main(argv):
             world.walk(Walk.Forward)
             world.turn(Turn.Stop)
         elif move == "left":
-            world.walk(Walk.Stopped)
+            world.walk(Walk.Stop)
             world.turn(Turn.Left)
         else:
-            world.walk(Walk.Stopped)
+            world.walk(Walk.Stop)
             world.turn(Turn.Right)
 
         prev_move = move

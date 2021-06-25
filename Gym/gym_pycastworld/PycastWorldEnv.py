@@ -49,13 +49,13 @@ class PycastWorldEnv(gym.Env):
         action_name = self._action_names[action]
 
         if action_name == "TurnLeft":
-            self.world.walk(Walk.Stopped)
+            self.world.walk(Walk.Stop)
             self.world.turn(Turn.Left)
         elif action_name == "MoveForward":
             self.world.walk(Walk.Forward)
             self.world.turn(Turn.Stop)
         elif action_name == "TurnRight":
-            self.world.walk(Walk.Stopped)
+            self.world.walk(Walk.Stop)
             self.world.turn(Turn.Right)
         else:
             raise ValueError(f"Invalid action name: {action_name}")

@@ -389,7 +389,7 @@ def main():
 
             rand_angle = rand_angle % (2 * pi)
 
-            world.walk(Walk.Stopped)
+            world.walk(Walk.Stop)
 
             # turning towards rand_angle
             while angle_diff(curr_dir, rand_angle) > 0.1:

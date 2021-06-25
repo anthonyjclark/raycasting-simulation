@@ -245,7 +245,7 @@ def main():
 
         # turning
         while decide != "straight":
-            world.walk(Walk.Stopped)
+            world.walk(Walk.Stop)
             if decide == "right":
 
                 perturb_num = rng.uniform(0.05, 0.3)

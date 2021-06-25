@@ -65,7 +65,7 @@ def keyPressed(event, data):
 
 def keyReleased(event, data):
     if event.keysym == "Up" or event.keysym == "Down":
-        data.world.walk(Walk.Stopped)
+        data.world.walk(Walk.Stop)
     elif event.keysym == "Left" or event.keysym == "Right":
         data.world.turn(Turn.Stop)
 

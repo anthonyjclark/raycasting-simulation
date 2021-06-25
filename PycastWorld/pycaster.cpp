@@ -13,7 +13,7 @@ PYBIND11_MODULE(pycaster, m)
 
     py::enum_<Walk>(m, "Walk", py::arithmetic(), "Walking enumeration")
         .value("Backward", Walk::BACKWARD)
-        .value("Stopped", Walk::STOP)
+        .value("Stop", Walk::STOP)
         .value("Forward", Walk::FORWARD);
 
     py::class_<RaycastWorld>(m, "PycastWorld", py::buffer_protocol())

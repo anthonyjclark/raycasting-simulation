@@ -172,7 +172,7 @@ class Driver:
                 return False
 
     def turn_to_angle(self):
-        self.world.walk(Walk.Stopped)
+        self.world.walk(Walk.Stop)
         i = 0
         prev_turn = None
 
@@ -313,7 +313,7 @@ class Driver:
             self.step -= self.world.walk_speed()
             self.update_dist()
 
-        self.world.walk(Walk.Stopped)
+        self.world.walk(Walk.Stop)
 
 
 class Navigator:
