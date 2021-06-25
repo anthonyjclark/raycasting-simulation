@@ -32,7 +32,8 @@ def main():
         os.mkdir(os.path.join(image_sub_dir, "left"))
 
     # past size 14, MazeGen.py breaks
-    min_size, max_size = 8, 14
+#     min_size, max_size = 8, 14
+    min_size, max_size = 8, 8
 
     for i in range(num_mazes):
         size = random.randint(min_size, max_size)
