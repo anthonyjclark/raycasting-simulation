@@ -8,7 +8,7 @@ from gym_pycastworld.PycastWorldEnv import PycastWorldEnv  # type: ignore
 
 steps_per_episode = 100
 
-env = PycastWorldEnv()
+env = PycastWorldEnv("../Mazes/maze01.txt", 320, 240)
 
 
 # Grab the initial observation (not used here)

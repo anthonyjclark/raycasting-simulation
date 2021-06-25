@@ -1,6 +1,7 @@
 # TODO:
 # - typing
 # - need random seeding for anything?
+# - set position as percentage along maze??
 
 # Based on
 # https://github.com/openai/gym/blob/master/gym/core.py
@@ -20,18 +21,15 @@ from pycaster import PycastWorld, Turn, Walk  # type: ignore
 class PycastWorldEnv(gym.Env):
     metadata = {"render.modes": ["human", "rgb_array"]}
 
-    # Maze file
-    # Image width and height
-    # Starting location (optional)
-    def __init__(self, mazefile=None) -> None:
+    def __init__(self, mazefile: str, image_width: int, image_height: int) -> None:
         super().__init__()
 
-        image_width = 320
-        image_height = 240
+        # image_width = 320
+        # image_height = 240
+        # mazefile = mazefile if mazefile else "../Mazes/maze01.txt"
+        # "../Mazes/maze01.txt", 320, 240
 
-        mazefile = mazefile if mazefile else "../Mazes/maze01.txt"
         self.world = PycastWorld(image_width, image_height, mazefile)
-        self.world.set_direction(0)  # TODO: remove?
 
         self.seed()
 

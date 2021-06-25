@@ -7,7 +7,7 @@ from gym_pycastworld.PycastWorldEnv import PycastWorldEnv  # type: ignore
 num_episodes = 10
 steps_per_episode = 100
 
-env = PycastWorldEnv()
+env = PycastWorldEnv("../Mazes/maze01.txt", 320, 240)
 
 # Run some number of trials all starting from the
 # initial location. We might eventually randomize
