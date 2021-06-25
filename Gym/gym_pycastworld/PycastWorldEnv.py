@@ -17,6 +17,11 @@ from typing import Dict, List, Tuple
 
 from pycaster import PycastWorld, Turn, Walk  # type: ignore
 
+import sys
+
+sys.path.append("../MazeGen")
+from MazeUtils import read_maze_file, percent_through_maze, bfs_dist_maze, is_on_path  # type: ignore
+
 
 class PycastWorldEnv(gym.Env):
     metadata = {"render.modes": ["human", "rgb_array"]}
@@ -42,6 +47,14 @@ class PycastWorldEnv(gym.Env):
 
         self.viewer = None
 
+        # maze, _, _, maze_directions, _ = read_maze_file(mazefile)
+        # x_start, y_start, _ = maze_directions[0]
+        # x_end, y_end, _ = maze_directions[-1]
+
+        # _, maze_path = bfs_dist_maze(maze, x_start, y_start, x_end, y_end)
+        # xy_on_path = is_on_path(maze_path, x, y)
+        # xy_pct_path = percent_through_maze(maze, x, y, x_start, y_start, x_end, y_end)
+
     def step(self, action: int) -> Tuple[np.ndarray, int, bool, Dict]:
         # Update the world according to the current action
         action_name = self._action_names[action]
@@ -63,7 +76,7 @@ class PycastWorldEnv(gym.Env):
         # Grab the new image frame
         ob = np.array(self.world)
 
-        # Reward with 1 if at the end
+        # Reward based on percent traveled through maze
         reward = 1 if self.world.at_goal() else -1
 
         # Episode is over if we reached the goal
