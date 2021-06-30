@@ -1,6 +1,5 @@
 from pathlib import Path
 from torch.utils.data import DataLoader, Dataset, SubsetRandomSampler
-import torchvision.models as models
 from PIL import Image
 import matplotlib.pyplot as plt
 import numpy as np
@@ -11,6 +10,7 @@ fastbook.setup_book()
 from fastbook import *
 from fastai.vision.widgets import *
 from fastai.vision.models.xresnet import *
+import torchvision.models as models
 
 
 class ImageWithCmdDataset(Dataset):
