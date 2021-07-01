@@ -385,11 +385,7 @@ class Navigator:
             driver.turn_to_angle()
             driver.set_rand_step()
             driver.move_to_step()
-            self.angles.append(driver.get_angle())
-            
-    def plot_angles(self):
-        for a in self.angles:
-            print(a)
+            self.angles.append(driver.get_angle())          
 
 
 def main():
@@ -407,7 +403,7 @@ def main():
         navigator.navigate(j, show_dir=show_dir, show_freq=show_freq)
         j += 1
     
-    navigator.plot_angles()
+#     navigator.plot_angles()
 
 if __name__ == "__main__":
     main()
