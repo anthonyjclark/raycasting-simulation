@@ -38,14 +38,7 @@ def in_targ_cell(base_dir, c_targ_x, c_targ_y, x, y):
 
 class Driver:
     def __init__(
-        self,
-        c_targ_x,
-        c_targ_y,
-        base_dir,
-        targ_dir,
-        world,
-        img_dir=None,
-        show_freq=0,
+        self, c_targ_x, c_targ_y, base_dir, targ_dir, world, img_dir=None, show_freq=0,
     ):
         self.c_targ_x = c_targ_x
         self.c_targ_y = c_targ_y
@@ -53,8 +46,8 @@ class Driver:
         self.targ_dir = targ_dir
 
         self.world = world
-        self.curr_x = self.world.getX()
-        self.curr_y = self.world.getY()
+        self.curr_x = self.world.x()
+        self.curr_y = self.world.y()
 
         self.direction = 0
         self.update_direction()
@@ -86,20 +79,20 @@ class Driver:
 
     def update_dist(self):
         self.dist = math.sqrt(
-            (self.c_targ_x - self.world.getX()) ** 2
-            + (self.c_targ_y - self.world.getY()) ** 2
+            (self.c_targ_x - self.world.x()) ** 2
+            + (self.c_targ_y - self.world.y()) ** 2
         )
 
     def update_direction(self):
-        if not -1 <= self.world.getDirX() <= 1:
-            dir_x = round(self.world.getDirX())
+        if not -1 <= self.world.get_dir_x() <= 1:
+            dir_x = round(self.world.get_dir_x())
         else:
-            dir_x = self.world.getDirX()
+            dir_x = self.world.get_dir_x()
 
-        if not -1 <= self.world.getDirY() <= 1:
-            dir_y = round(self.world.getDirY())
+        if not -1 <= self.world.get_dir_y() <= 1:
+            dir_y = round(self.world.get_dir_y())
         else:
-            dir_y = self.world.getDirY()
+            dir_y = self.world.get_dir_y()
 
         if dir_x > 0 and dir_y >= 0:
             dir = acos(dir_x)
@@ -186,7 +179,7 @@ class Driver:
                 return False
 
     def turn_to_angle(self):
-        self.world.walk(Walk.Stopped)
+        self.world.walk(Walk.Stop)
         i = 0
         prev_turn = None
         while self.abs_angle_diff(self.angle) > 0.1:
@@ -199,12 +192,12 @@ class Driver:
                 # save image right
                 if self.img_dir != None:
                     if self.stack_dir:
-                        self.world.savePNG(
+                        self.world.save_png(
                             os.path.join(self.img_dir, f"{self.img_num:05}_right.png")
                         )
                         self.img_num += 1
                     else:
-                        self.world.savePNG(
+                        self.world.save_png(
                             os.path.join(
                                 self.img_dir, "right", f"{self.img_num_r:05}.png"
                             )
@@ -224,12 +217,12 @@ class Driver:
                 # save image left
                 if self.img_dir != None:
                     if self.stack_dir:
-                        self.world.savePNG(
+                        self.world.save_png(
                             os.path.join(self.img_dir, f"{self.img_num:05}_left.png")
                         )
                         self.img_num += 1
                     else:
-                        self.world.savePNG(
+                        self.world.save_png(
                             os.path.join(
                                 self.img_dir, "left", f"{self.img_num_l:05}.png"
                             )
@@ -261,31 +254,31 @@ class Driver:
     def dist_to_wall(self):
         if self.targ_dir == 0:
             if (3 * pi / 2) <= self.direction <= (2 * pi):
-                a = self.world.getY() - (self.c_targ_y - 0.5)
+                a = self.world.y() - (self.c_targ_y - 0.5)
                 theta = self.direction - (3 * pi / 2)
             else:
-                a = (self.c_targ_y + 0.5) - self.world.getY()
+                a = (self.c_targ_y + 0.5) - self.world.y()
                 theta = self.direction
         elif self.targ_dir == 90:
             if 0 <= self.direction <= (pi / 2):
-                a = (self.c_targ_x + 0.5) - self.world.getX()
+                a = (self.c_targ_x + 0.5) - self.world.x()
                 theta = self.direction
             else:
-                a = self.world.getX() - (self.c_targ_x - 0.5)
+                a = self.world.x() - (self.c_targ_x - 0.5)
                 theta = pi - self.direction
         elif self.targ_dir == 180:
             if (pi / 2) <= self.direction <= pi:
-                a = (self.c_targ_y + 0.5) - self.world.getY()
+                a = (self.c_targ_y + 0.5) - self.world.y()
                 theta = self.direction - (pi / 2)
             else:
-                a = self.world.getY() - (self.c_targ_y - 0.5)
+                a = self.world.y() - (self.c_targ_y - 0.5)
                 theta = (3 * pi / 2) - self.direction
         elif self.targ_dir == 270:
             if pi <= self.direction <= 3 * pi / 2:
-                a = self.world.getX() - (self.c_targ_x - 0.5)
+                a = self.world.x() - (self.c_targ_x - 0.5)
                 theta = self.direction - pi
             else:
-                a = (self.c_targ_x + 0.5) - self.world.getX()
+                a = (self.c_targ_x + 0.5) - self.world.x()
                 theta = (2 * pi) - self.direction
 
         b, c = self.solve_triangle(theta, a)
@@ -306,12 +299,12 @@ class Driver:
         ):
             if self.img_dir != None:
                 if self.stack_dir:
-                    self.world.savePNG(
+                    self.world.save_png(
                         os.path.join(self.img_dir, f"{self.img_num:05}_straight.png")
                     )
                     self.img_num += 1
                 else:
-                    self.world.savePNG(
+                    self.world.save_png(
                         os.path.join(
                             self.img_dir, "straight", f"{self.img_num_s:05}.png"
                         )
@@ -321,8 +314,8 @@ class Driver:
             self.world.walk(Walk.Forward)
             self.world.update()
 
-            self.curr_x = self.world.getX()
-            self.curr_y = self.world.getY()
+            self.curr_x = self.world.x()
+            self.curr_y = self.world.y()
 
             if self.show_freq != 0:
                 if i % self.show_freq == 0:
@@ -331,10 +324,10 @@ class Driver:
                     plt.show()
                 i += 1
 
-            self.step -= self.world.getWalkSpeed()
+            self.step -= self.world.walk_speed()
             self.update_dist()
 
-        self.world.walk(Walk.Stopped)
+        self.world.walk(Walk.Stop)
 
 
 class Navigator:
@@ -355,7 +348,7 @@ class Navigator:
             self.directions = in_file.readlines()
 
         self.num_directions = len(self.directions)
-        
+
         self.angles = []
 
     def navigate(self, index, show_dir=False, show_freq=0):
@@ -385,7 +378,12 @@ class Navigator:
             driver.turn_to_angle()
             driver.set_rand_step()
             driver.move_to_step()
-            self.angles.append(driver.get_angle())          
+
+            self.angles.append(driver.get_angle())
+
+    def plot_angles(self):
+        for a in self.angles:
+            print(a)
 
 
 def main():
@@ -397,13 +395,14 @@ def main():
     )
 
     navigator = Navigator(maze, img_dir)
-    
+
     j = 0
     while j < navigator.num_directions - 1:
         navigator.navigate(j, show_dir=show_dir, show_freq=show_freq)
         j += 1
-    
-#     navigator.plot_angles()
+
+    navigator.plot_angles()
+
 
 if __name__ == "__main__":
     main()

@@ -86,11 +86,20 @@ def main():
         "num_turn_images", type=int, help="Number of turning specific images."
     )
     arg_parser.add_argument(
-        "--demo", action="store_true", help="Display images instead of saving."
+        "--image_width", type=int, default=224, help="Width of generated images."
+    )
+    arg_parser.add_argument(
+        "--image_height", type=int, default=224, help="Height of generated images."
     )
 
     # TODO: currently unused
-    arg_parser.add_argument("sequence", type=int, help="Number of images per sequence.")
+    arg_parser.add_argument(
+        "--sequence", type=int, default=1, help="Number of images per sequence."
+    )
+
+    arg_parser.add_argument(
+        "--demo", action="store_true", help="Display images instead of saving."
+    )
 
     args = arg_parser.parse_args()
 
@@ -178,7 +187,7 @@ def main():
 
     # Create world
     world = PycastWorld(320, 240, args.maze_filepath)
-    FOV = radians(66)
+    # FOV = radians(66) TODO: figure this out
 
     # Select position along path
     for i in range(args.num_straight_images):
@@ -193,8 +202,8 @@ def main():
         ang_noise = ANG_NOISE_MAG * (2 * random() - 1)
         angle = angle_from_zero_to_2pi(dir_to_angle[heading] + ang_noise)
 
-        world.position(x, y, 0)  # z=0 is at vertical center
-        world.direction(angle, FOV)  # 1.152 is the default FOV
+        world.set_position(x, y)
+        world.set_direction(angle)
 
         # Compute angles to the two corners of the turn
         angle_to_right = angle_from_zero_to_2pi(Pt.angle(right_corner - perturbed_pos))
@@ -239,7 +248,7 @@ def main():
             print(f"File not saved in demo mode ({filename}).")
 
         else:
-            world.savePNG(str(Path(args.save_dir) / action.lower() / filename))
+            world.save_png(str(Path(args.save_dir) / action.lower() / filename))
 
     for i in range(args.num_turn_images):
 
@@ -257,8 +266,8 @@ def main():
 
         # TODO: check if arrow is in field of view
 
-        world.position(x, y, 0)  # z=0 is at vertical center
-        world.direction(angle, FOV)  # 1.152 is the default FOV
+        world.set_position(x, y)
+        world.set_direction(angle)
 
         action = turn
 
@@ -284,7 +293,7 @@ def main():
             print(f"File not saved in demo mode ({filename}).")
 
         else:
-            world.savePNG(str(Path(args.save_dir) / action.lower() / filename))
+            world.save_png(str(Path(args.save_dir) / action.lower() / filename))
 
 
 if __name__ == "__main__":

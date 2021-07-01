@@ -158,9 +158,10 @@ def animate(image_frames, name):
         os.mkdir(dir_name)
     os.system(dir_name)
     save_path = os.path.abspath(dir_name)
-    name = str(name).split('/')[-1][:-4]
+    name = str(name).split("/")[-1][:-4]
     fig, ax = plt.subplots()
     ln = plt.imshow(image_frames[0])
+
     def init():
         ln.set_data(image_frames[0])
         return [ln]
@@ -172,8 +173,8 @@ def animate(image_frames, name):
 
     ani = FuncAnimation(fig, update, image_frames, init_func=init, interval=100)
     # plt.show()
-    ani.save(os.path.join(save_path, name + "_" +  str(now) +  ".mp4"))
-    
+    ani.save(os.path.join(save_path, name + "_" + str(now) + ".mp4"))
+
 
 def main(argv):
     maze = argv[0] if len(argv) > 0 else "../Mazes/maze01.txt"
@@ -197,7 +198,7 @@ def main(argv):
     prev_image_data = None
     frame = 0
     num_static = 0
-    prev_x, prev_y = world.getX(), world.getY()
+    prev_x, prev_y = world.x(), world.y()
     animation_frames = []
 
     outcome = "At goal? "
@@ -205,16 +206,16 @@ def main(argv):
     # Initialize maximum number of steps in case the robot travels in a completely incorrect direction
     max_steps = 3000
     step_count = 0
-    
+
     # Initialize Maze Check
     maze_rvs, _, _, maze_directions, _ = read_maze_file(maze)
     start_x, start_y, _ = maze_directions[0]
     end_x, end_y, _ = maze_directions[-1]
     _, maze_path = bfs_dist_maze(maze_rvs, start_x, start_y, end_x, end_y)
-    
-    while not world.atGoal() and num_static < 5:
-        
-        if is_on_path(maze_path, int(world.getX()), int(world.getY())) is False:
+
+    while not world.at_goal() and num_static < 5:
+
+        if is_on_path(maze_path, int(world.x()), int(world.y())) is False:
             print("Off Path")
             break
 
@@ -248,16 +249,16 @@ def main(argv):
             world.walk(Walk.Forward)
             world.turn(Turn.Stop)
         elif move == "left":
-            world.walk(Walk.Stopped)
+            world.walk(Walk.Stop)
             world.turn(Turn.Left)
         else:
-            world.walk(Walk.Stopped)
+            world.walk(Walk.Stop)
             world.turn(Turn.Right)
 
         prev_move = move
         world.update()
 
-        curr_x, curr_y = round(world.getX(), 5), round(world.getY(), 5)
+        curr_x, curr_y = round(world.x(), 5), round(world.y(), 5)
 
         if show_freq != 0 and frame % show_freq == 0:
             if curr_x == prev_x and curr_y == prev_y:
@@ -285,7 +286,7 @@ def main(argv):
         lost = True
     outcome = (
         "At Goal? "
-        + str(world.atGoal())
+        + str(world.at_goal())
         + "\n Stuck? "
         + str(stuck)
         + "\n Exceed step limit? "
@@ -293,15 +294,17 @@ def main(argv):
     )
     print(outcome)
 
-    completion_per = percent_through_maze(maze_rvs, int(world.getX()), int(world.getY()), start_x, start_y, end_x, end_y)
+    completion_per = percent_through_maze(
+        maze_rvs, int(world.x()), int(world.y()), start_x, start_y, end_x, end_y
+    )
 
     plt.imshow(image_data)
     plt.show()
     print("DIR NAME: ")
- 
+
     animate(animation_frames, model, directory_name)
 
-    if num_static >= 5 and not world.atGoal():  # model failed to navigate maze
+    if num_static >= 5 and not world.at_goal():  # model failed to navigate maze
         return frame, False, completion_per
     else:  # model successfully navigated maze
         return frame, True, completion_per
