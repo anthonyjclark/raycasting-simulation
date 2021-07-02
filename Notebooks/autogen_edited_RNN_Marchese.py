@@ -2,6 +2,7 @@
 Code to generate images in one folder in sequencial order for RNN
 """
 
+import distutils.util
 import numpy as np
 import matplotlib.pyplot as plt
 import sys
@@ -60,7 +61,7 @@ class Driver:
 
         self.angle = 0
         self.step = math.inf
-
+        
         # Adding variable to keep track of the previous move
         self.prev_move = "straight"
 
@@ -146,7 +147,6 @@ class Driver:
                 theta = (atan((mod_x - self.curr_x) / (self.curr_y - mod_y))) % (
                     2 * pi
                 ) + 3 * pi / 2
-
         return theta
 
     def set_rand_angle(self):
@@ -176,7 +176,6 @@ class Driver:
         self.world.walk(Walk.Stop)
         i = 0
         prev_turn = None
-
         while self.abs_angle_diff(self.angle) > 0.1:
             if self.turn_right(self.angle):
 
@@ -184,7 +183,7 @@ class Driver:
                     print("no left to right allowed")
                     break
 
-                # save image
+                # save image right
                 if self.img_dir != None:
                     self.world.save_png(
                         os.path.join(
@@ -205,7 +204,7 @@ class Driver:
                     print("no right to left allowed")
                     break
 
-                # save image left
+                # save left right
                 if self.img_dir != None:
                     self.world.save_png(
                         os.path.join(
@@ -284,7 +283,7 @@ class Driver:
             )
             and self.step > 0.1
         ):
-
+            # save image right
             if self.img_dir != None:
                 self.world.save_png(
                     os.path.join(
@@ -333,6 +332,8 @@ class Navigator:
 
         self.num_directions = len(self.directions)
 
+        self.angles = []
+
     def navigate(self, index, show_dir=False, show_freq=0):
         _, _, s_base_dir = self.directions[index].split()
         targ_x, targ_y, s_targ_dir = self.directions[index + 1].split()
@@ -360,19 +361,27 @@ class Navigator:
             driver.turn_to_angle()
             driver.set_rand_step()
             driver.move_to_step()
+            self.angles.append(driver.get_angle())
+
+    def plot_angles(self):
+        for a in self.angles:
+            print(a)
 
 
 def main():
-    maze = "../Mazes/maze01.txt"
+    maze = "../Mazes/maze05.txt"
     show_freq = 0  # frequency to show frames
     img_dir = "../Notebooks/data_RNN"  # directory to save images to
+    show_dir = True
 
     navigator = Navigator(maze, img_dir)
 
     j = 0
     while j < navigator.num_directions - 1:
-        navigator.navigate(j, show_dir=True, show_freq=show_freq)
-        j += 5
+        navigator.navigate(j, show_dir=show_dir, show_freq=show_freq)
+        j += 1
+
+    #navigator.plot_angles()
 
 
 if __name__ == "__main__":
