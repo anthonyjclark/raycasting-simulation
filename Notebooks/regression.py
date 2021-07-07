@@ -1,6 +1,7 @@
 # ---
 # jupyter:
 #   jupytext:
+#     formats: ipynb,py:light
 #     text_representation:
 #       extension: .py
 #       format_name: light
@@ -215,8 +216,8 @@ class Driver:
                 agent_dir = -abs(90 + turn_angle)
        
                 angle_label = agent_dir
-#                 print(f"RIGHT DIR: {turn_angle}")
-#                 print(f"RIGHT LABEL: {angle_label}")
+                print(f"RIGHT DIR: {turn_angle}")
+                print(f"RIGHT LABEL: {angle_label}")
                 self.all_angles = np.append(self.all_angles, angle_label)
                 if self.img_dir != None:
                     if self.stack_dir:
@@ -250,8 +251,8 @@ class Driver:
                 agent_dir = abs(90 - turn_angle)
 
                 angle_label = agent_dir
-#                 print(f"LEFT DIR: {turn_angle}")
-#                 print(f"LEFT LABEL: {angle_label}")
+                print(f"LEFT DIR: {turn_angle}")
+                print(f"LEFT LABEL: {angle_label}")
                 self.all_angles = np.append(self.all_angles, angle_label)                
                 if self.img_dir != None:
                     if self.stack_dir:
@@ -469,14 +470,25 @@ class Navigator:
         plt.show()
 
 # +
-mazes = ["../Mazes/proxy_mazes/maze01.txt",
-         "../Mazes/proxy_mazes/maze02.txt", 
-         "../Mazes/proxy_mazes/maze03.txt",
-         "../Mazes/proxy_mazes/maze04.txt",
-         "../Mazes/proxy_mazes/maze05.txt"]
+mazes = ["../Mazes/15_mazes_test_06-07-2021_22-37/maze_5.txt"]
+#          "../Mazes/15_mazes_test_06-07-2021_22-37/maze_2.txt", 
+#          "../Mazes/15_mazes_test_06-07-2021_22-37/maze_3.txt",
+#          "../Mazes/15_mazes_test_06-07-2021_22-37/maze_4.txt",
+#          "../Mazes/15_mazes_test_06-07-2021_22-37/maze_5.txt",
+#          "../Mazes/15_mazes_test_06-07-2021_22-37/maze_6.txt",
+#          "../Mazes/15_mazes_test_06-07-2021_22-37/maze_7.txt", 
+#          "../Mazes/15_mazes_test_06-07-2021_22-37/maze_8.txt",
+#          "../Mazes/15_mazes_test_06-07-2021_22-37/maze_9.txt",
+#          "../Mazes/15_mazes_test_06-07-2021_22-37/maze_10.txt",
+#          "../Mazes/15_mazes_test_06-07-2021_22-37/maze_11.txt",
+#          "../Mazes/15_mazes_test_06-07-2021_22-37/maze_12.txt", 
+#          "../Mazes/15_mazes_test_06-07-2021_22-37/maze_13.txt",
+#          "../Mazes/15_mazes_test_06-07-2021_22-37/maze_14.txt",
+#          "../Mazes/15_mazes_test_06-07-2021_22-37/maze_15.txt"]
 
 for m in mazes:
     maze = m
+    print(maze)
     show_freq = 0  # frequency to show frames
     img_dir = "/raid/Images/proxy_reg" # directory to save images to
     show_dir = True
@@ -504,9 +516,9 @@ import torch
 from math import pi
 
 # +
-path = Path('/raid/Images/proxy_reg')
+path = Path('/raid/Images/reg_data')
 
-num_img = !ls -l '/raid/Images/proxy_reg' | wc -l
+num_img = !ls -l '/raid/Images/reg_data' | wc -l
 
 int(num_img[0])
 # -
@@ -557,16 +569,16 @@ xb[0,0]
 
 learn = cnn_learner(
     dls_r,
-    resnet34,
+    resnet18,
     y_range=(-90, 90),
     metrics=[mse], # , within_45_deg, within_30_deg, within_15_deg
 )
 learn.fine_tune(
-    5,
+    3,
     cbs=[SaveModelCallback(), EarlyStoppingCallback(monitor="valid_loss", patience=10)],
 )
 
-learn.export('/home/CAMPUS/eoca2018/raycasting-simulation/Models/regression_model04.pkl')
+learn.export('/home/CAMPUS/eoca2018/raycasting-simulation/Models/regression_model02.pkl')
 
 learn.show_results(ds_idx=1, nrows=3, figsize=(8,10))
 
@@ -589,7 +601,7 @@ steps_per_episode = 1000
 
 env = PycastWorldEnv("../Mazes/maze01.txt", 320, 240)
 
-path = Path('/home/CAMPUS/eoca2018/raycasting-simulation/Models/regression_model03.pkl')
+path = Path('/home/CAMPUS/eoca2018/raycasting-simulation/Models/regression_model02.pkl')
 # Run some number of trials all starting from the
 # initial location. We might eventually randomize
 # the maze and the starting location.
@@ -601,60 +613,55 @@ model_inf = load_learner(path)
 prev_pred = 0
 
 plt.imshow(observation)
-# -
-
-pred_angle, _, _ =  model_inf.predict(observation)
-print(pred_angle)
-
-observation, reward, done, info = env.step(1)
-plt.imshow(observation)
-pred_angle, _, _ =  model_inf.predict(observation)
-print(pred_angle)
 
 # +
-# %%capture
 print("Predicting...")
-# learn.recorder.silent = True
 for t in range(steps_per_episode):    
     pred_angle, _, _ =  model_inf.predict(observation)
+    pred_angle = math.ceil(pred_angle[0])
     print(pred_angle)
-    num_movements = int(pred_angle[0] / 10)
+    num_movements = abs(int(pred_angle / 20))
     
-    if num_movements < 0:
-        num_movements = -1*num_movements
-        
-    if (prev_pred > 0 and pred_angle[0] < 0) or (prev_pred < 0 and pred_angle[0] > 0):
-        print("breaking")
+    if num_movements == 0:
         action_index = 1
         observation, reward, done, info = env.step(action_index)
         frames.append(observation.copy())
-        prev_pred = pred_angle[0]
+        prev_pred = pred_angle
+        continue
+    
+    if (prev_pred > 0 and pred_angle < 0) or (prev_pred < 0 and pred_angle > 0):
+        print("left-right mixup")
+        action_index = 1
+        observation, reward, done, info = env.step(action_index)
+        frames.append(observation.copy())
+        prev_pred = pred_angle
         continue
         
     # check if we have to move opposite
-    if abs(prev_pred) > abs(pred_angle[0]):   
-        print("opposite angle")
-        action_index = 1
-        observation, reward, done, info = env.step(action_index)
-        frames.append(observation.copy())
-    else: 
-        action_index = 1
-        if pred_angle[0] > 0 and num_movements > 0:
-            for i in range(num_movements):
-                action_index = 0 # turn left
-                observation, reward, done, info = env.step(action_index)
-                frames.append(observation.copy())
-        elif pred_angle[0] < 0 and num_movements > 0:
-            for i in range(num_movements):
-                action_index = 2 # turn right
-                observation, reward, done, info = env.step(action_index)
-                frames.append(observation.copy())
-        else:
-            action_index = 1
+#     if abs(prev_pred) > abs(pred_angle) + 5:
+#         print("preventing overturn")
+#         action_index = 1
+#         observation, reward, done, info = env.step(action_index)
+#         frames.append(observation.copy())
+#         continue
+             
+    action_index = 1
+    if pred_angle > 0 and num_movements > 0:
+        for i in range(num_movements):
+            action_index = 0 # turn left
             observation, reward, done, info = env.step(action_index)
             frames.append(observation.copy())
-    
-    prev_pred = pred_angle[0]
+    elif pred_angle < 0 and num_movements > 0:
+        for i in range(num_movements):
+            action_index = 2 # turn right
+            observation, reward, done, info = env.step(action_index)
+            frames.append(observation.copy())
+#     else:
+#         action_index = 1
+#         observation, reward, done, info = env.step(action_index)
+#         frames.append(observation.copy())
+
+    prev_pred = pred_angle
     # Check if we reached the end goal
     if done:
         print(f"  Found goal in {t+1} steps")
@@ -662,9 +669,6 @@ for t in range(steps_per_episode):
 
 print(f"  Ended at position {env.world.x()}, {env.world.y()}")
 env.close();
-# -
-
-int(-5.65902709960937/2.5)
 
 # +
 fig, ax = plt.subplots()
@@ -681,10 +685,11 @@ def update(frame):
 ani = FuncAnimation(fig, update, frames, init_func=init, interval=60)
 # plt.show()
 # ani.save("prediction_" + str(datetime.datetime.now()) + ".mp4")
-# -
-
 smaller_frames = frames[::3] 
 ani = FuncAnimation(fig, update, smaller_frames, init_func=init, interval=60)
 HTML(ani.to_html5_video())
+# -
+
+
 
 
