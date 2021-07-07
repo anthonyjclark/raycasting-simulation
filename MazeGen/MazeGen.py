@@ -384,8 +384,8 @@ if __name__ == "__main__":
             "../Textures/Tiles074_2K_Color1024.png",
             "../Textures/Plaster001_2K_Color1024.png",
             "../Textures/PavingStones087_2K_Color1024.png",
-            "../Textures/arrow-right.png",
-            "../Textures/arrow-left.png",
+            "../Textures/arrow-right-long.png",
+            "../Textures/arrow-left-long.png", # change arrow name
             "../Textures/goal.png",
         ]
         print(len(textures))
