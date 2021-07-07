@@ -69,6 +69,14 @@ Save all datasets and models into these folders.
 
 Additionally, pleasure help ensure that we provide a consistent interface for each model+dataset combination. We need to make it easy to load and run a model in `Imitator/Imitate.py`. We might need to create an interface for this (i.e., a base class), but I am not sure if that is necessary.
 
+# Working With Notebooks
+
+We will use [mwouts/jupytext: Jupyter Notebooks as Markdown Documents, Julia, Python or R scripts](https://github.com/mwouts/jupytext "mwouts/jupytext: Jupyter Notebooks as Markdown Documents, Julia, Python or R scripts") to more effectively work with Jupyter Notebooks. Each notebook should be paired with a script. This has the following benefits:
+
+- It will make it easier for me to review notebooks.
+- It will make it easier for others to make changes to notebooks (e.g., if an API call changes).
+
+
 # Textures
 
 Textures are from [](https://cc0textures.com/). These are under the Creative Commons CC0 License.
