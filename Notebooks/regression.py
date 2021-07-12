@@ -1,3 +1,19 @@
+# ---
+# jupyter:
+#   jupytext:
+#     formats: ipynb,py:light
+#     text_representation:
+#       extension: .py
+#       format_name: light
+#       format_version: '1.5'
+#       jupytext_version: 1.11.3
+#   kernelspec:
+#     display_name: Python 3
+#     language: python
+#     name: python3
+# ---
+
+# +
 import distutils.util
 import numpy as np
 import matplotlib.pyplot as plt
@@ -38,12 +54,15 @@ def in_targ_cell(base_dir, c_targ_x, c_targ_y, x, y):
 
 class Driver:
     def __init__(
-        self, c_targ_x, c_targ_y, base_dir, targ_dir, world, img_dir=None, show_freq=0,
+        self, c_targ_x, c_targ_y, base_dir, targ_dir, world, img_dir=None, show_freq=0, abs_base_dir=0
+        
     ):
         self.c_targ_x = c_targ_x
         self.c_targ_y = c_targ_y
         self.base_dir = base_dir
         self.targ_dir = targ_dir
+
+        self.prev_targ_angle = 0
 
         self.world = world
         self.curr_x = self.world.x()
@@ -57,6 +76,11 @@ class Driver:
 
         self.angle = 0
         self.step = math.inf
+
+        self.all_angles = np.array([])
+        self.all_base_angles = np.array([])
+        
+        self.abs_base_dir = abs_base_dir
 
         self.img_dir = img_dir
         if self.img_dir != None:
@@ -132,27 +156,21 @@ class Driver:
             if mod_y == self.curr_y:
                 theta = pi
             else:
-                theta = (atan((self.curr_x - mod_x) / (mod_y - self.curr_y))) % (
-                    2 * pi
-                ) + pi / 2
+                theta = (atan((self.curr_x - mod_x) / (mod_y - self.curr_y))) % (2 * pi) + pi / 2
 
         # case where target pos is down and to the left
         elif self.curr_x > mod_x and self.curr_y > mod_y:
             if mod_x == self.curr_x:
                 theta = 3 * pi / 2
             else:
-                theta = (atan((self.curr_y - mod_y) / (self.curr_x - mod_x))) % (
-                    2 * pi
-                ) + pi
+                theta = (atan((self.curr_y - mod_y) / (self.curr_x - mod_x))) % (2 * pi) + pi
 
         # case where target pos is down and to the right
         else:
             if self.curr_y == mod_y:
                 theta = 0
             else:
-                theta = (atan((mod_x - self.curr_x) / (self.curr_y - mod_y))) % (
-                    2 * pi
-                ) + 3 * pi / 2
+                theta = (atan((mod_x - self.curr_x) / (self.curr_y - mod_y))) % (2 * pi) + 3 * pi / 2
         return theta
 
     def set_rand_angle(self):
@@ -182,29 +200,45 @@ class Driver:
         self.world.walk(Walk.Stop)
         i = 0
         prev_turn = None
+        turn_angle = 0.0
+        angle_deg = self.angle * (180/pi)
+        num_turns = 1
+
+#         print(f"abs_ base dir: {self.abs_base_dir}")
+#         curr_dir = self.world.directions() * (180/pi)
+                
         while self.abs_angle_diff(self.angle) > 0.1:
             if self.turn_right(self.angle):
-
                 if prev_turn == "left":
                     print("no left to right allowed")
                     break
-
-                # save image right
+                
+                agent_dir = -abs(90 + turn_angle)
+       
+                angle_label = agent_dir
+                print(f"RIGHT DIR: {turn_angle}")
+                print(f"RIGHT LABEL: {angle_label}")
+                self.all_angles = np.append(self.all_angles, angle_label)
                 if self.img_dir != None:
                     if self.stack_dir:
                         self.world.save_png(
-                            os.path.join(self.img_dir, f"{self.img_num:05}_right.png")
+                            os.path.join(
+                                self.img_dir, f"{self.img_num:05}_{angle_label}.png",
+                            )
                         )
                         self.img_num += 1
                     else:
                         self.world.save_png(
                             os.path.join(
-                                self.img_dir, "right", f"{self.img_num_r:05}.png"
+                                self.img_dir,
+                                "right",
+                                f"{self.img_num_r:05}_{angle_label}.png",
                             )
                         )
                         self.img_num_r += 1
 
                 self.world.turn(Turn.Right)
+                turn_angle -= 2.5  # self.world.getTurnSpeed() * (180 / pi)
                 self.world.update()
 
                 prev_turn = "right"
@@ -213,23 +247,33 @@ class Driver:
                 if prev_turn == "right":
                     print("no right to left allowed")
                     break
+                    
+                agent_dir = abs(90 - turn_angle)
 
-                # save image left
+                angle_label = agent_dir
+                print(f"LEFT DIR: {turn_angle}")
+                print(f"LEFT LABEL: {angle_label}")
+                self.all_angles = np.append(self.all_angles, angle_label)                
                 if self.img_dir != None:
                     if self.stack_dir:
                         self.world.save_png(
-                            os.path.join(self.img_dir, f"{self.img_num:05}_left.png")
+                            os.path.join(
+                                self.img_dir, f"{self.img_num:05}_{angle_label}.png",
+                            )
                         )
                         self.img_num += 1
                     else:
                         self.world.save_png(
                             os.path.join(
-                                self.img_dir, "left", f"{self.img_num_l:05}.png"
+                                self.img_dir,
+                                "left",
+                                f"{self.img_num_l:05}_{angle_label}.png",
                             )
                         )
                         self.img_num_l += 1
 
                 self.world.turn(Turn.Left)
+                turn_angle += 2.5  # self.world.getTurnSpeed() * (180 / pi)
                 self.world.update()
 
                 prev_turn = "left"
@@ -243,6 +287,7 @@ class Driver:
 
             self.update_direction()
 
+        print("\n")
         self.world.turn(Turn.Stop)
 
     @staticmethod
@@ -297,16 +342,22 @@ class Driver:
             )
             and self.step > 0.1
         ):
+            angle_label = 0
+            self.all_angles = np.append(self.all_angles, angle_label)
             if self.img_dir != None:
                 if self.stack_dir:
                     self.world.save_png(
-                        os.path.join(self.img_dir, f"{self.img_num:05}_straight.png")
+                        os.path.join(
+                            self.img_dir, f"{self.img_num:05}_{angle_label}.png",
+                        )
                     )
                     self.img_num += 1
                 else:
                     self.world.save_png(
                         os.path.join(
-                            self.img_dir, "straight", f"{self.img_num_s:05}.png"
+                            self.img_dir,
+                            "straight",
+                            f"{self.img_num_s:05}_{angle_label}.png",
                         )
                     )
                     self.img_num_s += 1
@@ -334,6 +385,8 @@ class Navigator:
     def __init__(self, maze, img_dir=None):
         self.world = PycastWorld(320, 240, maze)
         self.img_dir = img_dir
+        self.abs_base_dir = 0
+        self.abd_targ_dir = 0
 
         # getting directions
         with open(maze, "r") as in_file:
@@ -349,26 +402,47 @@ class Navigator:
 
         self.num_directions = len(self.directions)
 
-        self.angles = []
+        self.angles = np.array([])
+        self.base_angles = np.array([])
+        self.dirs = []
 
     def navigate(self, index, show_dir=False, show_freq=0):
         _, _, s_base_dir = self.directions[index].split()
         targ_x, targ_y, s_targ_dir = self.directions[index + 1].split()
         targ_x, targ_y = int(targ_x), int(targ_y)
+        
 
         # convert from string
         base_dir = enws[s_base_dir]
-        targ_dir = enws[s_targ_dir]
-
+        targ_dir = enws[s_targ_dir]        
+        
+        if base_dir != targ_dir :
+            self.abs_base_dir = base_dir
+            self.abs_targ_dir = targ_dir
+        if self.abs_base_dir == 0:
+            self.abs_base_dir = 360
+            
+        _, _, s_prev_dir = None, None, None
+        prev_dir = None
+        if index >= 1:            
+            s_prev_dir = s_targ_dir
+            prev_dir = enws[s_prev_dir]
+            if base_dir != prev_dir:
+                self.abs_base_dir = prev_dir
+        # we know prev direction; calculate the angle direction we need and 
+        # keep that angle direction until the current direction changes again. 
+        # e.g. West -> North means turn right until North -> East so on and so forth
         if show_dir:
-            print(f"Directions: {targ_x}, {targ_y}, {s_targ_dir}")
+            print(f"Directions: {targ_x}, {targ_y}, {s_targ_dir}, basedir: {s_base_dir}, \
+            abs base dir: {self.abs_base_dir}\
+            prev dir: {s_prev_dir}")
 
         # center of target cell
         c_targ_x = targ_x + 0.5
         c_targ_y = targ_y + 0.5
 
         driver = Driver(
-            c_targ_x, c_targ_y, base_dir, targ_dir, self.world, self.img_dir, show_freq
+            c_targ_x, c_targ_y, base_dir, targ_dir, self.world, self.img_dir, show_freq, self.abs_base_dir
         )
 
         while not in_targ_cell(
@@ -378,21 +452,46 @@ class Navigator:
             driver.turn_to_angle()
             driver.set_rand_step()
             driver.move_to_step()
-
-            self.angles.append(driver.get_angle())
+        
+#         print("made it to targ cell..moving to next")
+        self.angles = np.append(self.angles, driver.all_angles)
+        return prev_dir
 
     def plot_angles(self):
-        for a in self.angles:
-            print(a)
+        plt.plot(self.angles)
+        plt.show()
 
+    def plot_directions(self):
+        plt.plot(self.dirs)
+        plt.show()
 
-def main():
-    maze = sys.argv[1] if len(sys.argv) > 1 else "../Mazes/maze01.txt"
-    show_freq = int(sys.argv[2]) if len(sys.argv) > 2 else 0  # frequency to show frames
-    img_dir = sys.argv[3] if len(sys.argv) > 3 else None  # directory to save images to
-    show_dir = (
-        bool(distutils.util.strtobool(sys.argv[4])) if len(sys.argv) > 4 else False
-    )
+    def plot_label_dir(self):
+        plt.plot(self.directions)
+        plt.show()
+
+# +
+mazes = ["../Mazes/15_mazes_test_06-07-2021_22-37/maze_5.txt"]
+#          "../Mazes/15_mazes_test_06-07-2021_22-37/maze_2.txt", 
+#          "../Mazes/15_mazes_test_06-07-2021_22-37/maze_3.txt",
+#          "../Mazes/15_mazes_test_06-07-2021_22-37/maze_4.txt",
+#          "../Mazes/15_mazes_test_06-07-2021_22-37/maze_5.txt",
+#          "../Mazes/15_mazes_test_06-07-2021_22-37/maze_6.txt",
+#          "../Mazes/15_mazes_test_06-07-2021_22-37/maze_7.txt", 
+#          "../Mazes/15_mazes_test_06-07-2021_22-37/maze_8.txt",
+#          "../Mazes/15_mazes_test_06-07-2021_22-37/maze_9.txt",
+#          "../Mazes/15_mazes_test_06-07-2021_22-37/maze_10.txt",
+#          "../Mazes/15_mazes_test_06-07-2021_22-37/maze_11.txt",
+#          "../Mazes/15_mazes_test_06-07-2021_22-37/maze_12.txt", 
+#          "../Mazes/15_mazes_test_06-07-2021_22-37/maze_13.txt",
+#          "../Mazes/15_mazes_test_06-07-2021_22-37/maze_14.txt",
+#          "../Mazes/15_mazes_test_06-07-2021_22-37/maze_15.txt"]
+
+for m in mazes:
+    maze = m
+    print(maze)
+    show_freq = 0  # frequency to show frames
+    img_dir = "/raid/Images/proxy_reg" # directory to save images to
+    show_dir = True
 
     navigator = Navigator(maze, img_dir)
 
@@ -400,9 +499,197 @@ def main():
     while j < navigator.num_directions - 1:
         navigator.navigate(j, show_dir=show_dir, show_freq=show_freq)
         j += 1
+# -
 
-    navigator.plot_angles()
+90 - 12.5
+
+navigator.angles.shape
+
+plt.plot(navigator.angles)
+plt.show()
+
+from fastai.vision.all import *
+from fastai import *
+import datetime;
+from fastai.vision.widgets import *
+import torch 
+from math import pi
+
+# +
+path = Path('/raid/Images/reg_data')
+
+num_img = !ls -l '/raid/Images/reg_data' | wc -l
+
+int(num_img[0])
+# -
+
+get_image_files(path)
+
+r_path = Path('/raid/Images/test/right')
+l_path = Path('/raid/Images/test/left')
+
+torch.cuda.current_device()
+
+torch.cuda.set_device(1)
+
+torch.cuda.current_device()
+
+sample_lab = "/raid/Images/test/left/00627_-12.4564.png"
+deg = float(sample_lab.split('_')[1][:-4])
+round(deg, 4)
+
+img_files = get_image_files(path)
+
+im = PILImage.create(img_files[0])
+im.shape
+
+im.to_thumb(160)
 
 
-if __name__ == "__main__":
-    main()
+def get_deg(f):
+    sample_lab = f.name
+    deg = float(sample_lab.split('_')[1][:-4])
+    return tensor(deg).unsqueeze(0)
+
+
+db_r = DataBlock(
+    blocks=(ImageBlock, RegressionBlock()),
+    get_items=get_image_files,
+    get_y=get_deg,
+    splitter=RandomSplitter(valid_pct=0.2, seed=47),
+)
+
+dls_r = db_r.dataloaders(path)
+dls_r.show_batch(max_n=9, figsize=(8,6))
+
+xb,yb = dls_r.one_batch()
+xb.shape,yb.shape
+
+xb[0,0]
+
+learn = cnn_learner(
+    dls_r,
+    resnet18,
+    y_range=(-90, 90),
+    metrics=[mse], # , within_45_deg, within_30_deg, within_15_deg
+)
+learn.fine_tune(
+    3,
+    cbs=[SaveModelCallback(), EarlyStoppingCallback(monitor="valid_loss", patience=10)],
+)
+
+learn.export('/home/CAMPUS/eoca2018/raycasting-simulation/Models/regression_model02.pkl')
+
+learn.show_results(ds_idx=1, nrows=3, figsize=(8,10))
+
+learn.predict(get_image_files(path)[0])
+
+get_image_files(path)[0]
+
+# # Try Predicting with the Regression Model
+
+import matplotlib.pyplot as plt
+import sys
+sys.path.append("../PycastWorld")
+sys.path.append("../Gym")
+from gym_pycastworld.PycastWorldEnv import PycastWorldEnv
+from matplotlib.animation import FuncAnimation
+from IPython.display import HTML
+
+# +
+steps_per_episode = 1000
+
+env = PycastWorldEnv("../Mazes/maze01.txt", 320, 240)
+
+path = Path('/home/CAMPUS/eoca2018/raycasting-simulation/Models/regression_model02.pkl')
+# Run some number of trials all starting from the
+# initial location. We might eventually randomize
+# the maze and the starting location.
+
+# Grab the initial observation (not used here)
+observation = env.reset()
+frames = [observation.copy()]
+model_inf = load_learner(path)
+prev_pred = 0
+
+plt.imshow(observation)
+
+# +
+print("Predicting...")
+for t in range(steps_per_episode):    
+    pred_angle, _, _ =  model_inf.predict(observation)
+    pred_angle = math.ceil(pred_angle[0])
+    print(pred_angle)
+    num_movements = abs(int(pred_angle / 20))
+    
+    if num_movements == 0:
+        action_index = 1
+        observation, reward, done, info = env.step(action_index)
+        frames.append(observation.copy())
+        prev_pred = pred_angle
+        continue
+    
+    if (prev_pred > 0 and pred_angle < 0) or (prev_pred < 0 and pred_angle > 0):
+        print("left-right mixup")
+        action_index = 1
+        observation, reward, done, info = env.step(action_index)
+        frames.append(observation.copy())
+        prev_pred = pred_angle
+        continue
+        
+    # check if we have to move opposite
+#     if abs(prev_pred) > abs(pred_angle) + 5:
+#         print("preventing overturn")
+#         action_index = 1
+#         observation, reward, done, info = env.step(action_index)
+#         frames.append(observation.copy())
+#         continue
+             
+    action_index = 1
+    if pred_angle > 0 and num_movements > 0:
+        for i in range(num_movements):
+            action_index = 0 # turn left
+            observation, reward, done, info = env.step(action_index)
+            frames.append(observation.copy())
+    elif pred_angle < 0 and num_movements > 0:
+        for i in range(num_movements):
+            action_index = 2 # turn right
+            observation, reward, done, info = env.step(action_index)
+            frames.append(observation.copy())
+#     else:
+#         action_index = 1
+#         observation, reward, done, info = env.step(action_index)
+#         frames.append(observation.copy())
+
+    prev_pred = pred_angle
+    # Check if we reached the end goal
+    if done:
+        print(f"  Found goal in {t+1} steps")
+        break
+
+print(f"  Ended at position {env.world.x()}, {env.world.y()}")
+env.close();
+
+# +
+fig, ax = plt.subplots()
+ln = plt.imshow(frames[0])
+def init():
+    ln.set_data(frames[0])
+    return [ln]
+
+def update(frame):
+#     print(frame)
+    ln.set_array(frame)
+    return [ln] 
+
+ani = FuncAnimation(fig, update, frames, init_func=init, interval=60)
+# plt.show()
+# ani.save("prediction_" + str(datetime.datetime.now()) + ".mp4")
+smaller_frames = frames[::3] 
+ani = FuncAnimation(fig, update, smaller_frames, init_func=init, interval=60)
+HTML(ani.to_html5_video())
+# -
+
+
+
+
