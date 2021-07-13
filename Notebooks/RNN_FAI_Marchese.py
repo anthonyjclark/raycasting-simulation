@@ -35,7 +35,7 @@ device
 
 # Get classes and filenames
 path = Path("data_RNN")
-classes = get_classes(path)
+classes = get_class_labels(path)
 all_filenames = get_filenames(path)
 all_filenames.sort()
 
@@ -59,7 +59,7 @@ train_data = ImageDataset(classes, train_filenames)
 val_data = ImageDataset(classes, val_filenames)
 
 # Creating DataLoader
-dls = DataLoaders.from_dsets(train_data, val_data, bs=8, shuffle=False)
+dls = DataLoaders.from_dsets(train_data, val_data, bs=32, shuffle=False)
 dls = dls.cuda()
 
 net = ConvRNN()
@@ -70,7 +70,7 @@ learn = Learner(dls, net, loss_func=CrossEntropyLossFlat(), metrics=accuracy)
 # Find good learning rate
 learn.lr_find()
 
-learn.fit(20, lr=4.36e-06)
+learn.fit(20, lr=0.0005)
 
 PATH = 'fai_RNN.pth'
 torch.save(net.state_dict(), PATH)

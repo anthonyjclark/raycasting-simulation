@@ -18,7 +18,9 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 import torchvision.transforms as transforms
+from torch.utils.data import DataLoader
 import convLSTM as convLSTM
+import numpy as np
 from pathlib import Path
 from time import time
 from PIL import Image
@@ -29,7 +31,7 @@ device
 
 # Get classes and filenames
 path = Path("data_RNN")
-classes = get_classes(path)
+classes = get_class_labels(path)
 all_filenames = get_filenames(path)
 all_filenames.sort()
 
@@ -53,8 +55,8 @@ train_data = ImageDataset(classes, train_filenames)
 val_data = ImageDataset(classes, val_filenames)
 
 # Loading in data
-train_loader = DataLoader(dataset=train_data, shuffle=False, batch_size=8)
-val_loader = DataLoader(dataset=val_data, shuffle=False, batch_size=8)
+train_loader = DataLoader(dataset=train_data, shuffle=False, batch_size=32)
+val_loader = DataLoader(dataset=val_data, shuffle=False, batch_size=32)
 img, label = next(iter(train_loader))
 
 img.size()
@@ -63,9 +65,9 @@ net = ConvRNN()
 net.to(device)
 
 criterion = nn.CrossEntropyLoss()
-optimizer = optim.Adam(net.parameters(), lr=4.36e-06)
+optimizer = optim.Adam(net.parameters(), lr=0.0006)
 
-num_epochs = 50
+num_epochs = 45
 
 # +
 net.train()
@@ -126,8 +128,6 @@ with torch.no_grad():
 
         # Predict
         output = net(img)
-        
-        print(output)
         
         # Assuming we always get batches
         for i in range(output.size()[0]):

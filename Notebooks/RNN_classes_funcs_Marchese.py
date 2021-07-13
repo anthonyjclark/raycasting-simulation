@@ -3,18 +3,20 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 import torchvision.transforms as transforms
+from torch.utils.data import Dataset
 import convLSTM as convLSTM
 from pathlib import Path
-from cmd_classes_funcs_Marchese import *
 from time import time
 from PIL import Image
+import numpy as np
 
 class ConvRNN(nn.Module):
     def __init__(self):
         super().__init__()
-        self.convlstm = convLSTM.ConvLSTM(3, 10, (3,3), 1, True, True, False)
+        self.convlstm = convLSTM.ConvLSTM(3, 15, (3,3), 
+                                          6, True, True, False) 
         self.flat = nn.Flatten()
-        self.lin1 = nn.Linear(10*240*320, 512)
+        self.lin1 = nn.Linear(15*240*320, 512)
         self.relu = nn.ReLU()
         self.lin2 = nn.Linear(512, 3)
         
@@ -25,6 +27,36 @@ class ConvRNN(nn.Module):
         x = self.relu(x)
         x = self.lin2(x)
         return x
+
+"""Code from https://medium.com/@nathaliejeans/how-i-classified-images-with-recurrent-neural-networks-28eb4b57fc79"""
+class ImageRNN(nn.Module):
+    def __init__(self, batch_size, steps, inputs, neurons, outputs):
+        super(ImageRNN, self).__init__()
+        
+        self.neurons = neurons
+        self.batch_size = batch_size
+        self.steps = steps
+        self.inputs = inputs
+        self.outputs = outputs
+        
+        self.basic_rnn = nn.RNN(self.inputs, self.neurons)
+        
+        self.l1 = nn.Linear(self.neurons, self.outputs)
+        
+    def init_hidden(self,):
+        return (torch.zeros(1, self.batch_size, self.neurons))
+    
+    def forward(self, x):
+        x = x.permute(1,0,2)
+        
+        self.batch_size = x.size(1)
+        self.hidden = self.init_hidden()
+        
+        lstm_out, self.hidden = self.basic_rnn(x, self.hidden)
+        out = self.FC(self.hidden)
+        
+        return out.view(-1, self.outputs)
+
 
 def get_filenames(img_dir):
     """
@@ -38,7 +70,7 @@ def get_filenames(img_dir):
         all_filenames += [item for item in img_dir.iterdir() if ".ipynb_checkpoints" not in str(item)]
     return all_filenames
 
-def get_classes(img_dir):
+def get_class_labels(img_dir):
     """
     Creates labels for dataset: ["left", "right", "straight"]. Does this through iterating 
     through the directories in img_dir and splitting on the backslash in the path name 
@@ -82,3 +114,5 @@ class ImageDataset(Dataset):
         
         # Data and the label associated with that data
         return img, label
+
+

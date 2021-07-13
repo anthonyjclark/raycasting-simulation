@@ -47,7 +47,7 @@ class ImageWithCmdDataset(Dataset):
         
         # Data and the label associated with that data
         return (img, cmd), label
-    
+
 class MyModel(nn.Module):
     def __init__(self, pretrained=True):
         super(MyModel, self).__init__()
@@ -66,7 +66,7 @@ class MyModel(nn.Module):
         x = self.r1(self.fc1(x))
         x = self.fc2(x)
         return x
-    
+
 class MyModel1(nn.Module):
     def __init__(self, pretrained=True):
         super(MyModel1, self).__init__()
@@ -90,7 +90,7 @@ class MyModel1(nn.Module):
         x = self.dr2(x)
         x = self.fc2(x)
         return x
-    
+
 class MyModel2(nn.Module):
     def __init__(self, pretrained=True):
         super(MyModel2, self).__init__()
@@ -118,7 +118,7 @@ class MyModel2(nn.Module):
         x = self.dr2(x)
         x = self.fc2(x)
         return x
-    
+
 class MyModel34(nn.Module):
     def __init__(self, pretrained=True):
         super(MyModel34, self).__init__()
@@ -146,7 +146,7 @@ class MyModel34(nn.Module):
         x = self.dr2(x)
         x = self.fc2(x)
         return x
-    
+
 class MyModel50(nn.Module):
     def __init__(self, pretrained=True):
         super(MyModel50, self).__init__()
@@ -174,7 +174,7 @@ class MyModel50(nn.Module):
         x = self.dr2(x)
         x = self.fc2(x)
         return x
-    
+
 class MyModel101(nn.Module):
     def __init__(self, pretrained=True):
         super(MyModel101, self).__init__()
@@ -202,7 +202,7 @@ class MyModel101(nn.Module):
         x = self.dr2(x)
         x = self.fc2(x)
         return x
-    
+
 class MyModelx18(nn.Module):
     def __init__(self, pretrained=True):
         super(MyModelx18, self).__init__()
@@ -230,7 +230,7 @@ class MyModelx18(nn.Module):
         x = self.dr2(x)
         x = self.fc2(x)
         return x
-    
+
 class MyModelx34(nn.Module):
     def __init__(self, pretrained=True):
         super(MyModelx34, self).__init__()
@@ -258,7 +258,7 @@ class MyModelx34(nn.Module):
         x = self.dr2(x)
         x = self.fc2(x)
         return x
-    
+
 class MyModelx50(nn.Module):
     def __init__(self, pretrained=True):
         super(MyModelx50, self).__init__()
@@ -314,7 +314,7 @@ class MyModelx101(nn.Module):
         x = self.dr2(x)
         x = self.fc2(x)
         return x    
-    
+
 class MyModel_sq1(nn.Module):
     def __init__(self, pretrained=True):
         super(MyModel_sq1, self).__init__()
@@ -370,7 +370,7 @@ class MyModel_sq1_1(nn.Module):
         x = self.dr2(x)
         x = self.fc2(x)
         return x    
-    
+
 class MyModel_dnet121(nn.Module):
     def __init__(self, pretrained=True):
         super(MyModel_dnet121, self).__init__()
@@ -398,7 +398,7 @@ class MyModel_dnet121(nn.Module):
         x = self.dr2(x)
         x = self.fc2(x)
         return x    
-    
+
 class MyModel_dnet161(nn.Module):
     def __init__(self, pretrained=True):
         super(MyModel_dnet161, self).__init__()
@@ -426,7 +426,7 @@ class MyModel_dnet161(nn.Module):
         x = self.dr2(x)
         x = self.fc2(x)
         return x    
-    
+
 class MyModel_dnet169(nn.Module):
     def __init__(self, pretrained=True):
         super(MyModel_dnet169, self).__init__()
@@ -482,7 +482,7 @@ class MyModel_dnet201(nn.Module):
         x = self.dr2(x)
         x = self.fc2(x)
         return x 
-    
+
 class MyModel_next50(nn.Module):
     def __init__(self, pretrained=True):
         super(MyModel_next50, self).__init__()
@@ -510,7 +510,7 @@ class MyModel_next50(nn.Module):
         x = self.dr2(x)
         x = self.fc2(x)
         return x    
-    
+
 class MyModel_next101(nn.Module):
     def __init__(self, pretrained=True):
         super(MyModel_next101, self).__init__()
@@ -538,7 +538,7 @@ class MyModel_next101(nn.Module):
         x = self.dr2(x)
         x = self.fc2(x)
         return x  
-    
+
 def get_class_labels(img_dir):
     """
     Creates labels for dataset: ["left", "right", "straight"]. Does this through iterating 

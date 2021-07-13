@@ -69,6 +69,10 @@ val_data = ImageWithCmdDataset(classes, val_filenames)
 train_loader = DataLoader(dataset=train_data, shuffle=False, batch_size=16, sampler=train_sampler)
 val_loader = DataLoader(dataset=val_data, shuffle=False, batch_size=16, sampler=val_sampler)
 
+data = next(iter(train_loader))
+img, cmd = data
+cmd
+
 # Instantiate MyModel class
 net = MyModel_next50()
 
