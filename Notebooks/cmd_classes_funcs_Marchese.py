@@ -1,12 +1,11 @@
+# Import appropriate packages and libraries
 from pathlib import Path
 from torch.utils.data import DataLoader, Dataset, SubsetRandomSampler
 from PIL import Image
 import matplotlib.pyplot as plt
 import numpy as np
-
 import fastbook
 fastbook.setup_book()
-
 from fastbook import *
 from fastai.vision.widgets import *
 from fastai.vision.models.xresnet import *
@@ -15,16 +14,33 @@ import torchvision.models as models
 
 class ImageWithCmdDataset(Dataset):
     def __init__(self, class_labels, filenames):
-
-        self.class_labels = class_labels
-        self.class_indices = {lbl:i for i, lbl in enumerate(self.class_labels)}
+        """
+        Creates objects for class labels, class indices, and filenames.
         
+        :param class_labels: (list) a list of labels denoting different classification categories
+        :param filenames: (list) a list of filenames that make up the dataset
+        """
+        self.class_labels = class_labels
+        self.class_indices = {lbl:i for i, lbl in enumerate(self.class_labels)}        
         self.all_filenames = filenames
         
     def __len__(self):
+        """
+        Gives length of dataset.
+        
+        :return: (int) the number of filenames in the dataset
+        """
         return len(self.all_filenames)
 
     def __getitem__(self, index):
+        """
+        Gets the filename associated with the given index, opens the image at
+        that index, then uses the image's filename to get information associated
+        with the image such as its label and the label of the previous image.
+        
+        :param index: (int) number that represents the location of the desired data
+        :return: (tuple) tuple of all the information associated with the desired data
+        """
         # img_filename looks like data/<label>/<number>-<previous_move>.png
         img_filename = self.all_filenames[index]
         
