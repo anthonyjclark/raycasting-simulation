@@ -13,7 +13,7 @@
 #     name: python3
 # ---
 
-# +
+# Import necessary libraries and packages
 from pathlib import Path
 from torch.utils.data import DataLoader, Dataset, SubsetRandomSampler
 import torchvision.models as models
@@ -21,15 +21,13 @@ import torch.optim as optim
 from PIL import Image
 import matplotlib.pyplot as plt
 import numpy as np
-
 import fastbook
 fastbook.setup_book()
-
 from fastbook import *
 from fastai.vision.widgets import *
 from RNN_classes_funcs_Marchese import *
-# -
 
+# Ensure correct GPU is being used if available
 device = torch.device("cuda:3" if torch.cuda.is_available() else "cpu")
 device
 
@@ -39,39 +37,44 @@ classes = get_class_labels(path)
 all_filenames = get_filenames(path)
 all_filenames.sort()
 
-# Getting size of dataset and corresponding list of indices
+# Get size of dataset and corresponding list of indices
 dataset_size = len(all_filenames)
 dataset_indices = list(range(dataset_size))
 
-# Getting index for where we want to split the data
+# Get index for where we want to split the data
 val_split_index = int(np.floor(0.2 * dataset_size))
 
-# Splitting list of indices into training and validation indices
+# Split list of indices into training and validation indices
 train_idx, val_idx = dataset_indices[val_split_index:], dataset_indices[:val_split_index]
 
-# Getting list of filenames for training and validation set
+# Get list of filenames for training and validation set
 train_filenames = [all_filenames[i] for i in train_idx]
 val_filenames = [all_filenames[i] for i in val_idx]
 train_filenames
 
-# Getting data via custom dataset
+# Get data via custom dataset
 train_data = ImageDataset(classes, train_filenames)
 val_data = ImageDataset(classes, val_filenames)
 
-# Creating DataLoader
+# Create the DataLoader
 dls = DataLoaders.from_dsets(train_data, val_data, bs=32, shuffle=False)
 dls = dls.cuda()
 
+# Initialize the network
 net = ConvRNN()
+# Send network to the GPU
 net.to(device)
 
+# Initialize FastAI learner
 learn = Learner(dls, net, loss_func=CrossEntropyLossFlat(), metrics=accuracy)
 
 # Find good learning rate
 learn.lr_find()
 
+# Fit learner
 learn.fit(20, lr=0.0005)
 
+# Save trained model
 PATH = 'fai_RNN.pth'
 torch.save(net.state_dict(), PATH)
 

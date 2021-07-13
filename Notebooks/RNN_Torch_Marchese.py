@@ -13,6 +13,7 @@
 #     name: python3
 # ---
 
+# Import necessary libraries and packages
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -26,6 +27,7 @@ from time import time
 from PIL import Image
 from RNN_classes_funcs_Marchese import *
 
+# Ensure correct GPU is being used if available
 device = torch.device("cuda:3" if torch.cuda.is_available() else "cpu")
 device
 
@@ -35,44 +37,45 @@ classes = get_class_labels(path)
 all_filenames = get_filenames(path)
 all_filenames.sort()
 
-# Getting size of dataset and corresponding list of indices
+# Get size of dataset and corresponding list of indices
 dataset_size = len(all_filenames)
 dataset_indices = list(range(dataset_size))
 
-# Getting index for where we want to split the data
+# Get index for where we want to split the data
 val_split_index = int(np.floor(0.2 * dataset_size))
 
-# Splitting list of indices into training and validation indices
+# Split list of indices into training and validation indices
 train_idx, val_idx = dataset_indices[val_split_index:], dataset_indices[:val_split_index]
 
-# Getting list of filenames for training and validation set
+# Get list of filenames for training and validation sets
 train_filenames = [all_filenames[i] for i in train_idx]
 val_filenames = [all_filenames[i] for i in val_idx]
 train_filenames
 
-# Getting data via custom dataset
+# Get data via custom dataset
 train_data = ImageDataset(classes, train_filenames)
 val_data = ImageDataset(classes, val_filenames)
 
-# Loading in data
+# Create a dataloader for training and validation dataset
 train_loader = DataLoader(dataset=train_data, shuffle=False, batch_size=32)
 val_loader = DataLoader(dataset=val_data, shuffle=False, batch_size=32)
-img, label = next(iter(train_loader))
 
-img.size()
-
+# Initialize the network
 net = ConvRNN()
 net.to(device)
 
+# Initialize a loss function and an optimizer
 criterion = nn.CrossEntropyLoss()
 optimizer = optim.Adam(net.parameters(), lr=0.0006)
 
 num_epochs = 45
 
 # +
+# Training the network
+
 net.train()
 
-for epoch in range(num_epochs):  # loop over the dataset multiple times
+for epoch in range(num_epochs):
 
     running_loss = 0.0
     
@@ -82,28 +85,29 @@ for epoch in range(num_epochs):  # loop over the dataset multiple times
         # Get the inputs and labels; currently ommitting cmd
         img, label = data
         
-        # Putting data into the GPU
+        # Send data to the GPU
         img = img.to(device)
         label = label.to(device)
         
-        # zero the parameter gradients
+        # Zero the parameter gradients
         optimizer.zero_grad()
         
-        # forward + backward + optimize
+        # Forward + backward + optimize
         output = net(img)
         loss = criterion(output, label)
         loss.backward()
         optimizer.step()
 
-        # print statistics
+        # Accumulate total loss for each epoch
         running_loss += loss.item()
         
+    # Print statistics
     print(f"Epoch:{epoch+1:}/{num_epochs}, Training Loss:{running_loss:0.1f}, Time:{time()-start:0.1f}s")
 
 print('Finished Training')
 
 # +
-# Checking accuracy on validation set
+# Check accuracy on validation set
 
 correct = 0
 total = 0
@@ -121,7 +125,7 @@ with torch.no_grad():
         # Get the inputs and labels; currently ommitting cmd
         img, label = data
         
-        # Putting data into the GPU
+        # Put data into the GPU
         img = img.to(device)
         label = label.to(device)
 
@@ -132,7 +136,7 @@ with torch.no_grad():
         # Assuming we always get batches
         for i in range(output.size()[0]):
                 
-            # Getting the predicted most probable move
+            # Get the predicted most probable move
             move = torch.argmax(output[i])
                 
             if move == label[i]:
@@ -155,6 +159,7 @@ for i, cls in enumerate(classes):
     print(f"  Accuracy on {cls:>5} class: {ccorrect}/{ctotal} = {caccuracy*100:.2f}%")
 # -
 
+# Save trained model
 PATH = 'torch_RNN.pth'
 torch.save(net.state_dict(), PATH)
 

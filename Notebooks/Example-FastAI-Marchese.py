@@ -14,63 +14,64 @@
 # ---
 
 # +
+# Import necessary packages and libraries
 # %matplotlib notebook
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 import numpy as np
-
 import sys
 from fastai.vision.all import *
 
+# Append paths to access certain .py files
 sys.path.append("../PycastWorld")
 sys.path.append("../Gym")
 sys.path.append("../Notebooks")
 
+# Import functions and classes from .py files
 from gym_pycastworld.PycastWorldEnv import PycastWorldEnv
 from cmd_classes_funcs_Marchese import *
 from RNN_classes_funcs_Marchese import *
 # -
 
-# loading in trained NN
+# load in trained network
 net = ConvRNN()
-net.load_state_dict(torch.load('torch_RNN.pth'))
+model_name = 'torch_RNN.pth'
+net.load_state_dict(torch.load(model_name))
 net.eval()
 
+# Number of steps the model should walk before it stops or reaches the end of the maze
 steps_per_episode = 2000
 
+# Load in the world environment
 env = PycastWorldEnv("../Mazes/maze_test00.txt", 320, 240)
 
-# Grab the initial observation (not used here)
+# Grab the initial observation 
 observation = env.reset()
 frames = [observation.copy()]
 
+# +
 # Variable to keep track of the previous move
 prev_move = 1
+
 # Variable to keep track of current move's name
 action_name = 'straight'
 
 # +
+# Loop to have the model walk through the maze
 for t in range(steps_per_episode):
-
-    # Remove this render call when actually training;
-    # it will needlessly slow things down if you don't want
-    # to watch.
-    # TODO: cannot render on HPC
-    # env.render()
     
-    #Non-RNN input
-    #inp = (tensor(observation/255).permute(2,0,1).unsqueeze(0), tensor(prev_move).unsqueeze(0)) 
-    #RNN input
-    inp = tensor(observation/255).permute(2,0,1).unsqueeze(0).unsqueeze(0)
+    # Checks what kind of model the network is in order to give the appropriate inputs
+    if "cmd" in model_name:
+        inp = (tensor(observation/255).permute(2,0,1).unsqueeze(0), tensor(prev_move).unsqueeze(0)) 
+    elif "RNN" in model_name:
+        inp = tensor(observation/255).permute(2,0,1).unsqueeze(0).unsqueeze(0)
+    else:
+        inp = tensor(observation/255).permute(2,0,1)
     
     # Use a trained neural network to select the action
     output = net(inp)
     
-    # Output is a multi-value tensor; in order to know the action_index
-    # we must take max and see what move is associated with that max
-    
     # Getting the most probable move
-    #print(output)
     action_index = int(torch.argmax(output[0]))
                 
     # Looking at what move has that probability
@@ -86,13 +87,6 @@ for t in range(steps_per_episode):
         action_index = 1
         action_name = 'straight'
         
-    """
-    # Account for left-right stuck mistake
-    if action_index == 0 and prev_move == 2:
-        action_index = 2
-    elif action_index == 2 and prev_move == 0:
-        action_index = 0"""
-    
     # Update previous move
     prev_move = action_index
     
@@ -102,45 +96,63 @@ for t in range(steps_per_episode):
     # method advance more than step so that it takes fewer
     # steps in total to get to the end goal.
     observation, reward, done, info = env.step(action_index)
+    
+    # Collect frames one by one
     frames.append(observation.copy())
+    
     # Check if we reached the end goal
     if done:
         print(f"  Found goal in {t+1} steps")
         break
-        
+
+# Show final image
 plt.imshow(observation)
+
+# Print ending position
 print(f"  Ended at position {env.world.get_x()}, {env.world.get_y()}")
+
+# Close environment
 env.close()
 
 # +
-# TODO: matplotlib animation
-# https://matplotlib.org/stable/api/animation_api.html
+# Initialize subplots
 fig, ax = plt.subplots()
+
+# Set axis of animation
 ax.set(xlim=(0,300), ylim=(240,0))
 
+# Initialize frame
 frame = plt.imshow(frames[0])
-print(f"  Ended at position {env.world.getX()}, {env.world.getY()}")
 
-
-# +
 def init():
+    """
+    Creates initial frame for animation.
+    
+    :return: (list) a list of the initial frame for animation
+    """
     frame.set_data(frames[0])
     return [frame]
 
 def animate(i):
+    """
+    Updates the state of the frame at each point of the animation.
+    
+    :param i: (ndarray) current image/frame
+    :return: (list) a list of the current frame for animation
+    """
+    # Define the updated content of frame
     frame.set_array(i)
     return [frame]
 
-
-# +
 from IPython.display import HTML
 
-ani = FuncAnimation(fig, animate, frames[::25], init_func = init, interval = 200)
+# Take images, functions, and other parameters and create an animation
+ani = FuncAnimation(fig, animate, frames[::20], init_func = init, interval = 200)
 HTML(ani.to_jshtml())
-
-# +
-#ani.save("prediction_next" + ".gif")
 # -
+
+# Save animation
+ani.save("animation" + ".gif")
 
 
 

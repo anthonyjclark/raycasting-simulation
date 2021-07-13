@@ -41,13 +41,16 @@ class ImageWithCmdDataset(Dataset):
         :param index: (int) number that represents the location of the desired data
         :return: (tuple) tuple of all the information associated with the desired data
         """
-        # img_filename looks like data/<label>/<number>-<previous_move>.png
+        # The filename of the image given a specific index
         img_filename = self.all_filenames[index]
         
-        # Opens image file and converts it into a tensor
-        img = Image.open(img_filename)
-        #img = img.resize((128,128))
+        # Opens image file and ensures dimension of channels included
+        img = Image.open(img_filename).convert('RGB')
+        # Resizes the image
+        img = img.resize((224, 224))
+        # Converts the image to tensor and 
         img = torch.Tensor(np.array(img)/255)
+        # changes the order of the dimensions and adds a dimension
         img = img.permute(2,0,1)
         
         # Replaces - and . with spaces then splits on the spaces
