@@ -81,6 +81,9 @@ class Driver:
         self.all_base_angles = np.array([])
         
         self.abs_base_dir = abs_base_dir
+        
+        self.left_throttle = 0
+        self.right_throttle = 0
 
         self.img_dir = img_dir
         if self.img_dir != None:
@@ -204,21 +207,14 @@ class Driver:
         angle_deg = self.angle * (180/pi)
         num_turns = 1
 
-#         print(f"abs_ base dir: {self.abs_base_dir}")
-#         curr_dir = self.world.directions() * (180/pi)
-                
         while self.abs_angle_diff(self.angle) > 0.1:
             if self.turn_right(self.angle):
                 if prev_turn == "left":
                     print("no left to right allowed")
-                    break
+                    break                
                 
-                agent_dir = -abs(90 + turn_angle)
-       
+                agent_dir = -abs(90 + turn_angle)       
                 angle_label = agent_dir
-                print(f"RIGHT DIR: {turn_angle}")
-                print(f"RIGHT LABEL: {angle_label}")
-                self.all_angles = np.append(self.all_angles, angle_label)
                 if self.img_dir != None:
                     if self.stack_dir:
                         self.world.save_png(
@@ -238,7 +234,7 @@ class Driver:
                         self.img_num_r += 1
 
                 self.world.turn(Turn.Right)
-                turn_angle -= 2.5  # self.world.getTurnSpeed() * (180 / pi)
+                turn_angle -= 2.5  
                 self.world.update()
 
                 prev_turn = "right"
@@ -249,11 +245,7 @@ class Driver:
                     break
                     
                 agent_dir = abs(90 - turn_angle)
-
                 angle_label = agent_dir
-                print(f"LEFT DIR: {turn_angle}")
-                print(f"LEFT LABEL: {angle_label}")
-                self.all_angles = np.append(self.all_angles, angle_label)                
                 if self.img_dir != None:
                     if self.stack_dir:
                         self.world.save_png(
@@ -273,7 +265,7 @@ class Driver:
                         self.img_num_l += 1
 
                 self.world.turn(Turn.Left)
-                turn_angle += 2.5  # self.world.getTurnSpeed() * (180 / pi)
+                turn_angle += 2.5
                 self.world.update()
 
                 prev_turn = "left"
@@ -286,8 +278,6 @@ class Driver:
                 i += 1
 
             self.update_direction()
-
-        print("\n")
         self.world.turn(Turn.Stop)
 
     @staticmethod
@@ -470,21 +460,21 @@ class Navigator:
         plt.show()
 
 # +
-mazes = ["../Mazes/15_mazes_test_06-07-2021_22-37/maze_5.txt"]
-#          "../Mazes/15_mazes_test_06-07-2021_22-37/maze_2.txt", 
-#          "../Mazes/15_mazes_test_06-07-2021_22-37/maze_3.txt",
-#          "../Mazes/15_mazes_test_06-07-2021_22-37/maze_4.txt",
-#          "../Mazes/15_mazes_test_06-07-2021_22-37/maze_5.txt",
-#          "../Mazes/15_mazes_test_06-07-2021_22-37/maze_6.txt",
-#          "../Mazes/15_mazes_test_06-07-2021_22-37/maze_7.txt", 
-#          "../Mazes/15_mazes_test_06-07-2021_22-37/maze_8.txt",
-#          "../Mazes/15_mazes_test_06-07-2021_22-37/maze_9.txt",
-#          "../Mazes/15_mazes_test_06-07-2021_22-37/maze_10.txt",
-#          "../Mazes/15_mazes_test_06-07-2021_22-37/maze_11.txt",
-#          "../Mazes/15_mazes_test_06-07-2021_22-37/maze_12.txt", 
-#          "../Mazes/15_mazes_test_06-07-2021_22-37/maze_13.txt",
-#          "../Mazes/15_mazes_test_06-07-2021_22-37/maze_14.txt",
-#          "../Mazes/15_mazes_test_06-07-2021_22-37/maze_15.txt"]
+mazes = ["../Mazes/15_mazes_test_07-07-2021_16-07/maze_1.txt",
+         "../Mazes/15_mazes_test_07-07-2021_16-07/maze_2.txt", 
+         "../Mazes/15_mazes_test_07-07-2021_16-07/maze_3.txt",
+         "../Mazes/15_mazes_test_07-07-2021_16-07/maze_4.txt"]
+#          "../Mazes/15_mazes_test_07-07-2021_16-07/maze_5.txt"]
+#          "../Mazes/15_mazes_test_07-07-2021_16-07/maze_6.txt",
+#          "../Mazes/15_mazes_test_07-07-2021_16-07/maze_7.txt", 
+#          "../Mazes/15_mazes_test_07-07-2021_16-07/maze_8.txt",
+#          "../Mazes/15_mazes_test_07-07-2021_16-07/maze_9.txt",
+#          "../Mazes/15_mazes_test_07-07-2021_16-07/maze_10.txt",
+#          "../Mazes/15_mazes_test_07-07-2021_16-07/maze_11.txt",
+#          "../Mazes/15_mazes_test_07-07-2021_16-07/maze_12.txt", 
+#          "../Mazes/15_mazes_test_07-07-2021_16-07/maze_13.txt",
+#          "../Mazes/15_mazes_test_07-07-2021_16-07/maze_14.txt",
+#          "../Mazes/15_mazes_test_07-07-2021_16-07/maze_15.txt"]
 
 for m in mazes:
     maze = m
@@ -500,10 +490,6 @@ for m in mazes:
         navigator.navigate(j, show_dir=show_dir, show_freq=show_freq)
         j += 1
 # -
-
-90 - 12.5
-
-navigator.angles.shape
 
 plt.plot(navigator.angles)
 plt.show()
@@ -534,9 +520,9 @@ torch.cuda.set_device(1)
 
 torch.cuda.current_device()
 
-sample_lab = "/raid/Images/test/left/00627_-12.4564.png"
-deg = float(sample_lab.split('_')[1][:-4])
-round(deg, 4)
+sample_lab = "02905_0_straight.png"
+sample_lab.split('_')[2][:-4]
+tensor((1,12), (23,155))
 
 img_files = get_image_files(path)
 
@@ -553,7 +539,7 @@ def get_deg(f):
 
 
 db_r = DataBlock(
-    blocks=(ImageBlock, RegressionBlock()),
+    blocks=(ImageBlock, RegressionBlock),
     get_items=get_image_files,
     get_y=get_deg,
     splitter=RandomSplitter(valid_pct=0.2, seed=47),
@@ -562,25 +548,21 @@ db_r = DataBlock(
 dls_r = db_r.dataloaders(path)
 dls_r.show_batch(max_n=9, figsize=(8,6))
 
-xb,yb = dls_r.one_batch()
-xb.shape,yb.shape
-
-xb[0,0]
-
 learn = cnn_learner(
     dls_r,
     resnet18,
-    y_range=(-90, 90),
-    metrics=[mse], # , within_45_deg, within_30_deg, within_15_deg
+    loss_func=steering_loss,
+    y_range=(-180, 180),
+    metrics=[mse],
 )
 learn.fine_tune(
-    3,
-    cbs=[SaveModelCallback(), EarlyStoppingCallback(monitor="valid_loss", patience=10)],
+    20,
+    cbs=[SaveModelCallback(), EarlyStoppingCallback(monitor="valid_loss", patience=5)],
 )
 
-learn.export('/home/CAMPUS/eoca2018/raycasting-simulation/Models/regression_model02.pkl')
+learn.export('/home/CAMPUS/eoca2018/raycasting-simulation/Models/point_block_reg.pkl')
 
-learn.show_results(ds_idx=1, nrows=3, figsize=(8,10))
+learn.show_results(ds_idx=1, nrows=3, figsize=(15,15))
 
 learn.predict(get_image_files(path)[0])
 
@@ -597,11 +579,11 @@ from matplotlib.animation import FuncAnimation
 from IPython.display import HTML
 
 # +
-steps_per_episode = 1000
+steps_per_episode = 2000
 
-env = PycastWorldEnv("../Mazes/maze01.txt", 320, 240)
+env = PycastWorldEnv("../Mazes/maze01-long.txt", 320, 240)
 
-path = Path('/home/CAMPUS/eoca2018/raycasting-simulation/Models/regression_model02.pkl')
+path = Path('/home/CAMPUS/eoca2018/raycasting-simulation/Models/steering_loss.pkl')
 # Run some number of trials all starting from the
 # initial location. We might eventually randomize
 # the maze and the starting location.
@@ -613,7 +595,6 @@ model_inf = load_learner(path)
 prev_pred = 0
 
 plt.imshow(observation)
-
 # +
 print("Predicting...")
 for t in range(steps_per_episode):    
@@ -627,6 +608,10 @@ for t in range(steps_per_episode):
         observation, reward, done, info = env.step(action_index)
         frames.append(observation.copy())
         prev_pred = pred_angle
+        
+        if done:
+            print(f"  Found goal in {t+1} steps")
+            break
         continue
     
     if (prev_pred > 0 and pred_angle < 0) or (prev_pred < 0 and pred_angle > 0):
@@ -634,7 +619,10 @@ for t in range(steps_per_episode):
         action_index = 1
         observation, reward, done, info = env.step(action_index)
         frames.append(observation.copy())
-        prev_pred = pred_angle
+        prev_pred = pred_angle        
+        if done:
+            print(f"  Found goal in {t+1} steps")
+            break        
         continue
         
     # check if we have to move opposite
@@ -656,10 +644,6 @@ for t in range(steps_per_episode):
             action_index = 2 # turn right
             observation, reward, done, info = env.step(action_index)
             frames.append(observation.copy())
-#     else:
-#         action_index = 1
-#         observation, reward, done, info = env.step(action_index)
-#         frames.append(observation.copy())
 
     prev_pred = pred_angle
     # Check if we reached the end goal
@@ -678,18 +662,10 @@ def init():
     return [ln]
 
 def update(frame):
-#     print(frame)
     ln.set_array(frame)
     return [ln] 
 
 ani = FuncAnimation(fig, update, frames, init_func=init, interval=60)
-# plt.show()
-# ani.save("prediction_" + str(datetime.datetime.now()) + ".mp4")
 smaller_frames = frames[::3] 
 ani = FuncAnimation(fig, update, smaller_frames, init_func=init, interval=60)
 HTML(ani.to_html5_video())
-# -
-
-
-
-
