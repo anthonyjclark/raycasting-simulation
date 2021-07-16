@@ -2,11 +2,8 @@
 
 # TODO:
 # - work with image sequences (just two for stacking)
-# - unify to work with single function for straight and cornering
-#   - need center of next turn cell for turning?
-#   - need to know if we are moving to a new cell (no longer turning)
 # - remove "Dir." from python files
-# - pick FOV
+# - pick FOV (get PR first)
 
 from __future__ import annotations
 
@@ -23,8 +20,8 @@ from pycaster import PycastWorld  # type: ignore
 sys.path.append("../MazeGen")
 from MazeUtils import bfs_dist_maze, read_maze_file  # type: ignore
 
-ANG_NOISE_MAG = radians(45)
-POS_NOISE_MAG = 0.4
+ANG_NOISE_MAG = radians(40)
+POS_NOISE_MAG = 0.35
 
 DIRS_TO_TURN = {
     ("NORTH", "EAST"): "RIGHT",
@@ -79,7 +76,7 @@ class Pt:
         return atan2(pt.y, pt.x)
 
 
-def angle_from_negpi_to_pospi(angle: float) -> float:
+def ang_plus_minus_pi(angle: float) -> float:
     angle = angle % (2 * pi)
     if angle < -pi:
         angle += 2 * pi
@@ -88,7 +85,7 @@ def angle_from_negpi_to_pospi(angle: float) -> float:
     return angle
 
 
-def angle_from_zero_to_2pi(angle: float) -> float:
+def ang_zero_to_2pi(angle: float) -> float:
     angle = angle % (2 * pi)
     return angle if angle >= 0 else angle + (2 * pi)
 
@@ -105,7 +102,10 @@ def process_maze(
     def get_next_dir(maze_directions, curr_heading):
         turnx, turny, next_heading = next(maze_directions)
         while next_heading == curr_heading:
-            turnx, turny, next_heading = next(maze_directions)
+            try:
+                turnx, turny, next_heading = next(maze_directions)
+            except StopIteration:
+                break
         return turnx, turny, next_heading
 
     # Compute path from maze file
@@ -139,10 +139,7 @@ def process_maze(
             curr_heading = next_heading
             prev_action = next_action
 
-            try:
-                turnx, turny, next_heading = get_next_dir(maze_directions, curr_heading)
-            except StopIteration:
-                pass
+            turnx, turny, next_heading = get_next_dir(maze_directions, curr_heading)
 
             # Default to FORWARD when curr_heading toward goal cell and we don't
             # have a next heading
@@ -163,19 +160,31 @@ def process_maze(
         # Add 0.5 offset to center position in the hallway
         pos = Pt(x + 0.5, y + 0.5)
 
-        path_cells.append((pos, right_corner, left_corner, curr_heading, turnx, turny))
+        cell_info = (
+            pos,
+            right_corner,
+            left_corner,
+            curr_heading,
+            prev_heading,
+            prev_action,
+        )
+
+        path_cells.append(cell_info)
 
         if is_turn_cell:
-            corner = left_corner if prev_action == "RIGHT" else right_corner
-            turn_cells.append((pos, prev_heading, prev_action, corner))
+            turn_cells.append(cell_info)
 
     return path_cells, turn_cells
 
 
 def capture_image(
-    angle: float, i: int, save_dir: str, demo: bool, world: PycastWorld,
+    angle: float,
+    i: int,
+    save_dir: str,
+    demo: bool,
+    world: PycastWorld,
 ):
-    angle = degrees(angle_from_negpi_to_pospi(angle))
+    angle = degrees(ang_plus_minus_pi(angle))
     filename = filename_from_angle_deg(angle, i)
 
     # Display image instead of saving
@@ -194,107 +203,83 @@ def capture_image(
         world.save_png(str(Path(save_dir) / filename))
 
 
-def capture_straightaway_images(
-    world: PycastWorld, num_images: int, path_cells, save_dir: str, demo: bool
+def capture_images(
+    world: PycastWorld,
+    num_images: int,
+    cells,
+    save_dir: str,
+    is_cornering: bool,
+    ioffset: int,
+    demo: bool,
 ):
+
+    # Print column header first time through
+    try:
+        _ = capture_images.first_call
+    except AttributeError:
+        capture_images.first_call = False
+        print("  I         X     Y   HEAD  NOISE  RIGHT  ANGLE  LEFT   ACTION   NAME")
+
     # Select position along path
     for i in range(num_images):
 
-        # TODO: not using turnx or turny
-        pos, right_corner, left_corner, heading, turnx, turny = choice(path_cells)
+        i += ioffset
 
-        # Perturb the position and heading
+        pos, rcorner, lcorner, cheading, pheading, turn_action = choice(cells)
+
+        # Heading is determined by cell case (cornering or not cornering)
+        heading = pheading if is_cornering else cheading
+
+        # Perturb the position
         perturbed_pos = pos + Pt.rand((-POS_NOISE_MAG, POS_NOISE_MAG))
-        x, y = perturbed_pos.xy
+        world.set_position(perturbed_pos.x, perturbed_pos.y)
 
+        # Perturb the heading
         ang_noise = ANG_NOISE_MAG * (2 * random() - 1)
-        angle = angle_from_zero_to_2pi(DIR_TO_ANGLE[heading] + ang_noise)
-
-        world.set_position(x, y)
+        angle = ang_zero_to_2pi(DIR_TO_ANGLE[heading] + ang_noise)
         world.set_direction(angle)
 
         # Compute angles to the two corners of the turn
-        angle_to_right = angle_from_zero_to_2pi(Pt.angle(right_corner - perturbed_pos))
-        angle_to_left = angle_from_zero_to_2pi(Pt.angle(left_corner - perturbed_pos))
+        angle_to_right = ang_zero_to_2pi(Pt.angle(rcorner - perturbed_pos))
+        angle_to_left = ang_zero_to_2pi(Pt.angle(lcorner - perturbed_pos))
 
         # Angles can straddle 0/360 when facing EAST
         if angle_to_right > angle_to_left:
-            angle = angle_from_negpi_to_pospi(angle)
-            angle_to_right = angle_from_negpi_to_pospi(angle_to_right)
-            angle_to_left = angle_from_negpi_to_pospi(angle_to_left)
+            angle = ang_plus_minus_pi(angle)
+            angle_to_right = ang_plus_minus_pi(angle_to_right)
+            angle_to_left = ang_plus_minus_pi(angle_to_left)
 
         # Now compute the "correct" action
-        if angle < angle_to_right:
-            angle_label = angle_to_right - angle
-            action = "LEFT"
-        elif angle > angle_to_left:
-            angle_label = angle_to_left - angle
-            action = "RIGHT"
-        else:
-            angle_label = 0
+        if is_cornering and turn_action == "LEFT":
+            action = turn_action
+            action_angle = ang_plus_minus_pi(angle_to_right) - ang_plus_minus_pi(angle)
+        elif is_cornering and turn_action == "RIGHT":
+            action = turn_action
+            action_angle = ang_plus_minus_pi(angle) - ang_plus_minus_pi(angle_to_left)
+        elif angle_to_right <= angle <= angle_to_left:
             action = "FORWARD"
+            action_angle = 0.0
+        elif angle < angle_to_right:
+            action = "LEFT"
+            action_angle = ang_plus_minus_pi(angle_to_right) - ang_plus_minus_pi(angle)
+        else:
+            action = "RIGHT"
+            action_angle = ang_plus_minus_pi(angle) - ang_plus_minus_pi(angle_to_left)
 
         print(
-            f"{i:>6} : ",
-            f"{x:5.2f}",
-            f"{y:5.2f}",
+            f"{i:>6} :",
+            f"{perturbed_pos.x:5.1f}",
+            f"{perturbed_pos.y:5.1f}",
             heading.rjust(5),
-            f"{degrees(angle_to_right): 7.2f}",
-            f"{degrees(angle_to_left): 7.2f}",
-            f"{degrees(angle): 7.2f}",
-            f"{degrees(angle_label): 7.2f}",
+            f"{degrees(ang_noise):6.1f}",
+            f"{degrees(angle_to_right): 6.1f}",
+            f"{degrees(angle): 6.1f}",
+            f"{degrees(angle_to_left): 6.1f}",
+            f"{degrees(action_angle): 6.1f}",
             action.rjust(7),
         )
 
-        capture_image(angle_label, i, save_dir, demo, world)
-
-
-def capture_cornering_images(
-    world: PycastWorld,
-    num_images: int,
-    turn_cells,
-    save_dir: str,
-    demo: bool,
-    istart: int,
-):
-    for i in range(num_images):
-
-        i += istart
-
-        pos, heading, action, corner = choice(turn_cells)
-
-        # Perturb the position and heading
-        perturbed_pos = pos + Pt.rand((-POS_NOISE_MAG, POS_NOISE_MAG))
-        x, y = perturbed_pos.xy
-
-        ang_noise = ANG_NOISE_MAG * (2 * random() - 1)
-        angle = angle_from_zero_to_2pi(DIR_TO_ANGLE[heading] + ang_noise)
-
-        # TODO: check if arrow is in field of view
-
-        world.set_position(x, y)
-        world.set_direction(angle)
-
-        angle_to_corner = angle_from_zero_to_2pi(Pt.angle(corner - perturbed_pos))
-
-        angle_label = (
-            angle - angle_to_corner
-            if angle > angle_to_corner
-            else angle_to_corner - angle
-        )
-        angle_label = angle_from_negpi_to_pospi(angle_label)
-
-        print(
-            f"{i:>6} : ",
-            f"{x:5.2f}",
-            f"{y:5.2f}",
-            heading.rjust(5),
-            f"{degrees(angle): 7.2f}",
-            f"{degrees(angle_label): 7.2f}",
-            action.rjust(7),
-        )
-
-        capture_image(angle_label, i, save_dir, demo, world)
+        capture_image(action_angle, i, save_dir, demo, world)
 
 
 def main():
@@ -327,21 +312,30 @@ def main():
     args = arg_parser.parse_args()
 
     path_cells, turn_cells = process_maze(args.maze_filepath)
-    print(turn_cells)
 
     # Create world
     world = PycastWorld(args.image_width, args.image_height, args.maze_filepath)
 
-    capture_straightaway_images(
-        world, args.num_straight_images, path_cells, args.save_dir, args.demo
+    # Capture images on corridor straightaways
+    capture_images(
+        world=world,
+        num_images=args.num_straight_images,
+        cells=path_cells,
+        save_dir=args.save_dir,
+        is_cornering=False,
+        ioffset=0,
+        demo=args.demo,
     )
-    capture_cornering_images(
-        world,
-        args.num_straight_images,
-        turn_cells,
-        args.save_dir,
-        args.demo,
-        args.num_straight_images,
+
+    # Capture images from corners while turning
+    capture_images(
+        world=world,
+        num_images=args.num_turn_images,
+        cells=turn_cells,
+        save_dir=args.save_dir,
+        is_cornering=True,
+        ioffset=args.num_straight_images,
+        demo=args.demo,
     )
 
 
