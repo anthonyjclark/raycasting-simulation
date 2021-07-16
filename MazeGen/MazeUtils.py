@@ -43,7 +43,7 @@ def read_maze_file(filepath: str) -> Tuple[Maze, int, int, Directions, List[str]
             for _ in range(maze_y_dim)
         ]
         maze_directions = [
-            (int(line.split()[0]), int(line.split()[1]), line.split()[2])
+            (int(line.split()[0]), int(line.split()[1]), line.split()[2][4:])
             for line in maze_file.readlines()
         ]
 
