@@ -216,10 +216,6 @@ def main(argv):
     print("Predicting...")
     while not world.at_goal() and num_static < 5 and on_path:
 
-        # if is_on_path(maze_path, int(world.x()), int(world.y())) is False:
-        #     print("Off Path")
-        #     break
-
         # Get image
         image_data = np.array(world)
 
