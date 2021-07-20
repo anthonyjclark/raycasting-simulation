@@ -133,7 +133,7 @@ private:
     double fov;
 
     // Initial view
-    double initial_x, initial_y, initial_angle;
+    double initial_x, initial_y, initial_angle, initial_fov;
 
     // Goal view
     double goal_x, goal_y;
@@ -214,9 +214,18 @@ public:
         need_to_render = true;
     }
 
+    void set_fov(double radians)
+    {
+        fov = radians;
+        initial_fov = radians; // TODO: this should be removed when fov is a paramter
+        set_direction(get_direction());
+        need_to_render = true;
+    }
+
     void reset()
     {
         set_position(initial_x, initial_y);
+        set_fov(initial_fov);
         set_direction(initial_angle);
     }
 
@@ -364,6 +373,7 @@ RaycastWorld::RaycastWorld(usize width, usize height, std::string maze_file_path
 
     // TODO: make FOV a parameter
     fov = 1.152;
+    initial_fov = fov;
     set_direction(initial_angle);
 
     std::cout << "Initial pose: "
