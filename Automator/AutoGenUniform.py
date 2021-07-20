@@ -2,8 +2,8 @@
 
 # TODO:
 # - work with image sequences (just two for stacking)
-# - remove "Dir." from python files
-# - pick FOV (get PR first)
+# - remove "Dir." from python files (get PR first)
+# - pick FOV
 
 from __future__ import annotations
 
