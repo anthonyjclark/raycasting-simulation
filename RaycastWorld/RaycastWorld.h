@@ -167,6 +167,7 @@ public:
     auto get_dir_x() { return dir_x; }
     auto get_dir_y() { return dir_y; }
     auto get_direction() { return atan2(dir_y, dir_x); }
+    auto get_fov() { return fov; }
 
     auto get_turn_speed() { return turn_speed; }
     auto get_walk_speed() { return walk_speed; }
@@ -372,7 +373,7 @@ RaycastWorld::RaycastWorld(usize width, usize height, std::string maze_file_path
     }
 
     // TODO: make FOV a parameter
-    fov = 1.152;
+    fov = 75.0 * 3.1415926 / 180.0;
     initial_fov = fov;
     set_direction(initial_angle);
 
