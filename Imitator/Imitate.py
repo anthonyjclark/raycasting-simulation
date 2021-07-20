@@ -137,17 +137,20 @@ def reg_predict(pred_coords):
 
 # Animation function. TODO: make it output an embedded HTML figure
 def animate(image_frames, name, dir_name):
+    print("Animating...")
     """
     Generate a GIF animation of the saved frames
 
     Keyword arguments:
     image_frames -- array of frames
     name -- name of model
+    dir_name -- name of directory
     """
-    now = datetime.now().strftime("%d-%m-%Y_%H-%M")
+    now = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
     if not os.path.isdir(dir_name):
         os.mkdir(dir_name)
-    os.system(dir_name)
+    else: 
+        os.system(dir_name)
     save_path = os.path.abspath(dir_name)
     name = str(name).split("/")[-1][:-4]
     fig, ax = plt.subplots()
@@ -158,12 +161,10 @@ def animate(image_frames, name, dir_name):
         return [ln]
 
     def update(frame):
-        #     print(frame)
         ln.set_array(frame)
         return [ln]
 
     ani = FuncAnimation(fig, update, image_frames, init_func=init)
-    # plt.show()
     ani.save(os.path.join(save_path, name + "_" + str(now) + ".mp4"))
 
 
@@ -195,6 +196,7 @@ def main(argv):
     prev_move = None
     prev_image_data = None
     frame = 0
+    frame_freq = 5
     num_static = 0
     prev_x, prev_y = world.x(), world.y()
     animation_frames = []
@@ -211,6 +213,7 @@ def main(argv):
     _, maze_path = bfs_dist_maze(maze_rvs, start_x, start_y, end_x, end_y)
     on_path = is_on_path(maze_path, int(world.x()), int(world.y()))
 
+    print("Predicting...")
     while not world.at_goal() and num_static < 5 and on_path:
 
         # if is_on_path(maze_path, int(world.x()), int(world.y())) is False:
@@ -280,15 +283,14 @@ def main(argv):
 
         if show_freq != 0 and frame % show_freq == 0:
             if int(curr_x) == int(prev_x) and int(curr_y) == int(prev_y):
-                print("in place")
                 num_static += 1
             else:
                 maze_path.remove((int(prev_x), int(prev_y)))
-                num_static = 0
-            animation_frames.append(image_data.copy())
+                num_static = 0       
             prev_x = curr_x
             prev_y = curr_y
-
+        if frame % frame_freq == 0:
+            animation_frames.append(image_data.copy())        
         on_path = is_on_path(maze_path, int(world.x()), int(world.y()))
         frame += 1
         prev_image_data = image_data
