@@ -94,7 +94,12 @@ def is_path_west(cell: int) -> bool:
 
 class Maze(object):
     def __init__(
-        self, width: int, height: int, *, val: int = 0, animate: bool = False,
+        self,
+        width: int,
+        height: int,
+        *,
+        val: int = 0,
+        animate: bool = False,
     ) -> None:
         self.width = width
         self.height = height
@@ -295,7 +300,7 @@ def generate_block_maze(
         return ndir, turn, step
 
     np_maze = (
-        np.ones((args.height * 2 + 1, args.width * 2 + 1), dtype=np.int) * colors.hall
+        np.ones((args.height * 2 + 1, args.width * 2 + 1), dtype=int) * colors.hall
     )
 
     # Walls along boundaries
@@ -385,7 +390,7 @@ if __name__ == "__main__":
             "../Textures/Plaster001_2K_Color1024.png",
             "../Textures/PavingStones087_2K_Color1024.png",
             "../Textures/arrow-right-long.png",
-            "../Textures/arrow-left-long.png", # change arrow name
+            "../Textures/arrow-left-long.png",  # change arrow name
             "../Textures/goal.png",
         ]
         print(len(textures))
@@ -403,6 +408,8 @@ if __name__ == "__main__":
         bm[-2, -1] = 5
 
         bm = np.flipud(bm)
+
+        np.set_printoptions(threshold=np.inf)
 
         s = np.array2string(bm).replace("[", "").replace("]", "")
         s = [line.strip() for line in s.split("\n")]
