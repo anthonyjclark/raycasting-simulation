@@ -7,14 +7,14 @@ int main(/*int argc, char const *argv[]*/)
 
     RaycastWorld world(IMAGE_WIDTH, IMAGE_HEIGHT, "../Mazes/maze01.txt");
 
-    world.toggleMiniMap();
-    world.setPosition(1.5, 1.5);
+    world.toggle_mini_map();
+    world.set_position(1.5, 1.5);
 
-    world.setDirection(0);
-    world.savePNG("frame0deg.png");
+    world.set_direction(0);
+    world.save_png("frame0deg.png");
 
-    world.setDirection(1.57);
-    world.savePNG("frame90deg.png");
+    world.set_direction(1.57);
+    world.save_png("frame90deg.png");
 
     return EXIT_SUCCESS;
 }

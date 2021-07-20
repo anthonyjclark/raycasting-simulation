@@ -5,23 +5,23 @@
 #include <vector>
 
 // TODO: remove as global variable
-std::string imageDirectory;
+std::string image_directory;
 
 /*
  * Saves an image from the window for the specified move
- * assumes imageDirectory doesn't include '/'
- * assumes imageDirectory/move directory already exists
+ * assumes image_directory doesn't include '/'
+ * assumes image_directory/move directory already exists
  *
  * @param w RaycastWorld
  * @param move specified move and subdirectory to save image to
  */
-void saveCommandPNG(RaycastWorld *world, std::string move)
+void save_png_with_command(RaycastWorld *world, std::string move)
 {
     static int count = 0;
 
-    std::string imagePath = imageDirectory + "/" + move + "/" + std::to_string(count) + ".png";
-    std::cout << "Saving image \"" << imagePath << "\"\n";
-    world->savePNG(imagePath);
+    std::string image_path = image_directory + "/" + move + "/" + std::to_string(count) + ".png";
+    std::cout << "Saving image \"" << image_path << "\"\n";
+    world->save_png(image_path);
     count++;
 }
 
@@ -31,19 +31,19 @@ void keyCallback(GLFWwindow *window, int key, int, int action, int)
 
     auto world = static_cast<RaycastWorld *>(glfwGetWindowUserPointer(window));
 
-    if (imageDirectory.length() > 0 && (action == GLFW_PRESS || action == GLFW_REPEAT))
+    if (image_directory.length() > 0 && (action == GLFW_PRESS || action == GLFW_REPEAT))
     {
         if (key == GLFW_KEY_UP)
         {
-            saveCommandPNG(world, "forward");
+            save_png_with_command(world, "forward");
         }
         else if (key == GLFW_KEY_LEFT)
         {
-            saveCommandPNG(world, "left");
+            save_png_with_command(world, "left");
         }
         else if (key == GLFW_KEY_RIGHT)
         {
-            saveCommandPNG(world, "right");
+            save_png_with_command(world, "right");
         }
     }
 
@@ -53,61 +53,74 @@ void keyCallback(GLFWwindow *window, int key, int, int action, int)
     }
     else if (key == GLFW_KEY_UP && action == GLFW_PRESS)
     {
-        world->setWalk(FORWARD);
+        world->set_walk(Walk::FORWARD);
     }
     else if (key == GLFW_KEY_DOWN && action == GLFW_PRESS)
     {
-        world->setWalk(BACKWARD);
+        world->set_walk(Walk::BACKWARD);
     }
     else if ((key == GLFW_KEY_UP || key == GLFW_KEY_DOWN) && action == GLFW_RELEASE)
     {
-        world->setWalk(STOPPED);
+        world->set_walk(Walk::STOP);
     }
     else if (key == GLFW_KEY_RIGHT && action == GLFW_PRESS)
     {
-        world->setTurn(RIGHT);
+        world->set_turn(Turn::RIGHT);
     }
     else if (key == GLFW_KEY_LEFT && action == GLFW_PRESS)
     {
-        world->setTurn(LEFT);
+        world->set_turn(Turn::LEFT);
     }
     else if ((key == GLFW_KEY_LEFT || key == GLFW_KEY_RIGHT) && action == GLFW_RELEASE)
     {
-        world->setTurn(STOP);
+        world->set_turn(Turn::STOP);
     }
     else if (key == GLFW_KEY_RIGHT_SHIFT && action == GLFW_PRESS)
     {
-        world->setZ(-100);
+        world->set_z(-100);
     }
     else if (key == GLFW_KEY_RIGHT_SHIFT && action == GLFW_RELEASE)
     {
-        world->setZ(0);
+        world->set_z(0);
     }
     else if (key == GLFW_KEY_P && action == GLFW_PRESS)
     {
-        auto angle = world->getDirection() * 180 / 3.141529;
-        std::cout << world->getX() << ", " << world->getY() << " @ " << angle << std::endl;
+        auto angle = world->get_direction() * 180.0 / 3.1415926;
+        std::cout << world->get_x() << ", " << world->get_y() << " @ " << angle << std::endl;
     }
     else if (key == GLFW_KEY_M && action == GLFW_PRESS)
     {
-        world->toggleMiniMap();
+        world->toggle_mini_map();
+    }
+    else if (key == GLFW_KEY_MINUS && action == GLFW_PRESS)
+    {
+        auto new_fov = world->get_fov();
+        world->set_fov(new_fov - 5 * 3.1415926 / 180.0);
+        std::cout << world->get_fov() * 180.0 / 3.1415926 << " degrees" << std::endl;
+    }
+    else if (key == GLFW_KEY_EQUAL && action == GLFW_PRESS)
+    {
+        auto new_fov = world->get_fov();
+        world->set_fov(new_fov + 5 * 3.1415926 / 180.0);
+        std::cout << world->get_fov() * 180.0 / 3.1415926 << " degrees" << std::endl;
     }
 }
 
 int main(int argc, char const *argv[])
 {
-    const unsigned int DEFAULT_WINDOW_WIDTH = 320;
-    const unsigned int DEFAULT_WINDOW_HEIGHT = 240;
+    const unsigned int DEFAULT_WINDOW_WIDTH = 244;
+    const unsigned int DEFAULT_WINDOW_HEIGHT = 244;
     const auto DEFAULT_WORLD_FILE = "../Mazes/maze01.txt";
 
     // Process program arguments (must be given in this order)
-    std::string worldFilepath = argc >= 2 ? argv[1] : DEFAULT_WORLD_FILE;
-    imageDirectory = argc >= 3 ? argv[2] : "";
+    std::string world_filepath = argc >= 2 ? argv[1] : DEFAULT_WORLD_FILE;
+    image_directory = argc >= 3 ? argv[2] : "";
     usize width = argc >= 4 ? std::stoul(argv[3]) : DEFAULT_WINDOW_WIDTH;
     usize height = argc >= 5 ? std::stoul(argv[4]) : DEFAULT_WINDOW_HEIGHT;
 
     DisplayArray displayer(width, height, keyCallback);
-    RaycastWorld world(width, height, worldFilepath);
+    RaycastWorld world(width, height, world_filepath);
+    world.set_fov(90 * 3.145926 / 180.0);
 
     glfwSetWindowUserPointer(displayer.window, &world);
 
@@ -116,8 +129,8 @@ int main(int argc, char const *argv[])
     {
         displayer.pre();
 
-        world.updatePose();
-        displayer.render(world.getBuffer());
+        world.update_pose();
+        displayer.render(world.get_buffer());
 
         displayer.post();
 

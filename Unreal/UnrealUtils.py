@@ -11,7 +11,7 @@ from unrealcv.util import read_png  # type: ignore
 
 
 class UE4EnvWrapper:
-    def __init__(self):
+    def __init__(self, rc_x: 0, rc_y: 0):
 
         ue4.connect(timeout=5)
 
@@ -23,8 +23,10 @@ class UE4EnvWrapper:
             print(ue4.request("vget /unrealcv/status"))
 
         # TODO: these are specific to the default maze
-        self.initial_x = 700
-        self.initial_y = -700
+#         self.initial_x = 700
+#         self.initial_y = -700
+        self.initial_x = 1050 - (100 * rc_x)
+        self.initial_y = -1050 + (100 * rc_y)
         self.initial_angle = 0
 
         self.x = self.initial_x
@@ -60,7 +62,7 @@ class UE4EnvWrapper:
         self.set_rotation(angle=self.angle + self.turn_speed)
 
     def forward(self):
-        ue4.request(f"vset /action/keyboard up .1")
+        ue4.request(f"vset /action/keyboard up .075")
 
     def request_image(self):
         image_data = ue4.request(f"vget /camera/0/lit png")
