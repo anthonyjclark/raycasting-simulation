@@ -51,7 +51,7 @@ def main():
 # reg/c  Stck  Reg  CMD in
 # ("../Models/cmd_fai_more2.pth", 'cmd', 'y', 'n')
     models = [("../Models/torch_RNN_finished6_10.pth", 'rnn', 'y', 'n')]
-#               ("../Models/regression_model02.pkl", 'r', 'y', 'y'),
+              #("../Models/regression_model02.pkl", 'r', 'y', 'y')]
 #               ("../Models/auto-stack-c3.pkl", 'c', 'y', 'n')]
 
     maze_dir = "../Mazes/"
@@ -78,7 +78,7 @@ def main():
 
         for j, m in enumerate(models):
             model, model_type, stacked, regression = m
-            input_args = [maze_file, model, 10, model_type, stacked, dir_name]
+            input_args = [maze_file, model, 17, model_type, stacked, dir_name]
             print(f"Testing model {j} on maze {i}")
             if regression == 'y':
                 num_frames, success, completion_per = RegressionImitator.main(input_args)

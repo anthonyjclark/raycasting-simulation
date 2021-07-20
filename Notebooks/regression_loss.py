@@ -213,7 +213,7 @@ class Driver:
                     print("no left to right allowed")
                     break                
                 
-                agent_dir = -abs(90 + turn_angle)       
+                agent_dir = turn_angle  
                 angle_label = agent_dir
                 if self.img_dir != None:
                     if self.stack_dir:
@@ -234,7 +234,7 @@ class Driver:
                         self.img_num_r += 1
 
                 self.world.turn(Turn.Right)
-                turn_angle -= 2.5  
+                turn_angle += 2.5  
                 self.world.update()
 
                 prev_turn = "right"
@@ -244,7 +244,7 @@ class Driver:
                     print("no right to left allowed")
                     break
                     
-                agent_dir = abs(90 - turn_angle)
+                agent_dir = turn_angle
                 angle_label = agent_dir
                 if self.img_dir != None:
                     if self.stack_dir:
@@ -480,7 +480,7 @@ for m in mazes:
     maze = m
     print(maze)
     show_freq = 0  # frequency to show frames
-    img_dir = "/raid/Images/proxy_reg" # directory to save images to
+    img_dir = "/raid/Images/test" # directory to save images to
     show_dir = True
 
     navigator = Navigator(maze, img_dir)
@@ -502,9 +502,9 @@ import torch
 from math import pi
 
 # +
-path = Path('/raid/Images/reg_data')
+path = Path('/raid/Images/test')
 
-num_img = !ls -l '/raid/Images/reg_data' | wc -l
+num_img = !ls -l '/raid/Images/test' | wc -l
 
 int(num_img[0])
 # -
@@ -554,9 +554,9 @@ def get_throttles(f):
     split_name = f.name.split('_')
     angle = float(split_name[1][:-4])
     if angle < 0:
-        return tensor([-angle, 0])#torch.stack((tensor(0.),tensor(-angle)))
+        return tensor([2.5, -2.5])#torch.stack((tensor(0.),tensor(-angle)))
     elif angle > 0:
-        return tensor([0, angle])#torch.stack((tensor(angle),tensor(0.)))
+        return tensor([-2.5, 2.5])#torch.stack((tensor(angle),tensor(0.)))
     else:
         return tensor([2.5, 2.5])#torch.stack((tensor(2.5),tensor(2.5)))
 
@@ -573,6 +573,8 @@ dls_r.show_batch(max_n=9, figsize=(8,6))
 
 xb,yb = dls_r.one_batch()
 xb.shape,yb.shape
+
+torch.where(torch.abs((y[:, 1] - y[:, 0]) - (yhat[:, 1] - yhat[:, 0])) < 0.1, 1., 0.).mean()
 
 yb[0]
 
@@ -598,18 +600,22 @@ def steering_loss(preds, targs):
     weight = torch.abs(angle_true + 0.05)
     return (
         torch.square(weight)
-        * (
-            torch.nn.functional.mse_loss(angle_true, angle_pred, reduction="none").T
-            + torch.nn.functional.mse_loss(targs, preds, reduction="none").T
-        )
-    ).mean()
+        * (torch.nn.functional.mse_loss(angle_true, angle_pred, reduction="none").T)
+    ).mean() + torch.nn.functional.mse_loss(targs, preds)
 
 
 num_train_examples = 10
 num_output_neurons = 2
-yhat = torch.vstack([torch.linspace(1, 10, num_train_examples), torch.linspace(1, 10, num_train_examples)]).T
+yhat = torch.vstack(
+    [
+        torch.linspace(1, 10, num_train_examples),
+        torch.linspace(1, 10, num_train_examples),
+    ]
+).T
 y = torch.ones((num_train_examples, num_output_neurons))
 steering_loss(yhat, y)
+
+y,yhat
 
 yhat.shape
 
@@ -627,13 +633,8 @@ torch.nn.functional.mse_loss(y, yhat, reduction='none').T
 
 
 def angle_metric(preds, targs):
-    print(preds)
-    print(targs)
     angle_true = targs[:, 1] - targs[:, 0]
     angle_pred = preds[:, 1] - preds[:, 0]
-    print(angle_true)
-    print(angle_pred)
-    print(torch.where(torch.abs(angle_true - angle_pred) < 0.1, 1., 0.))
     return torch.where(torch.abs(angle_true - angle_pred) < 0.1, 1., 0.).mean()
 
 
@@ -653,8 +654,7 @@ def direction_metric(preds, targs):
 learn = cnn_learner(
     dls_r,
     resnet18,
-    loss_func=steering_loss,
-    y_range=(0, 180),
+    y_range=(-100, 100),
     metrics=[mse, angle_metric, direction_metric],
 )
 learn.fine_tune(
@@ -662,7 +662,19 @@ learn.fine_tune(
     cbs=[SaveModelCallback(), EarlyStoppingCallback(monitor="valid_loss", patience=5)],
 )
 
-(179.25 - 179.92)
+learn2 = cnn_learner(
+    dls_r,
+    resnet18,
+    y_range=(-100, 100),
+    loss_func=steering_loss,
+    metrics=[mse, angle_metric, direction_metric],
+)
+learn2.fine_tune(
+    20,
+    cbs=[SaveModelCallback(), EarlyStoppingCallback(monitor="valid_loss", patience=5)],
+)
+
+learn2.loss_func
 
 0-30
 
