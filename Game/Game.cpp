@@ -120,7 +120,6 @@ int main(int argc, char const *argv[])
 
     DisplayArray displayer(width, height, keyCallback);
     RaycastWorld world(width, height, world_filepath);
-    world.set_fov(90 * 3.145926 / 180.0);
 
     glfwSetWindowUserPointer(displayer.window, &world);
 

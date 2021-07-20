@@ -20,7 +20,7 @@ git submodule update --init --recursive
 
 `Game/Game.cpp` depends on [GLFW3](https://www.glfw.org/). This is **not** included as a submodule. It will need to be installed separately.
 
-`MazeGen/MazeGen.py` depends on NumPy, but this dependency can be avoided if you don't need to view the output.
+`MazeGen/MazeGen.py` depends on matplotlib, but this dependency can be avoided if you don't need to view the output.
 
 # Getting Started
 
@@ -57,6 +57,12 @@ make
 
 # Working on the server
 
+Please use the project's conda environment so that we are all using the library versions:
+
+```bash
+source /opt/mambaforge/bin/activate arcs-summer21
+```
+
 When working on `dgx01`:
 
 ```bash
@@ -76,6 +82,7 @@ We will use [mwouts/jupytext: Jupyter Notebooks as Markdown Documents, Julia, Py
 - It will make it easier for me to review notebooks.
 - It will make it easier for others to make changes to notebooks (e.g., if an API call changes).
 
+Please do not add notebooks to the repo, instead we will only keep the corresponding python files.
 
 # Textures
 
