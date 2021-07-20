@@ -192,11 +192,11 @@ def capture_image(
         import matplotlib.pyplot as plt
         import numpy as np
 
+        print(f"File not saved in demo mode ({filename}).")
+
         image = np.array(world)
         plt.imshow(image)
         plt.show()
-
-        print(f"File not saved in demo mode ({filename}).")
 
     else:
         print("File saved: ", filename)
@@ -255,7 +255,7 @@ def capture_images(
             action_angle = ang_plus_minus_pi(angle_to_right) - ang_plus_minus_pi(angle)
         elif is_cornering and turn_action == "RIGHT":
             action = turn_action
-            action_angle = ang_plus_minus_pi(angle) - ang_plus_minus_pi(angle_to_left)
+            action_angle = ang_plus_minus_pi(angle_to_left) - ang_plus_minus_pi(angle)
         elif angle_to_right <= angle <= angle_to_left:
             action = "FORWARD"
             action_angle = 0.0
@@ -264,7 +264,7 @@ def capture_images(
             action_angle = ang_plus_minus_pi(angle_to_right) - ang_plus_minus_pi(angle)
         else:
             action = "RIGHT"
-            action_angle = ang_plus_minus_pi(angle) - ang_plus_minus_pi(angle_to_left)
+            action_angle = ang_plus_minus_pi(angle_to_left) - ang_plus_minus_pi(angle)
 
         print(
             f"{i:>6} :",
