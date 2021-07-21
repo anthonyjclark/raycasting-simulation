@@ -50,8 +50,8 @@ def main():
 # ("../Models/proxy_regression_model_loss.pkl", 'r', 'y', 'y')
 # reg/c  Stck  Reg  CMD in
 # ("../Models/cmd_fai_more2.pth", 'cmd', 'y', 'n')
-    models = [("../Models/torch_RNN_finished6_10.pth", 'rnn', 'y', 'n')]
-              #("../Models/regression_model02.pkl", 'r', 'y', 'y')]
+    models = [#("../Models/torch_RNN_finished6_10.pth", 'rnn', 'y', 'n')]
+              ("../Models/regression_model02.pkl", 'r', 'y', 'y')]
 #               ("../Models/auto-stack-c3.pkl", 'c', 'y', 'n')]
 
     maze_dir = "../Mazes/"
