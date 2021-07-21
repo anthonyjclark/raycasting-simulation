@@ -2,8 +2,6 @@
 
 # TODO:
 # - work with image sequences (just two for stacking)
-# - remove "Dir." from python files (get PR first)
-# - pick FOV
 
 from __future__ import annotations
 
@@ -284,7 +282,7 @@ def capture_images(
 
 def main():
 
-    arg_parser = ArgumentParser("Run a maze utility")
+    arg_parser = ArgumentParser("Generate images uniformly at random.")
     arg_parser.add_argument("maze_filepath", help="Path to a maze file.")
     arg_parser.add_argument("save_dir", help="Save location (directory must exist).")
     arg_parser.add_argument(
@@ -299,12 +297,7 @@ def main():
     arg_parser.add_argument(
         "image_height", type=int, default=224, help="Height of generated images."
     )
-
-    # TODO: currently unused
-    arg_parser.add_argument(
-        "--sequence", type=int, default=1, help="Number of images per sequence."
-    )
-
+    arg_parser.add_argument("ioffset", type=int, help="Where to start filenames.")
     arg_parser.add_argument(
         "--demo", action="store_true", help="Display images instead of saving."
     )
@@ -323,7 +316,7 @@ def main():
         cells=path_cells,
         save_dir=args.save_dir,
         is_cornering=False,
-        ioffset=0,
+        ioffset=args.ioffset,
         demo=args.demo,
     )
 
@@ -334,7 +327,7 @@ def main():
         cells=turn_cells,
         save_dir=args.save_dir,
         is_cornering=True,
-        ioffset=args.num_straight_images,
+        ioffset=args.ioffset + args.num_straight_images,
         demo=args.demo,
     )
 
