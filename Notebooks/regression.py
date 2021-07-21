@@ -6,9 +6,9 @@
 #       extension: .py
 #       format_name: light
 #       format_version: '1.5'
-#       jupytext_version: 1.11.3
+#       jupytext_version: 1.11.4
 #   kernelspec:
-#     display_name: Python 3
+#     display_name: Python 3 (ipykernel)
 #     language: python
 #     name: python3
 # ---
@@ -504,7 +504,7 @@ from math import pi
 # +
 path = Path('/raid/Images/reg_data')
 
-num_img = !ls -l '/raid/Images/reg_data' | wc -l
+# num_img = !ls -l '/raid/Images/reg_data' | wc -l
 
 int(num_img[0])
 # -
