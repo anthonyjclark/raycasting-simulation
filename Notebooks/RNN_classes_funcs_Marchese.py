@@ -11,7 +11,7 @@ from time import time
 from PIL import Image
 import numpy as np
 
-class ConvRNN(nn.Module):
+class ConvRNN15(nn.Module):
     def __init__(self):
         """
         Initializes the layers of the convolutional recurrent neural network.
@@ -37,36 +37,31 @@ class ConvRNN(nn.Module):
         x = self.lin2(x)
         return x
 
-"""
-Code from https://medium.com/@nathaliejeans/how-i-classified-images-with-recurrent-neural-networks-28eb4b57fc79
-"""
-class ImageRNN(nn.Module):
-    def __init__(self, batch_size, steps, inputs, neurons, outputs):
-        super(ImageRNN, self).__init__()
+class ConvRNN10(nn.Module):
+    def __init__(self):
+        """
+        Initializes the layers of the convolutional recurrent neural network.
+        """
+        super().__init__()
+        self.convlstm = convLSTM.ConvLSTM(3, 10, (3,3), 
+                                          6, True, True, False) 
+        self.flat = nn.Flatten()
+        self.lin1 = nn.Linear(10*240*320, 512)
+        self.relu = nn.ReLU()
+        self.lin2 = nn.Linear(512, 3)
         
-        self.neurons = neurons
-        self.batch_size = batch_size
-        self.steps = steps
-        self.inputs = inputs
-        self.outputs = outputs
+    def forward(self, img):
+        """
+        Does a forward pass of the given data through the layers of the neural network.
         
-        self.basic_rnn = nn.RNN(self.inputs, self.neurons)
-        
-        self.l1 = nn.Linear(self.neurons, self.outputs)
-        
-    def init_hidden(self,):
-        return (torch.zeros(1, self.batch_size, self.neurons))
-    
-    def forward(self, x):
-        x = x.permute(1,0,2)
-        
-        self.batch_size = x.size(1)
-        self.hidden = self.init_hidden()
-        
-        lstm_out, self.hidden = self.basic_rnn(x, self.hidden)
-        out = self.FC(self.hidden)
-        
-        return out.view(-1, self.outputs)
+        :param img: (tensor) tensor of rgb values that represent an image
+        """
+        _, lstm_output = self.convlstm(img)
+        x = self.flat(lstm_output[0][0])
+        x = self.lin1(x)
+        x = self.relu(x)
+        x = self.lin2(x)
+        return x
 
 
 def get_filenames(img_dir):

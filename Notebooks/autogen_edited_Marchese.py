@@ -62,10 +62,7 @@ class Driver:
 
         self.img_dir = img_dir
         if self.img_dir != None:
-            self.img_num_l = len(os.listdir(os.path.join(img_dir, "left")))
-            self.img_num_r = len(os.listdir(os.path.join(img_dir, "right")))
-            self.img_num_s = len(os.listdir(os.path.join(img_dir, "straight")))
-            self.img_num = self.img_num_l + self.img_num_r + self.img_num_s
+            self.img_num = len(os.listdir(img_dir))
 
         self.show_freq = show_freq
 
@@ -188,8 +185,7 @@ class Driver:
                     self.world.save_png(
                         os.path.join(
                             self.img_dir,
-                            "right",
-                            f"{self.img_num:05}-{self.prev_move}.png",
+                            f"{self.img_num:05}_0035p00.png",
                         )
                     )
                     self.prev_move = "right"
@@ -210,8 +206,7 @@ class Driver:
                     self.world.save_png(
                         os.path.join(
                             self.img_dir,
-                            "left",
-                            f"{self.img_num:05}-{self.prev_move}.png",
+                            f"{self.img_num:05}_-035p00.png",
                         )
                     )
                     self.prev_move = "left"
@@ -290,8 +285,7 @@ class Driver:
                 self.world.save_png(
                     os.path.join(
                         self.img_dir,
-                        "straight",
-                        f"{self.img_num:05}-{self.prev_move}.png",
+                        f"{self.img_num:05}_000p00.png",
                     )
                 )
                 self.prev_move = "straight"
@@ -365,7 +359,7 @@ class Navigator:
 
 
 def main():
-    maze = "../Mazes/maze05.txt"
+    maze = "../Mazes/maze01.txt"
     show_freq = 0  # frequency to show frames
     img_dir = "../Notebooks/data"  # directory to save images to
 

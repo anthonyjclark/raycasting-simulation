@@ -34,16 +34,16 @@ from RNN_classes_funcs_Marchese import *
 # -
 
 # load in trained network
-net = ConvRNN()
-model_name = 'torch_RNN.pth'
+net = MyModel2()
+model_name = 'models/cmd_torch_more2.pth'
 net.load_state_dict(torch.load(model_name))
 net.eval()
 
 # Number of steps the model should walk before it stops or reaches the end of the maze
-steps_per_episode = 2000
+steps_per_episode = 2500
 
 # Load in the world environment
-env = PycastWorldEnv("../Mazes/maze_test00.txt", 320, 240)
+env = PycastWorldEnv("../Mazes/maze_test01.txt", 320, 240)
 
 # Grab the initial observation 
 observation = env.reset()
@@ -109,7 +109,7 @@ for t in range(steps_per_episode):
 plt.imshow(observation)
 
 # Print ending position
-print(f"  Ended at position {env.world.get_x()}, {env.world.get_y()}")
+#print(f"  Ended at position {env.world.get_x()}, {env.world.get_y()}")
 
 # Close environment
 env.close()
@@ -147,7 +147,7 @@ def animate(i):
 from IPython.display import HTML
 
 # Take images, functions, and other parameters and create an animation
-ani = FuncAnimation(fig, animate, frames[::20], init_func = init, interval = 200)
+ani = FuncAnimation(fig, animate, frames[::35], init_func = init, interval = 200)
 HTML(ani.to_jshtml())
 # -
 
