@@ -213,7 +213,7 @@ class Driver:
                     print("no left to right allowed")
                     break                
                 
-                agent_dir = -abs(90 + turn_angle)       
+                agent_dir = turn_angle  
                 angle_label = agent_dir
                 if self.img_dir != None:
                     if self.stack_dir:
@@ -234,7 +234,7 @@ class Driver:
                         self.img_num_r += 1
 
                 self.world.turn(Turn.Right)
-                turn_angle -= 2.5  
+                turn_angle += 2.5  
                 self.world.update()
 
                 prev_turn = "right"
@@ -244,7 +244,7 @@ class Driver:
                     print("no right to left allowed")
                     break
                     
-                agent_dir = abs(90 - turn_angle)
+                agent_dir = turn_angle
                 angle_label = agent_dir
                 if self.img_dir != None:
                     if self.stack_dir:
@@ -480,7 +480,7 @@ for m in mazes:
     maze = m
     print(maze)
     show_freq = 0  # frequency to show frames
-    img_dir = "/raid/Images/proxy_reg" # directory to save images to
+    img_dir = "/raid/Images/test" # directory to save images to
     show_dir = True
 
     navigator = Navigator(maze, img_dir)
@@ -502,9 +502,9 @@ import torch
 from math import pi
 
 # +
-path = Path('/raid/Images/reg_data')
+path = Path('/raid/Images/test')
 
-# num_img = !ls -l '/raid/Images/reg_data' | wc -l
+# num_img = !ls -l '/raid/Images/test' | wc -l
 
 int(num_img[0])
 # -
@@ -538,27 +538,145 @@ def get_deg(f):
     return tensor(deg).unsqueeze(0)
 
 
+s = "04504_-72.5.png"
+split_name = s.split('_')
+angle = float(split_name[1][:-4])
+if angle < 0:
+    throttle = (0,-angle)
+elif angle > 0:
+    throtttle = (angle,0)
+else:
+    throttle = (2.5, 2.5)
+throttle
+
+
+def get_throttles(f):
+    split_name = f.name.split('_')
+    angle = float(split_name[1][:-4])
+    if angle < 0:
+        return tensor([2.5, -2.5])#torch.stack((tensor(0.),tensor(-angle)))
+    elif angle > 0:
+        return tensor([-2.5, 2.5])#torch.stack((tensor(angle),tensor(0.)))
+    else:
+        return tensor([2.5, 2.5])#torch.stack((tensor(2.5),tensor(2.5)))
+
+
 db_r = DataBlock(
     blocks=(ImageBlock, RegressionBlock),
     get_items=get_image_files,
-    get_y=get_deg,
+    get_y=get_throttles,
     splitter=RandomSplitter(valid_pct=0.2, seed=47),
 )
 
 dls_r = db_r.dataloaders(path)
 dls_r.show_batch(max_n=9, figsize=(8,6))
 
+xb,yb = dls_r.one_batch()
+xb.shape,yb.shape
+
+torch.where(torch.abs((y[:, 1] - y[:, 0]) - (yhat[:, 1] - yhat[:, 0])) < 0.1, 1., 0.).mean()
+
+yb[0]
+
+
+def angle_loss(preds, targs):
+    pred_angle_list = [e[0] for e in preds]
+    pred_turn_list = [e[1] for e in preds]
+    
+    targs_angle_list = [e[0] for e in targs]
+    targs_turn_list = [e[1] for e in targs]
+    
+    angle_preds = torch.stack(pred_angle_list)
+    turn_preds = torch.stack(pred_turn_list)
+    
+    angle_targs = torch.stack(targs_angle_list)
+    turn_targs = torch.stack(targs_turn_list)
+    return ((angle_preds - angle_targs)**2 + ((turn_preds - turn_targs)**2)).mean()
+
+
+def steering_loss(preds, targs):
+    angle_true = targs[:, 1] - targs[:, 0]
+    angle_pred = preds[:, 1] - preds[:, 0]
+    weight = torch.abs(angle_true + 0.05)
+    return (
+        torch.square(weight)
+        * (torch.nn.functional.mse_loss(angle_true, angle_pred, reduction="none").T)
+    ).mean() + torch.nn.functional.mse_loss(targs, preds)
+
+
+num_train_examples = 10
+num_output_neurons = 2
+yhat = torch.vstack(
+    [
+        torch.linspace(1, 10, num_train_examples),
+        torch.linspace(1, 10, num_train_examples),
+    ]
+).T
+y = torch.ones((num_train_examples, num_output_neurons))
+steering_loss(yhat, y)
+
+y,yhat
+
+yhat.shape
+
+torch.nn.functional.mse_loss(y, yhat, reduction="none")
+
+torch.nn.functional.mse_loss(y, yhat)
+
+angle_true = y[:, 1] - y[:, 0]
+angle_pred = yhat[:, 1] - yhat[:, 0]
+
+(torch.square(torch.abs((y[:,1] - yhat[:,0]) + 0.05)) * 
+ torch.nn.functional.mse_loss(angle_true, angle_pred, reduction='none').T).mean() + torch.nn.functional.mse_loss(y, yhat)
+
+torch.nn.functional.mse_loss(y, yhat, reduction='none').T
+
+
+def angle_metric(preds, targs):
+    angle_true = targs[:, 1] - targs[:, 0]
+    angle_pred = preds[:, 1] - preds[:, 0]
+    return torch.where(torch.abs(angle_true - angle_pred) < 0.1, 1., 0.).mean()
+
+
+def direction_metric(preds, targs):
+    angle_true = targs[:, 1] - targs[:, 0]
+    angle_pred = preds[:, 1] - preds[:, 0]
+    return torch.where(
+        torch.logical_or(
+            torch.sign(angle_pred) == torch.sign(angle_true),
+            torch.abs(angle_pred) < 0.1,
+        ),
+        1.0,
+        0.0,
+    ).mean()
+
+
 learn = cnn_learner(
     dls_r,
     resnet18,
-    loss_func=steering_loss,
-    y_range=(-180, 180),
-    metrics=[mse],
+    y_range=(-100, 100),
+    metrics=[mse, angle_metric, direction_metric],
 )
 learn.fine_tune(
     20,
     cbs=[SaveModelCallback(), EarlyStoppingCallback(monitor="valid_loss", patience=5)],
 )
+
+learn2 = cnn_learner(
+    dls_r,
+    resnet18,
+    y_range=(-100, 100),
+    loss_func=steering_loss,
+    metrics=[mse, angle_metric, direction_metric],
+)
+learn2.fine_tune(
+    20,
+    cbs=[SaveModelCallback(), EarlyStoppingCallback(monitor="valid_loss", patience=5)],
+)
+
+learn2.loss_func
+
+0-30
 
 learn.export('/home/CAMPUS/eoca2018/raycasting-simulation/Models/point_block_reg.pkl')
 
@@ -595,6 +713,10 @@ model_inf = load_learner(path)
 prev_pred = 0
 
 plt.imshow(observation)
+# -
+
+
+
 # +
 print("Predicting...")
 for t in range(steps_per_episode):    
@@ -669,3 +791,14 @@ ani = FuncAnimation(fig, update, frames, init_func=init, interval=60)
 smaller_frames = frames[::3] 
 ani = FuncAnimation(fig, update, smaller_frames, init_func=init, interval=60)
 HTML(ani.to_html5_video())
+# -
+# # Loss vs Non-Loss Comparison
+
+path = Path('/home/CAMPUS/eoca2018/raycasting-simulation/Models/proxy_regression_model_loss.pkl')
+path2 = Path('/home/CAMPUS/eoca2018/raycasting-simulation/Models/proxy_regression_model_norm.pkl')
+
+
+model_inf_loss = load_learner(path)
+model_inf = load_learner(path2)
+
+

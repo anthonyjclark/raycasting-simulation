@@ -85,19 +85,31 @@ void keyCallback(GLFWwindow *window, int key, int, int action, int)
     }
     else if (key == GLFW_KEY_P && action == GLFW_PRESS)
     {
-        auto angle = world->get_direction() * 180 / 3.141529;
+        auto angle = world->get_direction() * 180.0 / 3.1415926;
         std::cout << world->get_x() << ", " << world->get_y() << " @ " << angle << std::endl;
     }
     else if (key == GLFW_KEY_M && action == GLFW_PRESS)
     {
         world->toggle_mini_map();
     }
+    else if (key == GLFW_KEY_MINUS && action == GLFW_PRESS)
+    {
+        auto new_fov = world->get_fov();
+        world->set_fov(new_fov - 5 * 3.1415926 / 180.0);
+        std::cout << world->get_fov() * 180.0 / 3.1415926 << " degrees" << std::endl;
+    }
+    else if (key == GLFW_KEY_EQUAL && action == GLFW_PRESS)
+    {
+        auto new_fov = world->get_fov();
+        world->set_fov(new_fov + 5 * 3.1415926 / 180.0);
+        std::cout << world->get_fov() * 180.0 / 3.1415926 << " degrees" << std::endl;
+    }
 }
 
 int main(int argc, char const *argv[])
 {
-    const unsigned int DEFAULT_WINDOW_WIDTH = 320;
-    const unsigned int DEFAULT_WINDOW_HEIGHT = 240;
+    const unsigned int DEFAULT_WINDOW_WIDTH = 244;
+    const unsigned int DEFAULT_WINDOW_HEIGHT = 244;
     const auto DEFAULT_WORLD_FILE = "../Mazes/maze01.txt";
 
     // Process program arguments (must be given in this order)

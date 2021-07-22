@@ -1,37 +1,27 @@
 #!/usr/bin/env python
 
+from IPython.display import HTML
+# for animation
+from matplotlib.animation import FuncAnimation
 from matplotlib import image
 import matplotlib.pyplot as plt
 import numpy as np
 import distutils.util
-
+# functions defined for model required by fastai
 from fastai.vision.all import *
 from math import radians
-
+import sys
 # Needed to import pycaster from relative path
-import sys
-
 sys.path.append("../PycastWorld")
-sys.path.append("../Models")
 from pycaster import PycastWorld, Turn, Walk
-
-# Needed for Timeout
-import signal
-
-# Needed to calculate maze percentage
-
-import sys
-
+sys.path.append("../Models")
 sys.path.append("../MazeGen")
 from MazeUtils import read_maze_file, percent_through_maze, bfs_dist_maze, is_on_path
+sys.path.append("../Notebooks")
+from RNN_classes_funcs_Marchese import *
+from cmd_classes_funcs_Marchese import *
+# For Christy's cmd models
 
-# for animation
-from matplotlib.animation import FuncAnimation
-from IPython.display import HTML
-import time
-
-
-# functions defined for model required by fastai
 def parent_to_deg(f):
     parent = parent_label(f)
     if parent == "left":
@@ -55,7 +45,8 @@ def within_angle(preds, targs, angle):
     rad_targs = targs / 180 * np.pi
     angle_pred = torch.atan2(preds[:, 1], preds[:, 0])
     abs_diff = torch.abs(rad_targs - angle_pred)
-    angle_diff = torch.where(abs_diff > np.pi, np.pi * 2.0 - abs_diff, abs_diff)
+    angle_diff = torch.where(
+        abs_diff > np.pi, np.pi * 2.0 - abs_diff, abs_diff)
     return torch.where(angle_diff < angle, 1.0, 0.0).mean()
 
 
@@ -144,19 +135,22 @@ def reg_predict(pred_coords):
         return "straight"
 
 
-# Animation function.TODO: make it output an embedded HTML figure
-def animate(image_frames, name):
+# Animation function. TODO: make it output an embedded HTML figure
+def animate(image_frames, name, dir_name):
+    print("Animating...")
     """
     Generate a GIF animation of the saved frames
 
     Keyword arguments:
     image_frames -- array of frames
     name -- name of model
+    dir_name -- name of directory
     """
-    now = datetime.now()
+    now = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
     if not os.path.isdir(dir_name):
         os.mkdir(dir_name)
-    os.system(dir_name)
+    else: 
+        os.system(dir_name)
     save_path = os.path.abspath(dir_name)
     name = str(name).split("/")[-1][:-4]
     fig, ax = plt.subplots()
@@ -167,20 +161,20 @@ def animate(image_frames, name):
         return [ln]
 
     def update(frame):
-        #     print(frame)
         ln.set_array(frame)
         return [ln]
 
-    ani = FuncAnimation(fig, update, image_frames, init_func=init, interval=100)
-    # plt.show()
+    ani = FuncAnimation(fig, update, image_frames, init_func=init)
     ani.save(os.path.join(save_path, name + "_" + str(now) + ".mp4"))
 
 
 def main(argv):
     maze = argv[0] if len(argv) > 0 else "../Mazes/maze01.txt"
     model = argv[1] if len(argv) > 1 else "../Models/auto-gen-c.pkl"
-    show_freq = int(argv[2]) if len(argv) > 2 else 0  # frequency to show frames
+    show_freq = int(argv[2]) if len(
+        argv) > 2 else 0  # frequency to show frames
     directory_name = argv[5] if len(argv) > 5 else "tmp_diagnostics"
+    # cmd_in = bool(distutils.util.strtobool(argv[6]) if len(argv) > 6 else False
     print("DIR NAME: " + directory_name)
 
     model_type = (
@@ -192,11 +186,17 @@ def main(argv):
 
     world = PycastWorld(320, 240, maze)
 
-    path = Path("../")
-    model_inf = load_learner(model)
+    if model_type == "cmd" or model_type == "rnn":
+        model_inf = ConvRNN()
+        model_inf.load_state_dict(torch.load(model))
+    else:
+        path = Path("../")
+        model_inf = load_learner(model)
+
     prev_move = None
     prev_image_data = None
     frame = 0
+    frame_freq = 5
     num_static = 0
     prev_x, prev_y = world.x(), world.y()
     animation_frames = []
@@ -204,20 +204,17 @@ def main(argv):
     outcome = "At goal? "
     stuck = False
     # Initialize maximum number of steps in case the robot travels in a completely incorrect direction
-    max_steps = 3000
-    step_count = 0
+    max_steps = 3500
 
     # Initialize Maze Check
     maze_rvs, _, _, maze_directions, _ = read_maze_file(maze)
     start_x, start_y, _ = maze_directions[0]
     end_x, end_y, _ = maze_directions[-1]
     _, maze_path = bfs_dist_maze(maze_rvs, start_x, start_y, end_x, end_y)
+    on_path = is_on_path(maze_path, int(world.x()), int(world.y()))
 
-    while not world.at_goal() and num_static < 5:
-
-        if is_on_path(maze_path, int(world.x()), int(world.y())) is False:
-            print("Off Path")
-            break
+    print("Predicting...")
+    while not world.at_goal() and num_static < 5 and on_path:
 
         # Get image
         image_data = np.array(world)
@@ -230,14 +227,35 @@ def main(argv):
                 move = model_inf.predict(image_data)[0]
         elif model_type == "r":
             if stacked:
-                pred_coords, _, _ = model_inf.predict(
-                    stacked_input(prev_image_data, image_data)
-                )
+                pred_coords, _, _ = model_inf.predict(stacked_input(prev_image_data, image_data))
             else:
                 pred_coords, _, _ = model_inf.predict(image_data)
             move = reg_predict(pred_coords)
-
-        # print(move)
+        elif model_type == "cmd":
+            model_inf.eval()
+            # Predict
+            tmp_move_indx = 2 if prev_move == "straight" else 1 if prev_move == "right" else 0
+            img = (tensor(image_data)/255).permute(2, 0, 1).unsqueeze(0)
+            cmd = tensor([tmp_move_indx])
+            output = model_inf((img, cmd))
+            # Assuming we always get batches
+            if output.size()[0] > 0:
+                for i in range(output.size()[0]):
+                    # Getting the predicted most probable move
+                    action_index = torch.argmax(output[i])
+                    move = 'left' if action_index == 0 else 'right' if action_index == 1 else 'straight'
+            else:
+                # is there any reason for us to believe batch sizes can be empty?
+                move = 'straight'
+        elif model_type == "rnn":
+            model_inf.eval()
+            img = (tensor(image_data)/255).permute(2, 0, 1).unsqueeze(0).unsqueeze(0)
+            output = model_inf(img)
+            # Assuming we always get batches
+            for i in range(output.size()[0]):
+                # Getting the predicted most probable move
+                action_index = torch.argmax(output[i])
+                move = 'left' if action_index == 0 else 'right' if action_index == 1 else 'straight'
 
         if move == "left" and prev_move == "right":
             move = "straight"
@@ -257,21 +275,19 @@ def main(argv):
 
         prev_move = move
         world.update()
-
         curr_x, curr_y = round(world.x(), 5), round(world.y(), 5)
 
         if show_freq != 0 and frame % show_freq == 0:
-            if curr_x == prev_x and curr_y == prev_y:
+            if int(curr_x) == int(prev_x) and int(curr_y) == int(prev_y):
                 num_static += 1
             else:
-                num_static = 0
-            animation_frames.append(image_data.copy())
-            #             plt.imshow(image_data)
-            #             plt.show()
-            # update previous coordinates
+                maze_path.remove((int(prev_x), int(prev_y)))
+                num_static = 0       
             prev_x = curr_x
             prev_y = curr_y
-
+        if frame % frame_freq == 0:
+            animation_frames.append(image_data.copy())        
+        on_path = is_on_path(maze_path, int(world.x()), int(world.y()))
         frame += 1
         prev_image_data = image_data
         if frame == max_steps:
@@ -291,16 +307,15 @@ def main(argv):
         + str(stuck)
         + "\n Exceed step limit? "
         + str(lost)
+        + "\n On path? "
+        + str(on_path)
     )
     print(outcome)
 
     completion_per = percent_through_maze(
-        maze_rvs, int(world.x()), int(world.y()), start_x, start_y, end_x, end_y
+        maze_rvs, int(world.x()), int(
+            world.y()), start_x, start_y, end_x, end_y
     )
-
-    plt.imshow(image_data)
-    plt.show()
-    print("DIR NAME: ")
 
     animate(animation_frames, model, directory_name)
 
