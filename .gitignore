@@ -6,6 +6,9 @@ Game/Game
 PycastWorld/*.so
 RaycastWorld/Demo
 
+# Ignore notebooks (using Jupytext or code cells)
+*.ipynb
+
 # Created by https://www.toptal.com/developers/gitignore/api/VisualStudioCode,Python
 # Edit at https://www.toptal.com/developers/gitignore?templates=VisualStudioCode,Python
 
