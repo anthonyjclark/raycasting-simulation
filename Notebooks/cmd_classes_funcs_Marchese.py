@@ -1,38 +1,56 @@
+# Import appropriate packages and libraries
 from pathlib import Path
 from torch.utils.data import DataLoader, Dataset, SubsetRandomSampler
-import torchvision.models as models
 from PIL import Image
 import matplotlib.pyplot as plt
 import numpy as np
-
-# import fastbook
-# fastbook.setup_book()
-
-# from fastbook import *
-from fastai.vision.all import * 
+import fastbook
+fastbook.setup_book()
+from fastbook import *
 from fastai.vision.widgets import *
 from fastai.vision.models.xresnet import *
+import torchvision.models as models
 
 
 class ImageWithCmdDataset(Dataset):
     def __init__(self, class_labels, filenames):
-
-        self.class_labels = class_labels
-        self.class_indices = {lbl:i for i, lbl in enumerate(self.class_labels)}
+        """
+        Creates objects for class labels, class indices, and filenames.
         
+        :param class_labels: (list) a list of labels denoting different classification categories
+        :param filenames: (list) a list of filenames that make up the dataset
+        """
+        self.class_labels = class_labels
+        self.class_indices = {lbl:i for i, lbl in enumerate(self.class_labels)}        
         self.all_filenames = filenames
         
     def __len__(self):
+        """
+        Gives length of dataset.
+        
+        :return: (int) the number of filenames in the dataset
+        """
         return len(self.all_filenames)
 
     def __getitem__(self, index):
-        # img_filename looks like data/<label>/<number>-<previous_move>.png
+        """
+        Gets the filename associated with the given index, opens the image at
+        that index, then uses the image's filename to get information associated
+        with the image such as its label and the label of the previous image.
+        
+        :param index: (int) number that represents the location of the desired data
+        :return: (tuple) tuple of all the information associated with the desired data
+        """
+        # The filename of the image given a specific index
         img_filename = self.all_filenames[index]
         
-        # Opens image file and converts it into a tensor
-        img = Image.open(img_filename)
-        #img = img.resize((128,128))
+        # Opens image file and ensures dimension of channels included
+        img = Image.open(img_filename).convert('RGB')
+        # Resizes the image
+        img = img.resize((224, 224))
+        # Converts the image to tensor and 
         img = torch.Tensor(np.array(img)/255)
+        # changes the order of the dimensions and adds a dimension
         img = img.permute(2,0,1)
         
         # Replaces - and . with spaces then splits on the spaces
@@ -48,7 +66,7 @@ class ImageWithCmdDataset(Dataset):
         
         # Data and the label associated with that data
         return (img, cmd), label
-    
+
 class MyModel(nn.Module):
     def __init__(self, pretrained=True):
         super(MyModel, self).__init__()
@@ -67,7 +85,7 @@ class MyModel(nn.Module):
         x = self.r1(self.fc1(x))
         x = self.fc2(x)
         return x
-    
+
 class MyModel1(nn.Module):
     def __init__(self, pretrained=True):
         super(MyModel1, self).__init__()
@@ -91,7 +109,7 @@ class MyModel1(nn.Module):
         x = self.dr2(x)
         x = self.fc2(x)
         return x
-    
+
 class MyModel2(nn.Module):
     def __init__(self, pretrained=True):
         super(MyModel2, self).__init__()
@@ -119,7 +137,7 @@ class MyModel2(nn.Module):
         x = self.dr2(x)
         x = self.fc2(x)
         return x
-    
+
 class MyModel34(nn.Module):
     def __init__(self, pretrained=True):
         super(MyModel34, self).__init__()
@@ -147,7 +165,7 @@ class MyModel34(nn.Module):
         x = self.dr2(x)
         x = self.fc2(x)
         return x
-    
+
 class MyModel50(nn.Module):
     def __init__(self, pretrained=True):
         super(MyModel50, self).__init__()
@@ -175,7 +193,7 @@ class MyModel50(nn.Module):
         x = self.dr2(x)
         x = self.fc2(x)
         return x
-    
+
 class MyModel101(nn.Module):
     def __init__(self, pretrained=True):
         super(MyModel101, self).__init__()
@@ -203,7 +221,7 @@ class MyModel101(nn.Module):
         x = self.dr2(x)
         x = self.fc2(x)
         return x
-    
+
 class MyModelx18(nn.Module):
     def __init__(self, pretrained=True):
         super(MyModelx18, self).__init__()
@@ -231,7 +249,7 @@ class MyModelx18(nn.Module):
         x = self.dr2(x)
         x = self.fc2(x)
         return x
-    
+
 class MyModelx34(nn.Module):
     def __init__(self, pretrained=True):
         super(MyModelx34, self).__init__()
@@ -259,7 +277,7 @@ class MyModelx34(nn.Module):
         x = self.dr2(x)
         x = self.fc2(x)
         return x
-    
+
 class MyModelx50(nn.Module):
     def __init__(self, pretrained=True):
         super(MyModelx50, self).__init__()
@@ -315,7 +333,7 @@ class MyModelx101(nn.Module):
         x = self.dr2(x)
         x = self.fc2(x)
         return x    
-    
+
 class MyModel_sq1(nn.Module):
     def __init__(self, pretrained=True):
         super(MyModel_sq1, self).__init__()
@@ -371,7 +389,7 @@ class MyModel_sq1_1(nn.Module):
         x = self.dr2(x)
         x = self.fc2(x)
         return x    
-    
+
 class MyModel_dnet121(nn.Module):
     def __init__(self, pretrained=True):
         super(MyModel_dnet121, self).__init__()
@@ -399,7 +417,7 @@ class MyModel_dnet121(nn.Module):
         x = self.dr2(x)
         x = self.fc2(x)
         return x    
-    
+
 class MyModel_dnet161(nn.Module):
     def __init__(self, pretrained=True):
         super(MyModel_dnet161, self).__init__()
@@ -427,7 +445,7 @@ class MyModel_dnet161(nn.Module):
         x = self.dr2(x)
         x = self.fc2(x)
         return x    
-    
+
 class MyModel_dnet169(nn.Module):
     def __init__(self, pretrained=True):
         super(MyModel_dnet169, self).__init__()
@@ -483,7 +501,7 @@ class MyModel_dnet201(nn.Module):
         x = self.dr2(x)
         x = self.fc2(x)
         return x 
-    
+
 class MyModel_next50(nn.Module):
     def __init__(self, pretrained=True):
         super(MyModel_next50, self).__init__()
@@ -511,7 +529,7 @@ class MyModel_next50(nn.Module):
         x = self.dr2(x)
         x = self.fc2(x)
         return x    
-    
+
 class MyModel_next101(nn.Module):
     def __init__(self, pretrained=True):
         super(MyModel_next101, self).__init__()
@@ -539,7 +557,7 @@ class MyModel_next101(nn.Module):
         x = self.dr2(x)
         x = self.fc2(x)
         return x  
-    
+
 def get_class_labels(img_dir):
     """
     Creates labels for dataset: ["left", "right", "straight"]. Does this through iterating 

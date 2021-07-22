@@ -6,28 +6,31 @@
 #       extension: .py
 #       format_name: light
 #       format_version: '1.5'
-#       jupytext_version: 1.11.4
+#       jupytext_version: 1.11.3
 #   kernelspec:
-#     display_name: Python 3 (ipykernel)
+#     display_name: Python 3
 #     language: python
 #     name: python3
 # ---
 
-# +
+
+# Import necessary packages and libraries
 from pathlib import Path
 from torch.utils.data import DataLoader, Dataset, SubsetRandomSampler
+import torchvision.models as models
 import torch.optim as optim
 from PIL import Image
 import matplotlib.pyplot as plt
 import numpy as np
-
 import fastbook
 fastbook.setup_book()
-
 from fastbook import *
 from fastai.vision.widgets import *
 from cmd_classes_funcs_Marchese import *
-# -
+
+# Set device to run training on
+torch.cuda.set_device(1)
+torch.cuda.current_device()
 
 # ## Use two functions and classes from cmd_classes_funcs_Marchese to make train/valid dataset
 
@@ -36,20 +39,20 @@ path = Path("data")
 classes = get_class_labels(path)
 all_filenames = get_filenames(path)
 
-# Getting size of dataset and corresponding list of indices
+# Get size of dataset and corresponding list of indices
 dataset_size = len(all_filenames)
 dataset_indices = list(range(dataset_size))
 
-# Shuffling the indices
+# Shuffle the indices
 np.random.shuffle(dataset_indices)
 
-# Getting index for where we want to split the data
+# Get the index for where we want to split the data
 val_split_index = int(np.floor(0.2 * dataset_size))
 
-# Splitting list of indices into training and validation indices
+# Split the list of indices into training and validation indices
 train_idx, val_idx = dataset_indices[val_split_index:], dataset_indices[:val_split_index]
 
-# Getting list of filenames for training and validation set
+# Get the list of filenames for the training and validation sets
 train_filenames = [all_filenames[i] for i in train_idx]
 val_filenames = [all_filenames[i] for i in val_idx]
 
@@ -57,13 +60,15 @@ val_filenames = [all_filenames[i] for i in val_idx]
 train_data = ImageWithCmdDataset(classes, train_filenames)
 val_data = ImageWithCmdDataset(classes, val_filenames)
 
-# Creating DataLoader
+# Create the DataLoader
 dls = DataLoaders.from_dsets(train_data, val_data)
 dls = dls.cuda()
 
-net = MyModel_dnet169()
+# Initialize the network
+net = MyModel_next101()
 net
 
+# Create FastAI Learner
 learn = Learner(dls, net, loss_func=CrossEntropyLossFlat(), metrics=accuracy)
 
 # Freeze model to train the head
@@ -73,26 +78,17 @@ learn.freeze()
 learn.lr_find()
 
 # Train head of model
-learn.fit_one_cycle(4, 0.0016)
+learn.fit_one_cycle(4, 0.00052)
 
 # unfreeze to train the whole model
 learn.unfreeze()
 learn.lr_find()
 
-learn.fit(50, lr=9.1e-08, cbs=TrackerCallback(monitor='valid_loss', reset_on_fit=True))
+# Fit the learner
+learn.fit(10, lr=9.1e-08)
 
-# +
-# maybe try to get a confusion matrix...
-# -
-
-learn.export(os.path.abspath('cmd_fai.pkl'))
-
-PATH = 'cmd_fai_dnet169.pth'
+# Save the model to a given PATH
+PATH = 'cmd_fai_next50.pth'
 torch.save(net.state_dict(), PATH)
-
-learn.model
-
-net = models.resnet18()
-net
 
 

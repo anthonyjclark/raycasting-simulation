@@ -6,14 +6,14 @@
 #       extension: .py
 #       format_name: light
 #       format_version: '1.5'
-#       jupytext_version: 1.11.4
+#       jupytext_version: 1.11.3
 #   kernelspec:
-#     display_name: Python 3 (ipykernel)
+#     display_name: Python 3
 #     language: python
 #     name: python3
 # ---
 
-# +
+# Import appropriate libraries and packages
 from pathlib import Path
 from torch.utils.data import DataLoader, Dataset, SubsetRandomSampler
 import torch.optim as optim
@@ -21,16 +21,13 @@ import torchvision
 from PIL import Image
 import matplotlib.pyplot as plt
 import numpy as np
-
 import fastbook
 fastbook.setup_book()
-
 from fastbook import *
 from fastai.vision.widgets import *
 from cmd_classes_funcs_Marchese import *
-# -
 
-# Make sure we're running on the server's GPU
+# Set GPU to run on if available
 device = torch.device("cuda:3" if torch.cuda.is_available() else "cpu")
 device
 
@@ -66,24 +63,26 @@ val_filenames = [all_filenames[i] for i in val_idx]
 train_data = ImageWithCmdDataset(classes, train_filenames)
 val_data = ImageWithCmdDataset(classes, val_filenames)
 
+# Create the training set and validation set data loaders
 train_loader = DataLoader(dataset=train_data, shuffle=False, batch_size=16, sampler=train_sampler)
 val_loader = DataLoader(dataset=val_data, shuffle=False, batch_size=16, sampler=val_sampler)
 
-# Instantiate MyModel class
-net = MyModel_dnet201()
+# Instantiate the network
+net = MyModel_next50()
 
 # Send model to GPU
 net.to(device)
 
-n = dataset_size
-w = torch.tensor([(n-138)/n,(n-211)/n,(n-786)/n])
-w = w.to(device)
+####n = dataset_size
+#### w = torch.tensor([(n-138)/n,(n-211)/n,(n-786)/n])
+#### w = w.to(device)
 # defining loss function and optimizer
 criterion = nn.CrossEntropyLoss(weight=w)
-optimizer = optim.Adam(net.parameters(), lr=0.0000095)
+optimizer = optim.Adam(net.parameters(), lr=.0001)
 
-num_epochs = 40
+num_epochs = 50
 
+# Import time package to keep track of training time
 from time import time
 
 # +
@@ -91,7 +90,7 @@ from time import time
 
 net.train()
 
-for epoch in range(num_epochs):  # loop over the dataset multiple times
+for epoch in range(num_epochs):  
 
     running_loss = 0.0
     
@@ -109,18 +108,19 @@ for epoch in range(num_epochs):  # loop over the dataset multiple times
         cmd = cmd.to(device)
         label = label.to(device)
 
-        # zero the parameter gradients
+        # Zero the parameter gradients
         optimizer.zero_grad()
         
-        # forward + backward + optimize
+        # Forward + backward + optimize
         output = net((img, cmd))
         loss = criterion(output, label)
         loss.backward()
         optimizer.step()
 
-        # print statistics
+        # Add loss of current data to running loss
         running_loss += loss.item()
         
+    # Print statistics    
     print(f"Epoch:{epoch+1:}/{num_epochs}, Training Loss:{running_loss:0.1f}, Time:{time()-start:0.1f}s")
 
 print('Finished Training')
@@ -147,7 +147,7 @@ with torch.no_grad():
         # Break up the inputs
         img, cmd = inp_data
         
-        # Putting data into the GPU
+        # Put data into the GPU
         img = img.to(device)
         cmd = cmd.to(device)
         label = label.to(device)
@@ -159,7 +159,7 @@ with torch.no_grad():
         # Assuming we always get batches
         for i in range(output.size()[0]):
                 
-            # Getting the predicted most probable move
+            # Get the predicted most probable move
             move = torch.argmax(output[i])
                 
             if move == label[i]:
@@ -182,21 +182,6 @@ for i, cls in enumerate(classes):
     print(f"  Accuracy on {cls:>5} class: {ccorrect}/{ctotal} = {caccuracy*100:.2f}%")
 # -
 
-PATH = 'cmd_torch_dnet201.pth'
+# Save trained model given PATH
+PATH = 'cmd_torch_next50_.pth'
 torch.save(net.state_dict(), PATH)
-
-data, labels = next(iter(val_loader))
-labels.shape
-
-plt.imshow(data[0][0].permute(1,2,0))
-
-labels[0]
-
-net.eval()
-img = data[0][0]
-cmd = data[1][0]
-img = img.to(device)
-cmd = cmd.to(device)
-net((img.unsqueeze(0), cmd.unsqueeze(0)))
-
-
