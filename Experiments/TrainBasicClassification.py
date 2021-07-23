@@ -158,6 +158,8 @@ def main():
         model_filename = MODEL_PATH_REL_TO_DATASET / f"{file_prefix}-{rep}.pkl"
         print("Model relative filename :", model_filename)
 
+        # TODO: check if model exists and skip if it does (helps if this crashes)
+
         log_filename = DATA_PATH_REL_TO_DATASET / f"{file_prefix}-trainlog-{rep}.csv"
         print("Log relative filename   :", log_filename)
 
