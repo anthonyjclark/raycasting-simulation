@@ -57,27 +57,24 @@ make
 
 # Working on the server
 
-Please use the project's conda environment so that we are all using the library versions:
+Use the project's `conda` environment so that we are all using the same
+library versions:
 
 ```bash
 source /opt/mambaforge/bin/activate arcs-summer21
 ```
 
-When working on `dgx01`:
+When working on `dgx01`, place all datasets in:
+`/raid/clark/summer2021/datasets`.
 
-```bash
-/raid/clark/summer2021/
-├── datasets
-└── models
-```
-
-Save all datasets and models into these folders.
-
-Additionally, pleasure help ensure that we provide a consistent interface for each model+dataset combination. We need to make it easy to load and run a model in `Imitator/Imitate.py`. We might need to create an interface for this (i.e., a base class), but I am not sure if that is necessary.
+Models and data will be saved inside their corresponding dataset
+directories.
 
 # Working With Notebooks
 
-We will use [mwouts/jupytext: Jupyter Notebooks as Markdown Documents, Julia, Python or R scripts](https://github.com/mwouts/jupytext "mwouts/jupytext: Jupyter Notebooks as Markdown Documents, Julia, Python or R scripts") to more effectively work with Jupyter Notebooks. Each notebook should be paired with a script. This has the following benefits:
+We will use [mwouts/jupytext](https://github.com/mwouts/jupytext) to more
+effectively work with Jupyter Notebooks. Each notebook should be paired
+with a **percent Script**. This has the following benefits:
 
 - It will make it easier for me to review notebooks.
 - It will make it easier for others to make changes to notebooks (e.g., if an API call changes).
