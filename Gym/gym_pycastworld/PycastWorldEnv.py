@@ -26,6 +26,7 @@ from MazeUtils import read_maze_file, percent_through_maze, bfs_dist_maze, is_on
 class PycastWorldEnv(gym.Env):
     metadata = {"render.modes": ["human", "rgb_array"]}
 
+    # TODO: Change order to match pycaster
     def __init__(self, mazefile: str, image_width: int, image_height: int) -> None:
         super().__init__()
 
@@ -34,7 +35,7 @@ class PycastWorldEnv(gym.Env):
         # mazefile = mazefile if mazefile else "../Mazes/maze01.txt"
         # "../Mazes/maze01.txt", 320, 240
 
-        self.world = PycastWorld(image_width, image_height, mazefile)
+        self.world = PycastWorld(image_width, image_height, str(mazefile))
 
         self.seed()
 
