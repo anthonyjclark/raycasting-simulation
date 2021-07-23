@@ -198,6 +198,10 @@ class Driver:
                 return True
             else:
                 return False
+            
+    @staticmethod
+    def filename_from_angle_deg(angle: float, i: int) -> str:
+        return f"{i:>06}_{angle:.3f}".replace(".", "p") + ".png"
 
     def turn_to_angle(self):
         self.world.walk(Walk.Stop)
@@ -214,12 +218,12 @@ class Driver:
                     break                
                 
                 agent_dir = -abs(90 + turn_angle)       
-                angle_label = agent_dir
+                angle_label = self.filename_from_angle_deg(agent_dir, self.img_num)
                 if self.img_dir != None:
                     if self.stack_dir:
                         self.world.save_png(
                             os.path.join(
-                                self.img_dir, f"{self.img_num:05}_{angle_label}.png",
+                                self.img_dir, f"{angle_label}",
                             )
                         )
                         self.img_num += 1
@@ -245,12 +249,12 @@ class Driver:
                     break
                     
                 agent_dir = abs(90 - turn_angle)
-                angle_label = agent_dir
+                angle_label = self.filename_from_angle_deg(agent_dir, self.img_num)
                 if self.img_dir != None:
                     if self.stack_dir:
                         self.world.save_png(
                             os.path.join(
-                                self.img_dir, f"{self.img_num:05}_{angle_label}.png",
+                                self.img_dir, f"{angle_label}",
                             )
                         )
                         self.img_num += 1
@@ -332,13 +336,13 @@ class Driver:
             )
             and self.step > 0.1
         ):
-            angle_label = 0
+            angle_label = self.filename_from_angle_deg(0.0, self.img_num)
             self.all_angles = np.append(self.all_angles, angle_label)
             if self.img_dir != None:
                 if self.stack_dir:
                     self.world.save_png(
                         os.path.join(
-                            self.img_dir, f"{self.img_num:05}_{angle_label}.png",
+                            self.img_dir, f"{angle_label}",
                         )
                     )
                     self.img_num += 1
@@ -460,10 +464,10 @@ class Navigator:
         plt.show()
 
 # +
-mazes = ["../Mazes/15_mazes_test_07-07-2021_16-07/maze_1.txt",
-         "../Mazes/15_mazes_test_07-07-2021_16-07/maze_2.txt", 
-         "../Mazes/15_mazes_test_07-07-2021_16-07/maze_3.txt",
-         "../Mazes/15_mazes_test_07-07-2021_16-07/maze_4.txt"]
+mazes = ["../Mazes/15_mazes_test_07-07-2021_16-07/maze_1.txt"]
+#          "../Mazes/15_mazes_test_07-07-2021_16-07/maze_2.txt", 
+#          "../Mazes/15_mazes_test_07-07-2021_16-07/maze_3.txt",
+#          "../Mazes/15_mazes_test_07-07-2021_16-07/maze_4.txt"]
 #          "../Mazes/15_mazes_test_07-07-2021_16-07/maze_5.txt"]
 #          "../Mazes/15_mazes_test_07-07-2021_16-07/maze_6.txt",
 #          "../Mazes/15_mazes_test_07-07-2021_16-07/maze_7.txt", 
@@ -480,7 +484,7 @@ for m in mazes:
     maze = m
     print(maze)
     show_freq = 0  # frequency to show frames
-    img_dir = "/raid/Images/proxy_reg" # directory to save images to
+    img_dir = "/raid/Images/test" # directory to save images to
     show_dir = True
 
     navigator = Navigator(maze, img_dir)
