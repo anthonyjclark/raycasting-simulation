@@ -102,6 +102,9 @@ os.system(dir_name)
 save_path = os.path.abspath(dir_name)
 
 
+# %% [markdown]
+# # Bar Plot Code
+
 # %%
 def get_network_name(m):
     return m.split('-')[1]
@@ -147,18 +150,12 @@ stepdata
 cdata = get_df(completion_data)
 cdata
 
-# %%
-list(cdata['Network'])
-
 
 # %%
 def get_error(df):
     ci_bounds = df['error'].to_numpy()
     return ci_bounds
 
-
-# %%
-get_error(stepdata)
 
 # %%
 cdata
@@ -221,4 +218,71 @@ ax = plot_bars(stepdata, "Steps")
 # %%
 ax = plot_bars(cdata, "Completion") 
 
+# %% [markdown]
+# # Scatter Plot Code
+
 # %%
+test_csv = '/raid/clark/summer2021/datasets/uniform-small/data/classification-resnet18-pretrained-trainlog-0.csv'
+
+
+# %%
+def get_csv(file):
+    return "csv" in file
+
+
+# %%
+data_dir = '/raid/clark/summer2021/datasets/uniform-small/data'
+data_files = os.listdir(data_dir)
+data_files.sort()
+data_files
+
+# %%
+csvs = list(filter(get_csv, data_files))
+csvs
+
+# %%
+training_losses = []
+
+for c in csvs:
+    df = pandas.read_csv(data_dir + "/" + c)
+    training_losses.append(min(df['train_loss']))
+
+# %%
+training_losses
+
+# %%
+average_losses = np.array(training_losses).reshape(-1,4).mean(axis=1)
+average_losses
+
+# %%
+means = stepdata['mean']
+means
+
+# %%
+means_over_models = np.array(means).reshape(-1,4).mean(axis=1)
+means_over_models
+
+# %%
+unique_names = list(set(clean_names))
+
+# %%
+df = pandas.DataFrame()
+df = df.assign(Network = unique_names)
+df = df.assign(average_training_losses = average_losses)
+df = df.assign(mean_steps = means_over_models)
+
+# %%
+df
+
+# %%
+get_colors(len(df['Network']))
+
+# %%
+fig, ax = plt.subplots(figsize=(16, 9))
+x = list(df["average_training_losses"])
+y = list(df["mean_steps"])
+ax.scatter(x, y, s=200, c=df.average_training_losses, alpha=.5)
+ax.set_xlabel("Training Loss")
+# ax.legend(loc='upper left')
+for i, label in enumerate(list(df['Network'])):
+    ax.annotate(label, (x[i], y[i]))
