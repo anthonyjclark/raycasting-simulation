@@ -1,26 +1,20 @@
 # ---
 # jupyter:
 #   jupytext:
-#     formats: ipynb,py:light
 #     text_representation:
 #       extension: .py
 #       format_name: light
 #       format_version: '1.5'
-#       jupytext_version: 1.11.3
+#       jupytext_version: 1.11.4
 #   kernelspec:
-#     display_name: Python 3
+#     display_name: Python 3 (ipykernel)
 #     language: python
 #     name: python3
 # ---
 
-# +
 # Import packages
-import fastbook
-fastbook.setup_book()
-
-from fastbook import *
+from fastai.vision.all import *
 from fastai.vision.widgets import *
-# -
 
 # Specify output categories for NN and path to get training/validation images
 move_type = 'straight', 'right', 'left'

@@ -1,14 +1,13 @@
 # ---
 # jupyter:
 #   jupytext:
-#     formats: ipynb,py:light
 #     text_representation:
 #       extension: .py
 #       format_name: light
 #       format_version: '1.5'
-#       jupytext_version: 1.11.3
+#       jupytext_version: 1.11.4
 #   kernelspec:
-#     display_name: Python 3
+#     display_name: Python 3 (ipykernel)
 #     language: python
 #     name: python3
 # ---
@@ -22,9 +21,7 @@ import torch.optim as optim
 from PIL import Image
 import matplotlib.pyplot as plt
 import numpy as np
-import fastbook
-fastbook.setup_book()
-from fastbook import *
+from fastai.vision.all import *
 from fastai.vision.widgets import *
 from cmd_classes_funcs_Marchese import *
 
