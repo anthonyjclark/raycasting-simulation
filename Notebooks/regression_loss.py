@@ -198,6 +198,10 @@ class Driver:
                 return True
             else:
                 return False
+            
+    @staticmethod
+    def filename_from_angle_deg(angle: float, i: int) -> str:
+        return f"{i:>06}_{angle:.3f}".replace(".", "p") + ".png"
 
     def turn_to_angle(self):
         self.world.walk(Walk.Stop)
@@ -213,13 +217,13 @@ class Driver:
                     print("no left to right allowed")
                     break                
                 
-                agent_dir = turn_angle  
-                angle_label = agent_dir
+                agent_dir = -abs(90 + turn_angle)
+                angle_label = self.filename_from_angle_deg(agent_dir, self.img_num)#agent_dir
                 if self.img_dir != None:
                     if self.stack_dir:
                         self.world.save_png(
                             os.path.join(
-                                self.img_dir, f"{self.img_num:05}_{angle_label}.png",
+                                self.img_dir, f"{angle_label}",
                             )
                         )
                         self.img_num += 1
@@ -228,13 +232,13 @@ class Driver:
                             os.path.join(
                                 self.img_dir,
                                 "right",
-                                f"{self.img_num_r:05}_{angle_label}.png",
+                                f"{self.img_num_r:05}_{angle_label}",
                             )
                         )
                         self.img_num_r += 1
 
                 self.world.turn(Turn.Right)
-                turn_angle += 2.5  
+                turn_angle -= 2.5  
                 self.world.update()
 
                 prev_turn = "right"
@@ -244,13 +248,13 @@ class Driver:
                     print("no right to left allowed")
                     break
                     
-                agent_dir = turn_angle
-                angle_label = agent_dir
+                agent_dir = abs(90 - turn_angle)
+                angle_label = self.filename_from_angle_deg(agent_dir, self.img_num)#agent_dir
                 if self.img_dir != None:
                     if self.stack_dir:
                         self.world.save_png(
                             os.path.join(
-                                self.img_dir, f"{self.img_num:05}_{angle_label}.png",
+                                self.img_dir, f"{angle_label}",
                             )
                         )
                         self.img_num += 1
@@ -259,7 +263,7 @@ class Driver:
                             os.path.join(
                                 self.img_dir,
                                 "left",
-                                f"{self.img_num_l:05}_{angle_label}.png",
+                                f"{self.img_num_l:05}_{angle_label}",
                             )
                         )
                         self.img_num_l += 1
@@ -332,13 +336,13 @@ class Driver:
             )
             and self.step > 0.1
         ):
-            angle_label = 0
+            angle_label = self.filename_from_angle_deg(0.0, self.img_num)#0.0
             self.all_angles = np.append(self.all_angles, angle_label)
             if self.img_dir != None:
                 if self.stack_dir:
                     self.world.save_png(
                         os.path.join(
-                            self.img_dir, f"{self.img_num:05}_{angle_label}.png",
+                            self.img_dir, f"{angle_label}",
                         )
                     )
                     self.img_num += 1
@@ -347,7 +351,7 @@ class Driver:
                         os.path.join(
                             self.img_dir,
                             "straight",
-                            f"{self.img_num_s:05}_{angle_label}.png",
+                            f"{angle_label}",
                         )
                     )
                     self.img_num_s += 1
@@ -460,27 +464,33 @@ class Navigator:
         plt.show()
 
 # +
-mazes = ["../Mazes/15_mazes_test_07-07-2021_16-07/maze_1.txt",
-         "../Mazes/15_mazes_test_07-07-2021_16-07/maze_2.txt", 
-         "../Mazes/15_mazes_test_07-07-2021_16-07/maze_3.txt",
-         "../Mazes/15_mazes_test_07-07-2021_16-07/maze_4.txt"]
-#          "../Mazes/15_mazes_test_07-07-2021_16-07/maze_5.txt"]
-#          "../Mazes/15_mazes_test_07-07-2021_16-07/maze_6.txt",
-#          "../Mazes/15_mazes_test_07-07-2021_16-07/maze_7.txt", 
-#          "../Mazes/15_mazes_test_07-07-2021_16-07/maze_8.txt",
-#          "../Mazes/15_mazes_test_07-07-2021_16-07/maze_9.txt",
-#          "../Mazes/15_mazes_test_07-07-2021_16-07/maze_10.txt",
-#          "../Mazes/15_mazes_test_07-07-2021_16-07/maze_11.txt",
-#          "../Mazes/15_mazes_test_07-07-2021_16-07/maze_12.txt", 
-#          "../Mazes/15_mazes_test_07-07-2021_16-07/maze_13.txt",
-#          "../Mazes/15_mazes_test_07-07-2021_16-07/maze_14.txt",
-#          "../Mazes/15_mazes_test_07-07-2021_16-07/maze_15.txt"]
+mazes = ["../Mazes/training_mazes8x8/maze_01.txt",
+         "../Mazes/training_mazes8x8/maze_02.txt", 
+         "../Mazes/training_mazes8x8/maze_03.txt",
+         "../Mazes/training_mazes8x8/maze_04.txt",
+         "../Mazes/training_mazes8x8/maze_05.txt",
+         "../Mazes/training_mazes8x8/maze_06.txt",
+         "../Mazes/training_mazes8x8/maze_07.txt", 
+         "../Mazes/training_mazes8x8/maze_08.txt",
+         "../Mazes/training_mazes8x8/maze_09.txt",
+         "../Mazes/training_mazes8x8/maze_10.txt",
+         "../Mazes/training_mazes8x8/maze_11.txt",
+         "../Mazes/training_mazes8x8/maze_12.txt", 
+         "../Mazes/training_mazes8x8/maze_13.txt",
+         "../Mazes/training_mazes8x8/maze_14.txt",
+         "../Mazes/training_mazes8x8/maze_15.txt",
+         "../Mazes/training_mazes8x8/maze_16.txt",
+         "../Mazes/training_mazes8x8/maze_17.txt",
+         "../Mazes/training_mazes8x8/maze_18.txt", 
+         "../Mazes/training_mazes8x8/maze_19.txt",
+         "../Mazes/training_mazes8x8/maze_20.txt"]
+
 
 for m in mazes:
     maze = m
     print(maze)
     show_freq = 0  # frequency to show frames
-    img_dir = "/raid/Images/test" # directory to save images to
+    img_dir = "/raid/clark/summer2021/datasets/reg_data" # directory to save images to
     show_dir = True
 
     navigator = Navigator(maze, img_dir)
@@ -490,9 +500,6 @@ for m in mazes:
         navigator.navigate(j, show_dir=show_dir, show_freq=show_freq)
         j += 1
 # -
-
-plt.plot(navigator.angles)
-plt.show()
 
 from fastai.vision.all import *
 from fastai import *

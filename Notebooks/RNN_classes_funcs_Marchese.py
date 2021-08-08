@@ -1,3 +1,4 @@
+
 # Import necessary libraries and packages
 import torch
 import torch.nn as nn
@@ -62,7 +63,6 @@ class ConvRNN10(nn.Module):
         x = self.relu(x)
         x = self.lin2(x)
         return x
-
 
 def get_filenames(img_dir):
     """
@@ -139,5 +139,4 @@ class ImageDataset(Dataset):
         
         # Returns data and the label associated with that data
         return img, label
-
 

@@ -177,6 +177,10 @@ class Driver:
                 return True
             else:
                 return False
+            
+    @staticmethod
+    def filename_from_angle_deg(angle: float, i: int) -> str:
+        return f"{i:>06}_{angle:.3f}".replace(".", "p") + ".png"
 
     def turn_to_angle(self):
         self.world.walk(Walk.Stop)
@@ -190,10 +194,12 @@ class Driver:
                     break
 
                 # save image right
+                agent_dir = -abs(90 + turn_angle)
+                angle_label = self.filename_from_angle_deg(agent_dir, self.img_num)
                 if self.img_dir != None:
                     if self.stack_dir:
                         self.world.save_png(
-                            os.path.join(self.img_dir, f"{self.img_num:05}_right.png")
+                            os.path.join(self.img_dir, f"{angle_label}")
                         )
                         self.img_num += 1
                     else:
@@ -215,10 +221,12 @@ class Driver:
                     break
 
                 # save image left
+                agent_dir = abs(90 - turn_angle)
+                angle_label = self.filename_from_angle_deg(agent_dir, self.img_num)
                 if self.img_dir != None:
                     if self.stack_dir:
                         self.world.save_png(
-                            os.path.join(self.img_dir, f"{self.img_num:05}_left.png")
+                            os.path.join(self.img_dir, f"{angle_label}")
                         )
                         self.img_num += 1
                     else:
@@ -297,10 +305,11 @@ class Driver:
             )
             and self.step > 0.1
         ):
+            angle_label = self.filename_from_angle_deg(0.0, self.img_num)
             if self.img_dir != None:
                 if self.stack_dir:
                     self.world.save_png(
-                        os.path.join(self.img_dir, f"{self.img_num:05}_straight.png")
+                        os.path.join(self.img_dir, f"{angle_label}")
                     )
                     self.img_num += 1
                 else:
