@@ -7,26 +7,26 @@
 #       extension: .py
 #       format_name: light
 #       format_version: '1.5'
-#       jupytext_version: 1.11.3
+#       jupytext_version: 1.11.4
 #   kernelspec:
-#     display_name: Python 3
+#     display_name: Python 3 (ipykernel)
 #     language: python
 #     name: python3
 # ---
 
-import distutils.util
 from datetime import datetime
 import matplotlib.pyplot as plt
 import numpy as np
 import os
 from pathlib import Path
-import random
 import sys
-import time
 import Imitate
 from Imitate import *
 import RegressionImitator
 from RegressionImitator import *
+import pandas
+from plot_helper import *
+
 colors = [
     "tab:blue",
     "tab:orange",
@@ -41,18 +41,11 @@ colors = [
 # assume running from Imitator dir
 def main():
     num_mazes = int(sys.argv[1]) if len(sys.argv) > 1 else 1
-
-#     ("../Models/auto-gen-r_large-6-6.pkl", 'c', 'n'),
-#               ("../Models/auto-gen-c_large-6-6.pkl", 'r', 'n'),
-#               ("../Models/auto-stack-r.pkl", 'r', 'y'),
-#               ("../Models/auto-stack-c3.pkl", 'c', 'y'),
-# ("../Models/regression_model02.pkl", 'r', 'n')
-# ("../Models/proxy_regression_model_loss.pkl", 'r', 'y', 'y')
-# reg/c  Stck  Reg  CMD in
-# ("../Models/cmd_fai_more2.pth", 'cmd', 'y', 'n')
-    models = [#("../Models/torch_RNN_finished6_10.pth", 'rnn', 'y', 'n')]
-              ("../Models/regression_model02.pkl", 'r', 'y', 'y')]
-#               ("../Models/auto-stack-c3.pkl", 'c', 'y', 'n')]
+    model_dir = '/raid/clark/summer2021/datasets/wander-full/models'
+    models = os.listdir(model_dir)
+    models.sort()
+    for i, m in enumerate(models):
+        models[i] = (model_dir + '/' + m, 'c', 'n', 'n')
 
     maze_dir = "../Mazes/"
     now = datetime.now().strftime("%d-%m-%Y_%H-%M")
@@ -68,7 +61,7 @@ def main():
     data = {model_name: [] for model_name in model_names}
     completion_data = {model_name: [] for model_name in model_names}
     for i in range(num_mazes):
-        size = random.randint(min_size, max_size)
+        size = 8#random.randint(min_size, max_size)
         maze_file = os.path.join(maze_sub_dir, f"maze_{i+1}.txt")
 
         print(f"Creating maze {i+1} with size {size}")
@@ -96,59 +89,67 @@ def main():
     save_path = os.path.abspath(dir_name)
     
     # Make Bar Plot
-    mazes = [f"maze {i+1}" for i in range(num_mazes)]
-    ind = np.arange(num_mazes)
-    width = 0.15
-    bars = []
-    plt.clf()
-    plt.figure(figsize=(20, 10)) 
-    for k, model_name in enumerate(model_names):
-        xvals = data[model_name]
-        color = colors[k]
-        bar = plt.bar(ind+width*k, xvals, width, color=color)
-        bars.append(bar)
-    plt.xlabel("Mazes")
-    plt.xticks(rotation=90)
-    plt.ylabel("Number of frames")
-    plt.title("Frames to navigate")
-    plt.xticks(ind+width, mazes)
-    plt.legend(bars, model_names)
-    plt.savefig(os.path.join(save_path, f"barchart_{now}.png"))
-    plt.show()
+    mazes = [f"maze_{i+1}" for i in range(num_mazes)]
+    clean_names = list(map(get_network_name, model_names))
+    stepdata = get_df(data, mazes)
+    cdata = get_df(completion_data, mazes)
+    
+    # make step bar
+    ax = plot_bars(stepdata, "Steps", clean_names)
+    ax.figure.savefig(os.path.join(save_path, f"step_barchart_{now}.png"))
+    
+    # make completion bar
+    ax = plot_bars(cdata, "Completion", clean_names) 
+    ax.figure.savefig(os.path.join(save_path, f"completion_barchart_{now}.png"))
 
-    # Generate Completion bar plot
-    plt.clf()
-    plt.figure(figsize=(20, 10)) 
-    bars = []
-    for k, model_name in enumerate(model_names):
-        xvals = completion_data[model_name]
-        color = colors[k]
-        bar = plt.bar(ind+width*k, xvals, width, color=color)
-        bars.append(bar)
-    plt.xlabel("Mazes")
-    plt.xticks(rotation=90)
-    plt.ylabel("Percentage Complete")
-    plt.title("Percentage Navigated")
-    plt.xticks(ind+width, mazes)
-    plt.legend(bars, model_names)
-    plt.savefig(os.path.join(save_path, f"completionchart_{now}.png"))
-    plt.show()
+    # make scatter plots
+    data_dir = "/raid/clark/summer2021/datasets/uniform-full/data"
+    
+    # valid average
+    avg_df = merge_loss_data(data_dir, stepdata, "valid_loss", clean_names, True)
+    ax = plot_average_scatter(avg_df)
+    ax.set_title("Averaged Steps Taken Over Valid Loss Per Model")
+    ax.set_xlabel("Valid Loss")
+    ax.figure.savefig(os.path.join(save_path, f"scatter_valid_average_{now}.png"))
+
+    # valid no average
+    avg_df = merge_loss_data(data_dir, stepdata, "valid_loss", clean_names, False)
+    ax = plot_average_scatter(avg_df)
+    ax.set_xlabel("Valid Loss")
+    ax.set_title("Averaged Steps Taken Over Valid Loss Per Model")
+    ax.set_ylabel("Steps Taken Averaged Over Mazes")
+    ax.figure.savefig(os.path.join(save_path, f"scatter_valid_{now}.png"))
+    
+    # train average
+    tlosses_df = merge_loss_data(data_dir, stepdata, "train_loss", clean_names, True)
+    ax = plot_average_scatter(tlosses_df)
+    ax.figure.savefig(os.path.join(save_path, f"scatter_train_average_{now}.png"))
+
+    
+    # train no average
+    tlosses_df = merge_loss_data(data_dir, stepdata, "train_loss", clean_names, False)
+    ax = plot_average_scatter(tlosses_df)
+    ax.set_ylabel("Steps Taken Averaged Over Mazes")
+    ax.figure.savefig(os.path.join(save_path, f"scatter_train_{now}.png"))
+
     
     # Generate completion box plots
-    plt.clf()
-    plt.figure(figsize=(20, 10)) 
-    bars = []
-    boxplot_dict = {}
-    df = []
-    for k,model_name in enumerate(model_names):
-        df.append(completion_data[model_name])
-    plt.boxplot(x=df, labels=model_names);
-    plt.xlabel("Models")
-    plt.xticks(rotation=45)
-    plt.ylabel("Percentage Complete")
-    plt.title("Percentage Navigated")
-    plt.savefig(os.path.join(save_path, f"boxplots_{now}.png"))
-    plt.show()
+    all_data = []
+    fig, ax = plt.subplots(figsize=(16, 9))
+    for m in mazes:    
+        x = list(stepdata[m])
+        all_data.append(x)
+    ax.boxplot(all_data, labels=mazes)
+    ax.set_xlabel("Mazes")
+    ax.set_ylabel("Steps")
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
+    ax.spines['left'].set_visible(False)
+    ax.spines['bottom'].set_color('#DDDDDD')
+    ax.set_title("Distribution of Steps per Maze")
+    ax.figure.savefig(os.path.join(save_path, f"boxplot_{now}.png"))
+
+
 
 if __name__ == "__main__":
     main()

@@ -1,25 +1,22 @@
 #!/usr/bin/env python
 
-from IPython.display import HTML
 # for animation
 from matplotlib.animation import FuncAnimation
-from matplotlib import image
 import matplotlib.pyplot as plt
 import numpy as np
 import distutils.util
 # functions defined for model required by fastai
 from fastai.vision.all import *
-from math import radians
 import sys
 # Needed to import pycaster from relative path
 sys.path.append("../PycastWorld")
-from pycaster import PycastWorld, Turn, Walk
+from pycaster import PycastWorld, Turn, Walk 
 sys.path.append("../Models")
 sys.path.append("../MazeGen")
 from MazeUtils import read_maze_file, percent_through_maze, bfs_dist_maze, is_on_path
 sys.path.append("../Notebooks")
-from RNN_classes_funcs_Marchese import *
-from cmd_classes_funcs_Marchese import *
+# from RNN_classes_funcs_Marchese import *
+# from cmd_classes_funcs_Marchese import *
 # For Christy's cmd models
 
 def parent_to_deg(f):
@@ -134,6 +131,14 @@ def reg_predict(pred_coords):
     else:
         return "straight"
 
+def filename_to_class(filename: str) -> str:
+    angle = float(filename.split("_")[1].split(".")[0].replace("p", "."))
+    if angle > 0:
+        return "left"
+    elif angle < 0:
+        return "right"
+    else:
+        return "forward"
 
 # Animation function. TODO: make it output an embedded HTML figure
 def animate(image_frames, name, dir_name):
@@ -154,21 +159,96 @@ def animate(image_frames, name, dir_name):
     save_path = os.path.abspath(dir_name)
     name = str(name).split("/")[-1][:-4]
     fig, ax = plt.subplots()
-    ln = plt.imshow(image_frames[0])
+#     ln = plt.imshow(image_frames[0])
 
-    def init():
-        ln.set_data(image_frames[0])
-        return [ln]
+#     def init():
+#         ln.set_data(image_frames[0])
+#         return [ln]
 
-    def update(frame):
-        ln.set_array(frame)
-        return [ln]
+#     def update(frame):
+#         ln.set_array(frame)
+#         return [ln]
 
-    ani = FuncAnimation(fig, update, image_frames, init_func=init)
-    ani.save(os.path.join(save_path, name + "_" + str(now) + ".mp4"))
+#     ani = FuncAnimation(fig, update, image_frames, init_func=init, blit=True)
+#     ani.save(os.path.join(save_path, name + "_" + str(now) + ".mp4"), fps=60)
+
+
+def get_fig_filename(prefix: str, label: str, ext: str, rep: int) -> str:
+    fig_filename = f"{prefix}-{label}-{rep}.{ext}"
+    print(label, "filename :", fig_filename)
+    return fig_filename
+
+
+def filename_to_class(filename: str) -> str:
+    angle = float(filename.split("_")[1].split(".")[0].replace("p", "."))
+    if angle > 0:
+        return "left"
+    elif angle < 0:
+        return "right"
+    else:
+        return "forward"
+
+
+def prepare_dataloaders(dataset_name: str, prefix: str) -> DataLoaders:
+
+    path = DATASET_DIR / dataset_name
+    files = get_image_files(path)
+
+    dls = ImageDataLoaders.from_name_func(
+        path, files, filename_to_class, valid_pct=VALID_PCT
+    )
+
+    dls.show_batch()  # type: ignore
+    plt.savefig(get_fig_filename(prefix, "batch", "pdf", 0))
+
+    return dls  # type: ignore
+
+
+def train_model(
+    dls: DataLoaders,
+    model_arch: str,
+    pretrained: bool,
+    logname: Path,
+    modelname: Path,
+    prefix: str,
+    rep: int,
+):
+    learn = cnn_learner(
+        dls,
+        compared_models[model_arch],
+        metrics=accuracy,
+        pretrained=pretrained,
+        cbs=CSVLogger(fname=logname),
+    )
+
+    if pretrained:
+        learn.fine_tune(NUM_EPOCHS)
+    else:
+        learn.fit_one_cycle(NUM_EPOCHS)
+
+    # The follwing line is necessary for pickling
+    learn.remove_cb(CSVLogger)
+    learn.export(modelname)
+
+    learn.show_results()
+    plt.savefig(get_fig_filename(prefix, "results", "pdf", rep))
+
+    interp = ClassificationInterpretation.from_learner(learn)
+    interp.plot_top_losses(9, figsize=(15, 10))
+    plt.savefig(get_fig_filename(prefix, "toplosses", "pdf", rep))
+
+    interp.plot_confusion_matrix(figsize=(10, 10))
+    plt.savefig(get_fig_filename(prefix, "confusion", "pdf", rep))
 
 
 def main(argv):
+#     torch.cuda.set_device(1)
+    if torch.cuda.is_available():
+        print("Using GPU")
+        device = torch.device('cuda')
+        torch.cuda.set_device(0)
+    else:
+        device = torch.device('cpu')
     maze = argv[0] if len(argv) > 0 else "../Mazes/maze01.txt"
     model = argv[1] if len(argv) > 1 else "../Models/auto-gen-c.pkl"
     show_freq = int(argv[2]) if len(
@@ -184,27 +264,29 @@ def main(argv):
         bool(distutils.util.strtobool(argv[4])) if len(argv) > 4 else False
     )  # True for stacked input
 
-    world = PycastWorld(320, 240, maze)
+    world = PycastWorld(224, 224, maze)
 
     if model_type == "cmd" or model_type == "rnn":
         model_inf = ConvRNN()
         model_inf.load_state_dict(torch.load(model))
     else:
         path = Path("../")
-        model_inf = load_learner(model)
+        model_inf = load_learner(model, cpu=False)
+        model_inf.eval()
 
     prev_move = None
     prev_image_data = None
     frame = 0
-    frame_freq = 5
+    frame_freq = 1
     num_static = 0
     prev_x, prev_y = world.x(), world.y()
     animation_frames = []
 
     outcome = "At goal? "
     stuck = False
-    # Initialize maximum number of steps in case the robot travels in a completely incorrect direction
-    max_steps = 3500
+    # Initialize maximum number of steps in case the robot travels in a 
+    # completely incorrect direction
+    max_steps = 3500 #np.random.randint(20, 40 + 1)
 
     # Initialize Maze Check
     maze_rvs, _, _, maze_directions, _ = read_maze_file(maze)
@@ -224,7 +306,8 @@ def main(argv):
             if stacked:
                 move = model_inf.predict(stacked_input(prev_image_data, image_data))[0]
             else:
-                move = model_inf.predict(image_data)[0]
+                with model_inf.no_bar():
+                    move = model_inf.predict(image_data)[0]
         elif model_type == "r":
             if stacked:
                 pred_coords, _, _ = model_inf.predict(stacked_input(prev_image_data, image_data))
@@ -263,7 +346,7 @@ def main(argv):
             move = "straight"
 
         # Move in world
-        if move == "straight":
+        if move == "straight" or move == "forward":
             world.walk(Walk.Forward)
             world.turn(Turn.Stop)
         elif move == "left":
@@ -285,9 +368,9 @@ def main(argv):
                 num_static = 0       
             prev_x = curr_x
             prev_y = curr_y
-        if frame % frame_freq == 0:
-            animation_frames.append(image_data.copy())        
-        on_path = is_on_path(maze_path, int(world.x()), int(world.y()))
+#         if frame % frame_freq == 0:
+#             animation_frames.append(image_data.copy())        
+        on_path = is_on_path(maze_path, int(curr_x), int(curr_y))
         frame += 1
         prev_image_data = image_data
         if frame == max_steps:
