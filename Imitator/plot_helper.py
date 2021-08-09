@@ -22,7 +22,18 @@ colors = [
 ]
 
 def get_network_name(m):
-    return m.split('-')[1]
+    name = m.split("-")[1]
+    return (
+        name.capitalize()
+        .replace("net", "Net")
+        .replace("resnext", "ResNext")
+        .replace("deep", "Deep")
+        .replace("deeper", "Deeper")
+        .replace("_res", "_Res")
+    )
+
+def get_clean_names(m):
+    return m.split("-")[1]
 
 def index_one(num):
     return num[0]
@@ -39,7 +50,7 @@ def get_df(data_dict, mazes):
     df['std'] = df[df.columns[1:]].std(axis=1)
     df['mean'] = df[df.columns[1:-1]].mean(axis=1)
     # df = df.assign(lower_error=1.96*df['std'])
-    df = df.assign(error=1.96*df['std'])
+    df = df.assign(error=1.96*df['std']/np.sqrt(len(mazes)))
     return df
 
 def get_error(df):
@@ -54,7 +65,7 @@ def get_colors(num_unique_mazes) -> list:
             color_labels.append(color)
     return color_labels
 
-def plot_bars(df, metric, clean_names):
+def plot_bars(df, metric):
     full_names = list(df["Network"])
     clean_names = list(map(get_network_name, full_names))
     unique_names = list(set(clean_names))
@@ -81,8 +92,10 @@ def plot_bars(df, metric, clean_names):
         ax.yaxis.set_major_formatter(mtick.PercentFormatter())
         y_lab = "Average Completion Over Averaged Mazes"
         ax.set_yticks(np.arange(0, 100, 10))
+        ax.set_ylim(bottom = 0.0, top = 100.0)
     else:
-        ax.set_yticks(np.arange(0, max(vals), 500))
+        ax.set_yticks(np.arange(0, max(vals), 200))
+        ax.set_ylim(bottom = 0.0, top = max(vals))
     
     ax.bar(
         x,
@@ -90,8 +103,8 @@ def plot_bars(df, metric, clean_names):
         yerr=ci_bounds,
         color=color_labels,
         align="center",
-        alpha=0.5,
-        ecolor="black",
+        alpha=0.75,
+        ecolor="grey",
         capsize=2,
     )
     ax.set_xticks(x)
@@ -121,7 +134,10 @@ def get_losses(csv_files, data_dir, loss_type):
     training_losses = []
     for c in csv_files:
         df = pandas.read_csv(data_dir + "/" + c)
-        training_losses.append(min(df[loss_type]))
+        if len(df) == 0:
+            training_losses.append(0.0)
+        else:
+            training_losses.append(min(df["valid_loss"]))
     return training_losses
 
 def merge_loss_data(data_dir, df, loss_type, clean_names, average=False):
