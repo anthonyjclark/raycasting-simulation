@@ -12,7 +12,6 @@
 #     name: python3
 # ---
 
-
 # Import necessary packages and libraries
 from pathlib import Path
 from torch.utils.data import DataLoader, Dataset, SubsetRandomSampler
@@ -62,7 +61,7 @@ dls = DataLoaders.from_dsets(train_data, val_data)
 dls = dls.cuda()
 
 # Initialize the network
-net = MyModel_next101()
+net = MyModel1()
 net
 
 # Create FastAI Learner

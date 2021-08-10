@@ -26,7 +26,7 @@ sys.path.append("../Notebooks")
 import convLSTM as convLSTM
 
 # Assign GPU
-torch.cuda.set_device(2)
+torch.cuda.set_device(3)
 print("Running on GPU: " + str(torch.cuda.current_device()))
 
 # Constants (same for all trials)
