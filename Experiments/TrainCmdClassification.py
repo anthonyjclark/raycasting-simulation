@@ -198,17 +198,8 @@ def train_model(
     else:
         learn.fit_one_cycle(NUM_EPOCHS)
 
-    # The following line is necessary for pickling
-    learn.remove_cb(CSVLogger)
     # Save trained model
     torch.save(net.state_dict(), modelname)
-
-    interp = ClassificationInterpretation.from_learner(learn)
-    interp.plot_top_losses(9, figsize=(15, 10))
-    plt.savefig(get_fig_filename(prefix, "toplosses", "pdf", rep))
-
-    interp.plot_confusion_matrix(figsize=(10, 10))
-    plt.savefig(get_fig_filename(prefix, "confusion", "pdf", rep))
 
 
 def main():
@@ -251,7 +242,7 @@ def main():
         model_filename = DATASET_DIR / args.dataset_name / MODEL_PATH_REL_TO_DATASET / f"{file_prefix}-{rep}.pth"
         print("Model relative filename :", model_filename)
 
-        # TODO: check if model exists and skip if it does (helps if this crashes)
+        # Checks if model exists and skip if it does (helps if this crashes)
         if path.exists(model_filename):
             continue
 

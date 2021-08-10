@@ -139,9 +139,6 @@ def main():
 
     args = arg_parser.parse_args()
 
-    # TODO: not using this (would require replacing first layer)
-    # rgb_instead_of_gray = True
-
     # Make dirs as needed
     model_dir = DATASET_DIR / args.dataset_name / MODEL_PATH_REL_TO_DATASET
     model_dir.mkdir(exist_ok=True)
@@ -164,7 +161,7 @@ def main():
         model_filename = MODEL_PATH_REL_TO_DATASET / f"{file_prefix}-{rep}.pkl"
         print("Model relative filename :", model_filename)
 
-        # TODO: check if model exists and skip if it does (helps if this crashes)
+        # Checks if model exists and skip if it does (helps if this crashes)
         if path.exists(model_filename):
             continue
 

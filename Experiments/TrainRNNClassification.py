@@ -123,6 +123,9 @@ def train_model(
     learn.remove_cb(CSVLogger)
     # Save trained model
     learn.export(modelname)
+    
+    learn.show_results()
+    plt.savefig(get_fig_filename(prefix, "results", "pdf", rep))
 
     interp = ClassificationInterpretation.from_learner(learn)
     interp.plot_top_losses(9, figsize=(15, 10))
@@ -158,7 +161,7 @@ def main():
         model_filename = DATASET_DIR / dataset_name / MODEL_PATH_REL_TO_DATASET / f"{file_prefix}-{rep}.plk"
         print("Model relative filename :", model_filename)
 
-        # TODO: check if model exists and skip if it does (helps if this crashes)
+        # Checks if model exists and skip if it does (helps if this crashes)
         if path.exists(model_filename):
             continue
 
