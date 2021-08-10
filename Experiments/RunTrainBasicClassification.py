@@ -27,7 +27,7 @@ compared_models = [
     "alexnet",
 ]
 
-for dataset in ["uniform-full", "wander-full"]:
+for dataset in ["uniform-full", "corrected-wander-full"]:
 
     for model in compared_models:
 

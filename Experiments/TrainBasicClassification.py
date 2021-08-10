@@ -7,10 +7,16 @@
 from argparse import ArgumentParser
 
 import matplotlib.pyplot as plt
+import os.path
+from os import path
 
 from fastai.vision.all import *
 from fastai.callback.progress import CSVLogger
 
+
+# Assign GPU
+torch.cuda.set_device(1)
+print("Running on GPU: " + str(torch.cuda.current_device()))
 
 # Constants (same for all trials)
 VALID_PCT = 0.05
@@ -74,7 +80,7 @@ def prepare_dataloaders(dataset_name: str, prefix: str) -> DataLoaders:
     dls = ImageDataLoaders.from_name_func(
         path, files, filename_to_class, valid_pct=VALID_PCT
     )
-
+    
     dls.show_batch()  # type: ignore
     plt.savefig(get_fig_filename(prefix, "batch", "pdf", 0))
 
@@ -125,7 +131,7 @@ def main():
         "model_arch", help="Model architecture (see code for options)"
     )
     arg_parser.add_argument(
-        "dataset_name", help="Name of dataset to use (uniform-full | wander-full)"
+        "dataset_name", help="Name of dataset to use (uniform-full | corrected-wander-full)"
     )
     arg_parser.add_argument(
         "--pretrained", action="store_true", help="Use pretrained model"
@@ -154,11 +160,13 @@ def main():
 
     # Train NUM_REPLICATES separate instances of this model and dataset
     for rep in range(NUM_REPLICATES):
-
+        
         model_filename = MODEL_PATH_REL_TO_DATASET / f"{file_prefix}-{rep}.pkl"
         print("Model relative filename :", model_filename)
 
         # TODO: check if model exists and skip if it does (helps if this crashes)
+        if path.exists(model_filename):
+            continue
 
         log_filename = DATA_PATH_REL_TO_DATASET / f"{file_prefix}-trainlog-{rep}.csv"
         print("Log relative filename   :", log_filename)

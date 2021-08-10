@@ -33,9 +33,9 @@ model_archs = [models.resnet18, models.resnet34, models.resnet50, models.resnet1
               models.densenet201, models.resnext50_32x4d, models.resnext101_32x8d]
 
 # Filenames for models to be saved to
-"""model_names = ["resnet18.pth", "resnet34.pth", "resnet50.pth", "resnet101.pth", "xrnet18.pth", "xrnet34.pth", "xrnet50.pth", "xrnet101",
+model_names = ["resnet18.pth", "resnet34.pth", "resnet50.pth", "resnet101.pth", "xrnet18.pth", "xrnet34.pth", "xrnet50.pth", "xrnet101",
                "sqnet1_0.pth", "sqnet1_1.pth", "dnet121.pth", "dnet161.pth", "dnet169.pth", "dnet201.pth", "rnext50_2d.pth", 
-               "rnext101_8d.pth"]"""
+               "rnext101_8d.pth"]
 
 def label_func(filename):
     """

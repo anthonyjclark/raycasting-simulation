@@ -33,8 +33,8 @@ from RNN_classes_funcs_Marchese import *
 # -
 
 # load in trained network
-net = MyModel2()
-model_name = 'models/cmd_torch_more2.pth'
+net = ConvRNN()
+model_name = 'fai_RNN.pth'
 net.load_state_dict(torch.load(model_name))
 net.eval()
 
@@ -42,7 +42,7 @@ net.eval()
 steps_per_episode = 2500
 
 # Load in the world environment
-env = PycastWorldEnv("../Mazes/maze_test01.txt", 320, 240)
+env = PycastWorldEnv("../Mazes/maze_test01.txt", 224, 224)
 
 # Grab the initial observation 
 observation = env.reset()
