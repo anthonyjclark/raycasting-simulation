@@ -1,11 +1,16 @@
 #include "DisplayArray.h"
 #include "../RaycastWorld/RaycastWorld.h"
 
+#include <iomanip>
 #include <iostream>
+#include <sstream>
 #include <vector>
+
+// rsync -arv images/ dgx01:/raid/clark/summer2021/datasets/handmade-full
 
 // TODO: remove as global variable
 std::string image_directory;
+int image_number;
 
 /*
  * Saves an image from the window for the specified move
@@ -15,37 +20,45 @@ std::string image_directory;
  * @param w RaycastWorld
  * @param move specified move and subdirectory to save image to
  */
-void save_png_with_command(RaycastWorld *world, std::string move)
+void save_png_with_command(RaycastWorld *world)
 {
-    static int count = 0;
+    // Set angle based on current turn and walk values (only works for classification)
+    // TODO: make this work with regularization
+    std::string angle;
+    if (world->get_walk() == Walk::STOP && world->get_turn() == Turn::LEFT)
+    {
+        angle = "1p000";
+    }
+    else if (world->get_walk() == Walk::STOP && world->get_turn() == Turn::RIGHT)
+    {
+        angle = "-1p000";
+    }
+    else if (world->get_walk() == Walk::FORWARD && world->get_turn() == Turn::STOP)
+    {
+        angle = "0p000";
+    }
+    else
+    {
+        std::cout << "WARNING: cannot handle case when walking and turning at the same time.\n";
+        return;
+    }
 
-    std::string image_path = image_directory + "/" + move + "/" + std::to_string(count) + ".png";
-    std::cout << "Saving image \"" << image_path << "\"\n";
-    world->save_png(image_path);
-    count++;
+    // From python: f"{i:>06}_{angle:.3f}".replace(".", "p") + ".png"
+    std::ostringstream image_path;
+    image_path << image_directory << (image_directory[image_directory.length() - 1] == '/' ? "" : "/")
+               << std::setfill('0') << std::setw(6) << image_number
+               << "_"
+               << angle
+               << ".png";
+    std::cout << "Saving image \"" << image_path.str() << "\"\n";
+    world->save_png(image_path.str());
+    image_number++;
 }
 
 // void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods)
 void keyCallback(GLFWwindow *window, int key, int, int action, int)
 {
-
     auto world = static_cast<RaycastWorld *>(glfwGetWindowUserPointer(window));
-
-    if (image_directory.length() > 0 && (action == GLFW_PRESS || action == GLFW_REPEAT))
-    {
-        if (key == GLFW_KEY_UP)
-        {
-            save_png_with_command(world, "forward");
-        }
-        else if (key == GLFW_KEY_LEFT)
-        {
-            save_png_with_command(world, "left");
-        }
-        else if (key == GLFW_KEY_RIGHT)
-        {
-            save_png_with_command(world, "right");
-        }
-    }
 
     if (key == GLFW_KEY_Q && action == GLFW_PRESS)
     {
@@ -108,15 +121,18 @@ void keyCallback(GLFWwindow *window, int key, int, int action, int)
 
 int main(int argc, char const *argv[])
 {
-    const unsigned int DEFAULT_WINDOW_WIDTH = 244;
-    const unsigned int DEFAULT_WINDOW_HEIGHT = 244;
     const auto DEFAULT_WORLD_FILE = "../Mazes/maze01.txt";
+    const std::string DEFAULT_IMAGE_DIRECTORY = "";
+    const int DEFAULT_IMAGE_NUMBER_START = 0;
+    const unsigned int DEFAULT_WINDOW_WIDTH = 224;
+    const unsigned int DEFAULT_WINDOW_HEIGHT = 224;
 
     // Process program arguments (must be given in this order)
     std::string world_filepath = argc >= 2 ? argv[1] : DEFAULT_WORLD_FILE;
-    image_directory = argc >= 3 ? argv[2] : "";
-    usize width = argc >= 4 ? std::stoul(argv[3]) : DEFAULT_WINDOW_WIDTH;
-    usize height = argc >= 5 ? std::stoul(argv[4]) : DEFAULT_WINDOW_HEIGHT;
+    image_directory = argc >= 3 ? argv[2] : DEFAULT_IMAGE_DIRECTORY;
+    image_number = argc >= 4 ? std::stol(argv[3]) : DEFAULT_IMAGE_NUMBER_START;
+    usize width = argc >= 5 ? std::stoul(argv[4]) : DEFAULT_WINDOW_WIDTH;
+    usize height = argc >= 6 ? std::stoul(argv[5]) : DEFAULT_WINDOW_HEIGHT;
 
     DisplayArray displayer(width, height, keyCallback);
     RaycastWorld world(width, height, world_filepath);
@@ -129,6 +145,13 @@ int main(int argc, char const *argv[])
         displayer.pre();
 
         world.update_pose();
+
+        // Save an image if the world was updated
+        if (image_directory.length() > 0 && world.in_motion())
+        {
+            save_png_with_command(&world);
+        }
+
         displayer.render(world.get_buffer());
 
         displayer.post();

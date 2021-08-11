@@ -157,6 +157,11 @@ public:
     void set_turn(Turn turn) { turn_direction = turn; }
     void set_walk(Walk walk) { walk_direction = walk; }
 
+    Turn get_turn() { return turn_direction; }
+    Walk get_walk() { return walk_direction; }
+
+    bool in_motion() { return turn_direction != Turn::STOP || walk_direction != Walk::STOP; }
+
     auto get_screen_width() { return screen_width; }
     auto get_screen_height() { return screen_height; }
 
@@ -228,6 +233,8 @@ public:
         set_position(initial_x, initial_y);
         set_fov(initial_fov);
         set_direction(initial_angle);
+        turn_direction = Turn::STOP;
+        walk_direction = Walk::STOP;
     }
 
     bool at_goal()
