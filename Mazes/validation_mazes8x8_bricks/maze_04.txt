@@ -1,0 +1,52 @@
+6
+../Textures/Tiles074_2K_Color1024.png
+../Textures/Plaster001_2K_Color1024.png
+../Textures/Bricks051_2K_Color1024.png
+../Textures/arrow-right-bricks-long.png
+../Textures/arrow-left-bricks-long.png
+../Textures/goal.png
+17 17
+2 2 2 2 2 2 2 2 2 2 2 3 2 2 2 5 2
+2 0 2 0 0 0 0 0 0 0 2 0 0 0 0 0 5
+2 0 2 2 2 2 2 2 2 0 2 0 2 2 2 4 2
+2 0 0 0 2 0 0 0 0 0 3 0 0 0 0 0 2
+2 0 2 0 2 0 2 2 2 2 2 0 2 2 2 0 2
+2 0 2 0 2 0 2 0 0 0 0 0 0 0 2 0 2
+2 2 2 0 2 0 2 0 2 3 2 2 2 0 2 0 2
+2 0 0 0 2 0 2 0 2 0 0 0 3 0 2 0 2
+2 0 2 2 2 0 2 3 2 0 2 0 2 3 2 0 2
+2 0 0 0 0 0 2 0 0 0 4 0 2 0 0 0 4
+2 0 2 2 2 2 2 0 2 4 2 0 2 0 2 0 2
+2 0 0 0 2 0 3 0 0 0 2 0 0 0 4 0 2
+2 2 2 0 2 3 2 2 2 0 2 4 2 2 2 0 2
+2 0 0 0 2 0 0 0 3 0 2 0 0 0 0 0 2
+2 0 2 2 2 0 2 0 2 0 2 0 2 2 2 2 2
+2 0 0 0 0 0 4 0 0 0 4 0 0 0 0 0 2
+2 2 2 2 2 2 2 4 2 2 2 2 2 2 2 2 2
+1 1 Dir.EAST
+3 1 Dir.EAST
+5 1 Dir.NORTH
+5 3 Dir.EAST
+7 3 Dir.SOUTH
+7 1 Dir.EAST
+9 1 Dir.NORTH
+9 3 Dir.NORTH
+9 5 Dir.WEST
+7 5 Dir.NORTH
+7 7 Dir.EAST
+9 7 Dir.NORTH
+9 9 Dir.EAST
+11 9 Dir.SOUTH
+11 7 Dir.SOUTH
+11 5 Dir.EAST
+13 5 Dir.NORTH
+13 7 Dir.EAST
+15 7 Dir.NORTH
+15 9 Dir.NORTH
+15 11 Dir.NORTH
+15 13 Dir.WEST
+13 13 Dir.WEST
+11 13 Dir.NORTH
+11 15 Dir.EAST
+13 15 Dir.EAST
+15 15 Dir.EAST
