@@ -1,7 +1,6 @@
 # ---
 # jupyter:
 #   jupytext:
-#     formats: ipynb,py:light
 #     text_representation:
 #       extension: .py
 #       format_name: light
@@ -24,10 +23,11 @@ import numpy as np
 from fastai.vision.all import *
 from fastai.vision.widgets import *
 from RNN_classes_funcs_Marchese import *
+import re
 
-# Ensure correct GPU is being used if available
-device = torch.device("cuda:3" if torch.cuda.is_available() else "cpu")
-device
+# Set device to run training on
+torch.cuda.set_device(3)
+torch.cuda.current_device()
 
 # Get classes and filenames
 path = Path("data_RNN")
@@ -60,17 +60,20 @@ dls = dls.cuda()
 
 # Initialize the network
 net = ConvRNN()
-# Send network to the GPU
-net.to(device)
+net = net.cuda()
 
 # Initialize FastAI learner
-learn = Learner(dls, net, loss_func=CrossEntropyLossFlat(), metrics=accuracy)
+learn = Learner(dls, net, loss_func=CrossEntropyLossFlat(), metrics=accuracy, cbs=CSVLogger(fname='test'))
 
 # Find good learning rate
-learn.lr_find()
+lr = learn.lr_find()
+
+lr = float(re.split("=|\)", str(lr))[1])
+
+lr
 
 # Fit learner
-learn.fit(20, lr=0.0005)
+learn.fine_tune(8, lr)
 
 # Save trained model
 PATH = 'fai_RNN.pth'

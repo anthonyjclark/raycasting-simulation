@@ -1,4 +1,3 @@
-
 # Import necessary libraries and packages
 import torch
 import torch.nn as nn
@@ -12,7 +11,7 @@ from time import time
 from PIL import Image
 import numpy as np
 
-class ConvRNN15(nn.Module):
+class ConvRNN(nn.Module):
     def __init__(self):
         """
         Initializes the layers of the convolutional recurrent neural network.
@@ -21,33 +20,7 @@ class ConvRNN15(nn.Module):
         self.convlstm = convLSTM.ConvLSTM(3, 15, (3,3), 
                                           6, True, True, False) 
         self.flat = nn.Flatten()
-        self.lin1 = nn.Linear(15*240*320, 512)
-        self.relu = nn.ReLU()
-        self.lin2 = nn.Linear(512, 3)
-        
-    def forward(self, img):
-        """
-        Does a forward pass of the given data through the layers of the neural network.
-        
-        :param img: (tensor) tensor of rgb values that represent an image
-        """
-        _, lstm_output = self.convlstm(img)
-        x = self.flat(lstm_output[0][0])
-        x = self.lin1(x)
-        x = self.relu(x)
-        x = self.lin2(x)
-        return x
-
-class ConvRNN10(nn.Module):
-    def __init__(self):
-        """
-        Initializes the layers of the convolutional recurrent neural network.
-        """
-        super().__init__()
-        self.convlstm = convLSTM.ConvLSTM(3, 10, (3,3), 
-                                          6, True, True, False) 
-        self.flat = nn.Flatten()
-        self.lin1 = nn.Linear(10*240*320, 512)
+        self.lin1 = nn.Linear(15*224*224, 512)
         self.relu = nn.ReLU()
         self.lin2 = nn.Linear(512, 3)
         
@@ -139,4 +112,5 @@ class ImageDataset(Dataset):
         
         # Returns data and the label associated with that data
         return img, label
+
 
