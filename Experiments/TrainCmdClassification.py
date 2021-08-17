@@ -209,7 +209,7 @@ def main():
         "model_arch", help="Model architecture (see code for options)"
     )
     arg_parser.add_argument(
-        "dataset_name", help="Name of dataset to use (corrected-wander-full)"
+        "dataset_name", help="Name of dataset to use (handmade-full | corrected-wander-full)"
     )
     arg_parser.add_argument(
         "--pretrained", action="store_true", help="Use pretrained model"
