@@ -29,8 +29,8 @@ print("Running on GPU: " + str(torch.cuda.current_device()))
 
 # Constants (same for all trials)
 VALID_PCT = 0.05
-NUM_REPLICATES = 1
-NUM_EPOCHS = 1
+NUM_REPLICATES = 4
+NUM_EPOCHS = 8
 DATASET_DIR = Path("/raid/clark/summer2021/datasets")
 MODEL_PATH_REL_TO_DATASET = Path("stacked_models")
 DATA_PATH_REL_TO_DATASET = Path("stacked_data")
@@ -42,18 +42,18 @@ compared_models = {
 
 
 def get_pair_2(o):
-    curr_im_num = Path(o).name[:5]
-    if not int(curr_im_num):
+    curr_im_num = Path(o).name[:6]
+    if int(curr_im_num) == 0:
         prev_im_num = curr_im_num
     else:
         prev_im_num = int(curr_im_num)-1
     
     prev_im = None
     for item in Path(o).parent.ls():
-        if isinstance(item.name[:5], str):
+        if isinstance(item.name[:6], str):
             prev_im = Path(o)
             break
-        if int(item.name[:5]) == prev_im_num:
+        if int(item.name[:6]) == prev_im_num:
             prev_im = item
     if prev_im is None:
         prev_im = Path(o)
