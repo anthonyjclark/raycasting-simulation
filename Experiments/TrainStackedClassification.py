@@ -37,7 +37,9 @@ DATA_PATH_REL_TO_DATASET = Path("stacked_data")
 VALID_MAZE_DIR = Path("../Mazes/validation_mazes8x8/")
 
 compared_models = {
-    "resnet18": resnet18
+    "xresnext18": xresnext18,
+    "alexnet": alexnet,
+    "densenet121": densenet121,
 }
 
 

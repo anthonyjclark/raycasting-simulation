@@ -22,6 +22,7 @@ from os import path
 from fastai.vision.all import *
 from fastai.callback.progress import CSVLogger
 from torchvision import transforms
+from math import pi
 
 # Assign GPU
 torch.cuda.set_device(0)
@@ -32,8 +33,8 @@ VALID_PCT = 0.05
 NUM_REPLICATES = 4
 NUM_EPOCHS = 8
 DATASET_DIR = Path("/raid/clark/summer2021/datasets")
-MODEL_PATH_REL_TO_DATASET = Path("paneled_models")
-DATA_PATH_REL_TO_DATASET = Path("paneled_data")
+MODEL_PATH_REL_TO_DATASET = Path("regression_models")
+DATA_PATH_REL_TO_DATASET = Path("regression_data")
 VALID_MAZE_DIR = Path("../Mazes/validation_mazes8x8/")
 
 compared_models = {
@@ -43,40 +44,34 @@ compared_models = {
 }
 
 
-def get_pair(o):
-    curr_im_num = Path(o).name[:6]
-    if int(curr_im_num) == 0:
-        prev_im_num = curr_im_num
+def get_throttles(f):
+    split_name = f.name.split('_')
+    angle = float(split_name[1][:-4].replace("p", "."))
+    if angle < 0:
+        return tensor([2.5, -2.5])#torch.stack((tensor(0.),tensor(-angle)))
+    elif angle > 0:
+        return tensor([-2.5, 2.5])#torch.stack((tensor(angle),tensor(0.)))
     else:
-        prev_im_num = int(curr_im_num)-1
-    
-    prev_im = None
-    for item in Path(o).parent.ls():
-        if isinstance(item.name[:6], str):
-            prev_im = Path(o)
-            break
-        if int(item.name[:6]) == prev_im_num:
-            prev_im = item
-    if prev_im is None:
-        prev_im = Path(o)
-        
-    assert prev_im != None
-    
-    img1 = Image.open(o).convert('RGB')
-    img2 = Image.open(prev_im).convert('RGB')
-    img1_t = transforms.ToTensor()(img1).unsqueeze_(0)
-    img2_t = transforms.ToTensor()(img2).unsqueeze_(0)
-    
-    new_shape = list(img1_t.shape)
-    new_shape[-2] = new_shape[-2] * 2
-    img3_t = torch.zeros(new_shape)
+        return tensor([2.5, 2.5])#torch.stack((tensor(2.5),tensor(2.5)))
 
-    img3_t[:, :, :224, :] = img1_t
-    img3_t[:, :, 224:, :] = img2_t
-    
-    img3 = transforms.ToPILImage()(img3_t.squeeze_(0))
-    
-    return np.array(img3)
+
+def angle_metric(preds, targs):
+    angle_true = targs[:, 1] - targs[:, 0]
+    angle_pred = preds[:, 1] - preds[:, 0]
+    return torch.where(torch.abs(angle_true - angle_pred) < 0.1, 1., 0.).mean()
+
+
+def direction_metric(preds, targs):
+    angle_true = targs[:, 1] - targs[:, 0]
+    angle_pred = preds[:, 1] - preds[:, 0]
+    return torch.where(
+        torch.logical_or(
+            torch.sign(angle_pred) == torch.sign(angle_true),
+            torch.abs(angle_pred) < 0.1,
+        ),
+        1.0,
+        0.0,
+    ).mean()
 
 
 def get_fig_filename(prefix: str, label: str, ext: str, rep: int) -> str:
@@ -85,32 +80,18 @@ def get_fig_filename(prefix: str, label: str, ext: str, rep: int) -> str:
     return fig_filename
 
 
-def filename_to_class(filename: str) -> str:
-    angle = float(filename.split("_")[1].split(".")[0].replace("p", "."))
-    if angle > 0:
-        return "left"
-    elif angle < 0:
-        return "right"
-    else:
-        return "forward"
-
-
 def prepare_dataloaders(dataset_name: str, prefix: str) -> DataLoaders:
 
     path = DATASET_DIR / dataset_name
     
     db = DataBlock(
-        blocks=(ImageBlock, CategoryBlock),
-        get_items=get_image_files,
-        get_x=get_pair,
-        get_y=filename_to_class,
-        splitter=RandomSplitter(valid_pct=VALID_PCT)
+    blocks=(ImageBlock, RegressionBlock),
+    get_items=get_image_files,
+    get_y=get_throttles,
+    splitter=RandomSplitter(valid_pct=VALID_PCT),
     )
 
     dls = db.dataloaders(path, bs=64)
-
-    dls.show_batch()  # type: ignore
-    plt.savefig(get_fig_filename(prefix, "batch", "pdf", 0))
 
     return dls  # type: ignore
 
@@ -127,11 +108,12 @@ def train_model(
     learn = cnn_learner(
         dls,
         compared_models[model_arch],
-        metrics=accuracy,
+        y_range=(-100, 100),
+        metrics=[mse, angle_metric, direction_metric],
         pretrained=pretrained,
         cbs=CSVLogger(fname=logname),
     )
-
+    
     if pretrained:
         learn.fine_tune(NUM_EPOCHS)
     else:
@@ -154,7 +136,7 @@ def train_model(
 
 def main():
 
-    arg_parser = ArgumentParser("Train paneled classification networks.")
+    arg_parser = ArgumentParser("Train regression networks.")
     arg_parser.add_argument(
         "model_arch", help="Model architecture (see code for options)"
     )

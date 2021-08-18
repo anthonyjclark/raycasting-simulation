@@ -26,7 +26,7 @@ for model in compared_models:
     run(
         [
             "python",
-            "TrainStackedClassification.py",
+            "TrainRegression.py",
             model,
             "corrected-wander-full",
             "--pretrained",

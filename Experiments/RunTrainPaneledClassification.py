@@ -16,19 +16,19 @@
 from subprocess import run
 
 compared_models = [
-    "resnet18",
+    "xresnext18",
+    "alexnet",
+    "densenet121",
 ]
 
-for dataset in ["handmade-full", "corrected-wander-full"]:
+for model in compared_models:
 
-    for model in compared_models:
-
-        run(
-            [
-                "python",
-                "TrainPaneledClassification.py",
-                model,
-                dataset,
-                "--pretrained",
-            ]
-        )
+    run(
+        [
+            "python",
+            "TrainPaneledClassification.py",
+            model,
+            "corrected-wander-full",
+            "--pretrained",
+        ]
+    )
