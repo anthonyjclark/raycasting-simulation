@@ -25,7 +25,7 @@ from torchvision import transforms
 from math import pi
 
 # Assign GPU
-torch.cuda.set_device(0)
+torch.cuda.set_device(3)
 print("Running on GPU: " + str(torch.cuda.current_device()))
 
 # Constants (same for all trials)
@@ -33,11 +33,12 @@ VALID_PCT = 0.05
 NUM_REPLICATES = 4
 NUM_EPOCHS = 8
 DATASET_DIR = Path("/raid/clark/summer2021/datasets")
-MODEL_PATH_REL_TO_DATASET = Path("regression_models")
-DATA_PATH_REL_TO_DATASET = Path("regression_data")
+MODEL_PATH_REL_TO_DATASET = Path("regression_models1")
+DATA_PATH_REL_TO_DATASET = Path("regression_data1")
 VALID_MAZE_DIR = Path("../Mazes/validation_mazes8x8/")
 
 compared_models = {
+    "xresnext50": xresnext50,
     "xresnext18": xresnext18,
     "alexnet": alexnet,
     "densenet121": densenet121,
@@ -108,7 +109,7 @@ def train_model(
     learn = cnn_learner(
         dls,
         compared_models[model_arch],
-        y_range=(-100, 100),
+        y_range=(-180, 180),
         metrics=[mse, angle_metric, direction_metric],
         pretrained=pretrained,
         cbs=CSVLogger(fname=logname),
@@ -122,7 +123,7 @@ def train_model(
     # The follwing line is necessary for pickling
     learn.remove_cb(CSVLogger)
     learn.export(modelname)
-
+"""
     learn.show_results()
     plt.savefig(get_fig_filename(prefix, "results", "pdf", rep))
 
@@ -131,7 +132,7 @@ def train_model(
     plt.savefig(get_fig_filename(prefix, "toplosses", "pdf", rep))
 
     interp.plot_confusion_matrix(figsize=(10, 10))
-    plt.savefig(get_fig_filename(prefix, "confusion", "pdf", rep))
+    plt.savefig(get_fig_filename(prefix, "confusion", "pdf", rep))"""
 
 
 def main():
@@ -171,7 +172,7 @@ def main():
     # Train NUM_REPLICATES separate instances of this model and dataset
     for rep in range(NUM_REPLICATES):
         
-        model_filename = DATASET_DIR / args.dataset_name / MODEL_PATH_REL_TO_DATASET / f"{file_prefix}-{rep}.pth"
+        model_filename = DATASET_DIR / args.dataset_name / MODEL_PATH_REL_TO_DATASET / f"{file_prefix}-{rep}.pkl"
         print("Model relative filename :", model_filename)
 
         # Checks if model exists and skip if it does (helps if this crashes)

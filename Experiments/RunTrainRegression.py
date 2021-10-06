@@ -16,9 +16,10 @@
 from subprocess import run
 
 compared_models = [
-    "xresnext18",
     "alexnet",
+    "xresnext18",
     "densenet121",
+    "xresnext50",
 ]
 
 for model in compared_models:

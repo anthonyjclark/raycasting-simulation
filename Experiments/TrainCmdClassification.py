@@ -26,7 +26,7 @@ from torch.utils.data import Dataset
 # -
 
 # Assign GPU
-torch.cuda.set_device(3)
+torch.cuda.set_device(2)
 print("Running on GPU: " + str(torch.cuda.current_device()))
 
 # Constants (same for all trials)
@@ -39,6 +39,7 @@ DATA_PATH_REL_TO_DATASET = Path("cmd_data")
 VALID_MAZE_DIR = Path("../Mazes/validation_mazes8x8/")
 
 compared_models = {
+    "xresnext50": xresnext50,
     "xresnext18": xresnext18,
     "alexnet": alexnet,
     "densenet121": densenet121,

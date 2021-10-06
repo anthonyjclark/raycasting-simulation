@@ -17,7 +17,11 @@ from MazeUtils import read_maze_file, percent_through_maze, bfs_dist_maze, is_on
 sys.path.append("../Notebooks")
 # from RNN_classes_funcs_Marchese import *
 # from cmd_classes_funcs_Marchese import *
-# For Christy's cmd models
+sys.path.append("../Experiments")
+from TrainRNNClassification import *
+from TrainCmdClassification import * 
+from TrainStackedClassification import *
+from TrainPaneledClassification import *
 
 def parent_to_deg(f):
     parent = parent_label(f)
@@ -74,32 +78,35 @@ def get_label(o):
 
 
 def get_pair_2(o):
-    curr_im_num = Path(o).name[:5]
-    if not int(curr_im_num):
+    curr_im_num = Path(o).name[:6]
+    if int(curr_im_num) == 0:
         prev_im_num = curr_im_num
     else:
-        prev_im_num = int(curr_im_num) - 1
-
+        prev_im_num = int(curr_im_num)-1
+    
     prev_im = None
     for item in Path(o).parent.ls():
-        if int(item.name[:5]) == prev_im_num:
+        if isinstance(item.name[:6], str):
+            prev_im = Path(o)
+            break
+        if int(item.name[:6]) == prev_im_num:
             prev_im = item
     if prev_im is None:
         prev_im = Path(o)
     assert prev_im != None
-
-    img1 = Image.open(o).convert("RGB")
-    img2 = Image.open(prev_im).convert("RGB")
+    
+    img1 = Image.open(o).convert('RGB')
+    img2 = Image.open(prev_im).convert('RGB')
     img1_arr = np.array(img1, dtype=np.uint8)
     img2_arr = np.array(img2, dtype=np.uint8)
-
+        
     new_shape = list(img1_arr.shape)
     new_shape[-1] = new_shape[-1] * 2
     img3_arr = np.zeros(new_shape, dtype=np.uint8)
 
     img3_arr[:, :, :3] = img1_arr
     img3_arr[:, :, 3:] = img2_arr
-
+    
     return img3_arr.T.astype(np.float32)
 
 
@@ -116,6 +123,25 @@ def stacked_input(prev_im, curr_im):
     stacked_im[:, :, 3:] = prev_im
 
     return stacked_im.T.astype(np.float32)
+
+
+def paneled_input(prev_im, curr_im):
+    if prev_im is None:
+        prev_im = curr_im
+        
+    img1_t = transforms.ToTensor()(prev_im).unsqueeze_(0)
+    img2_t = transforms.ToTensor()(curr_im).unsqueeze_(0)
+    
+    new_shape = list(img1_t.shape)
+    new_shape[-2] = new_shape[-2] * 2
+    img3_t = torch.zeros(new_shape)
+
+    img3_t[:, :, :224, :] = img1_t
+    img3_t[:, :, 224:, :] = img2_t
+    
+    img3 = transforms.ToPILImage()(img3_t.squeeze_(0))
+    
+    return np.array(img3)
 
 
 def reg_predict(pred_coords):
@@ -156,9 +182,9 @@ def animate(image_frames, name, dir_name):
         os.mkdir(dir_name)
     else: 
         os.system(dir_name)
-    save_path = os.path.abspath(dir_name)
-    name = str(name).split("/")[-1][:-4]
-    fig, ax = plt.subplots()
+#     save_path = os.path.abspath(dir_name)
+#     name = str(name).split("/")[-1][:-4]
+#     fig, ax = plt.subplots()
 #     ln = plt.imshow(image_frames[0])
 
 #     def init():
@@ -242,13 +268,18 @@ def train_model(
 
 
 def main(argv):
-#     torch.cuda.set_device(1)
+    compared_models = {
+        "xresnext50": xresnext50,
+        "xresnext18": xresnext18,
+        "alexnet": alexnet,
+        "densenet121": densenet121,
+    }
     if torch.cuda.is_available():
-        print("Using GPU")
         device = torch.device('cuda')
-        torch.cuda.set_device(0)
+        torch.cuda.set_device(3)
     else:
         device = torch.device('cpu')
+        
     maze = argv[0] if len(argv) > 0 else "../Mazes/maze01.txt"
     model = argv[1] if len(argv) > 1 else "../Models/auto-gen-c.pkl"
     show_freq = int(argv[2]) if len(
@@ -266,12 +297,17 @@ def main(argv):
 
     world = PycastWorld(224, 224, maze)
 
-    if model_type == "cmd" or model_type == "rnn":
-        model_inf = ConvRNN()
+    if model_type == "cmd":
+        map_name = model.split("-")[3]
+        print(map_name)
+        model_inf = cmd_model(compared_models[map_name], True)
         model_inf.load_state_dict(torch.load(model))
     else:
         path = Path("../")
-        model_inf = load_learner(model, cpu=False)
+        print("Model: " + model)
+        model_inf = load_learner(model)
+#         model_inf = torch.load(model, "cuda:3")
+#         if "classification-resnet50-pretrained-0.pkl" in 
         model_inf.eval()
 
     prev_move = None
@@ -286,7 +322,7 @@ def main(argv):
     stuck = False
     # Initialize maximum number of steps in case the robot travels in a 
     # completely incorrect direction
-    max_steps = 3500 #np.random.randint(20, 40 + 1)
+    max_steps = 3500
 
     # Initialize Maze Check
     maze_rvs, _, _, maze_directions, _ = read_maze_file(maze)
@@ -304,7 +340,9 @@ def main(argv):
         # Convert image_data and give to network
         if model_type == "c":
             if stacked:
-                move = model_inf.predict(stacked_input(prev_image_data, image_data))[0]
+                with model_inf.no_bar():
+                    #print(model_inf.predict(paneled_input(prev_image_data, image_data)))
+                    move = model_inf.predict(stacked_input(prev_image_data, image_data))[0]
             else:
                 with model_inf.no_bar():
                     move = model_inf.predict(image_data)[0]
@@ -312,6 +350,7 @@ def main(argv):
             if stacked:
                 pred_coords, _, _ = model_inf.predict(stacked_input(prev_image_data, image_data))
             else:
+#                 image_data = torch.from_numpy(image_data)
                 pred_coords, _, _ = model_inf.predict(image_data)
             move = reg_predict(pred_coords)
         elif model_type == "cmd":
@@ -326,19 +365,20 @@ def main(argv):
                 for i in range(output.size()[0]):
                     # Getting the predicted most probable move
                     action_index = torch.argmax(output[i])
-                    move = 'left' if action_index == 0 else 'right' if action_index == 1 else 'straight'
+                    move = 'left' if action_index == 0 else 'forward' if action_index == 1 else 'right'
             else:
                 # is there any reason for us to believe batch sizes can be empty?
                 move = 'straight'
         elif model_type == "rnn":
             model_inf.eval()
-            img = (tensor(image_data)/255).permute(2, 0, 1).unsqueeze(0).unsqueeze(0)
-            output = model_inf(img)
+#             img = (tensor(image_data)/255).permute(2, 0, 1).unsqueeze(0).unsqueeze(0)
+            move = model_inf.predict(image_data)[0]
+#             output = model_inf(img)
             # Assuming we always get batches
-            for i in range(output.size()[0]):
-                # Getting the predicted most probable move
-                action_index = torch.argmax(output[i])
-                move = 'left' if action_index == 0 else 'right' if action_index == 1 else 'straight'
+#             for i in range(output.size()[0]):
+#                 # Getting the predicted most probable move
+#                 action_index = torch.argmax(output[i])
+#                 move = 'left' if action_index == 0 else 'right' if action_index == 1 else 'straight'
 
         if move == "left" and prev_move == "right":
             move = "straight"

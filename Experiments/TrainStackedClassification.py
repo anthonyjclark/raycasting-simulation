@@ -24,7 +24,7 @@ from fastai.callback.progress import CSVLogger
 from torchvision import transforms
 
 # Assign GPU
-torch.cuda.set_device(0)
+torch.cuda.set_device(1)
 print("Running on GPU: " + str(torch.cuda.current_device()))
 
 # Constants (same for all trials)
@@ -32,34 +32,26 @@ VALID_PCT = 0.05
 NUM_REPLICATES = 4
 NUM_EPOCHS = 8
 DATASET_DIR = Path("/raid/clark/summer2021/datasets")
-MODEL_PATH_REL_TO_DATASET = Path("stacked_models")
-DATA_PATH_REL_TO_DATASET = Path("stacked_data")
+MODEL_PATH_REL_TO_DATASET = Path("stacked_models1")
+DATA_PATH_REL_TO_DATASET = Path("stacked_data1")
 VALID_MAZE_DIR = Path("../Mazes/validation_mazes8x8/")
 
 compared_models = {
-    "xresnext18": xresnext18,
     "alexnet": alexnet,
+    "xresnext50": xresnext50,
+    "xresnext18": xresnext18,
     "densenet121": densenet121,
 }
 
+img_dir = Path("/raid/clark/summer2021/datasets/corrected-wander-full/")
+img_filenames = list(img_dir.glob("*.png"))
+img_filenames.sort()
+
 
 def get_pair_2(o):
-    curr_im_num = Path(o).name[:6]
-    if int(curr_im_num) == 0:
-        prev_im_num = curr_im_num
-    else:
-        prev_im_num = int(curr_im_num)-1
-    
-    prev_im = None
-    for item in Path(o).parent.ls():
-        if isinstance(item.name[:6], str):
-            prev_im = Path(o)
-            break
-        if int(item.name[:6]) == prev_im_num:
-            prev_im = item
-    if prev_im is None:
-        prev_im = Path(o)
-    assert prev_im != None
+    curr_im_num = int(Path(o).name[:6])
+    prev_im_num = curr_im_num if curr_im_num == 0 else curr_im_num - 1
+    prev_im = img_filenames[prev_im_num]
     
     img1 = Image.open(o).convert('RGB')
     img2 = Image.open(prev_im).convert('RGB')
@@ -100,7 +92,7 @@ def prepare_dataloaders(dataset_name: str, prefix: str) -> DataLoaders:
         blocks=((ImageBlock, ImageBlock), CategoryBlock),
         get_items=get_image_files,
         get_x=get_pair_2,
-        get_y=filename_to_class,
+        get_y=lambda x: filename_to_class(str(x)),
         splitter=RandomSplitter(valid_pct=VALID_PCT)
     )
 
@@ -126,8 +118,16 @@ def train_model(
         cbs=CSVLogger(fname=logname),
     )
     
-    learn.model[0][0] = nn.Conv2d(6, 64, kernel_size=(7,7), stride=(2,2), padding=(3,3), bias=False)
-
+    out_channels = learn.model[0][0][0].out_channels
+    kernel_size = learn.model[0][0][0].kernel_size
+    stride = learn.model[0][0][0].stride
+    padding = learn.model[0][0][0].padding
+    if (model_arch == "alexnet"):
+        learn.model[0][0][0] = nn.Conv2d(6, out_channels, kernel_size=kernel_size, stride=stride, padding=padding)
+    else:
+        bias = learn.model[0][0][0].bias
+        learn.model[0][0][0] = nn.Conv2d(6, out_channels, kernel_size=kernel_size, stride=stride, padding=padding, bias=bias)
+    
     if pretrained:
         learn.fine_tune(NUM_EPOCHS)
     else:
@@ -136,7 +136,7 @@ def train_model(
     # The follwing line is necessary for pickling
     learn.remove_cb(CSVLogger)
     learn.export(modelname)
-
+"""
     learn.show_results()
     plt.savefig(get_fig_filename(prefix, "results", "pdf", rep))
 
@@ -145,7 +145,7 @@ def train_model(
     plt.savefig(get_fig_filename(prefix, "toplosses", "pdf", rep))
 
     interp.plot_confusion_matrix(figsize=(10, 10))
-    plt.savefig(get_fig_filename(prefix, "confusion", "pdf", rep))
+    plt.savefig(get_fig_filename(prefix, "confusion", "pdf", rep))"""
 
 
 def main():
@@ -185,7 +185,7 @@ def main():
     # Train NUM_REPLICATES separate instances of this model and dataset
     for rep in range(NUM_REPLICATES):
         
-        model_filename = DATASET_DIR / args.dataset_name / MODEL_PATH_REL_TO_DATASET / f"{file_prefix}-{rep}.pth"
+        model_filename = DATASET_DIR / args.dataset_name / MODEL_PATH_REL_TO_DATASET / f"{file_prefix}-{rep}.pkl"
         print("Model relative filename :", model_filename)
 
         # Checks if model exists and skip if it does (helps if this crashes)
