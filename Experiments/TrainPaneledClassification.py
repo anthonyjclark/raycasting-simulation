@@ -32,8 +32,8 @@ VALID_PCT = 0.05
 NUM_REPLICATES = 4
 NUM_EPOCHS = 8
 DATASET_DIR = Path("/raid/clark/summer2021/datasets")
-MODEL_PATH_REL_TO_DATASET = Path("paneled_models1")
-DATA_PATH_REL_TO_DATASET = Path("paneled_data1")
+MODEL_PATH_REL_TO_DATASET = Path("paneled_models2")
+DATA_PATH_REL_TO_DATASET = Path("paneled_data2")
 VALID_MAZE_DIR = Path("../Mazes/validation_mazes8x8/")
 
 compared_models = {
@@ -78,8 +78,8 @@ def get_fig_filename(prefix: str, label: str, ext: str, rep: int) -> str:
     return fig_filename
 
 
-def filename_to_class(filename: str) -> str:
-    angle = float(filename.split("_")[1].split(".")[0].replace("p", "."))
+def filename_to_class(filename) -> str:
+    angle = float(str(filename).split("_")[1].split(".")[0].replace("p", "."))
     if angle > 0:
         return "left"
     elif angle < 0:
@@ -96,7 +96,7 @@ def prepare_dataloaders(dataset_name: str, prefix: str) -> DataLoaders:
         blocks=(ImageBlock, CategoryBlock),
         get_items=get_image_files,
         splitter=RandomSplitter(valid_pct=VALID_PCT),
-        get_y=lambda x: filename_to_class(str(x)),
+        get_y=filename_to_class,
         get_x=get_pair
     )
 

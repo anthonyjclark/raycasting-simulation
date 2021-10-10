@@ -47,12 +47,12 @@ def main():
 #         device = torch.device('cpu')
     
     num_mazes = 20
-    model_dir = '/raid/clark/summer2021/datasets/corrected-wander-full/regression_models1'
+    model_dir = '/raid/clark/summer2021/datasets/corrected-wander-full/stacked_models2'
     models = os.listdir(model_dir)
 #     models = list(filter(lambda x: "-notpretrained" in x, models))
     models.sort()
     for i, m in enumerate(models):
-        models[i] = (model_dir + '/' + m, 'c', 'n', 'y') #model type, stacked, regression
+        models[i] = (model_dir + '/' + m, 'c', 'y', 'n') #model type, stacked, regression
 
     maze_dir = "../Mazes/validation_mazes8x8"
     mazes = os.listdir(maze_dir)
@@ -103,8 +103,8 @@ def main():
     stepdata = get_df(data, mazes)
     cdata = get_df(completion_data, mazes)
     
-    stepdata.to_csv(dir_name + "/regression_step.csv") #
-    cdata.to_csv(dir_name + "/regression_percentage.csv")
+    stepdata.to_csv(dir_name + "/stacked_step.csv") #
+    cdata.to_csv(dir_name + "/stacked_percentage.csv")
     
     clean_names = list(map(get_network_name, model_names))
 #     stepdata = get_df(data, mazes)
