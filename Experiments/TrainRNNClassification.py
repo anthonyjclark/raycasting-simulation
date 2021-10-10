@@ -14,19 +14,17 @@
 # ---
 
 import matplotlib.pyplot as plt
-import seaborn as sns
 import os.path
 from os import path
 
 from fastai.vision.all import *
 from fastai.callback.progress import CSVLogger
-from torch.utils.data import Dataset
 
 sys.path.append("../Notebooks")
 import convLSTM as convLSTM
 
 # Assign GPU
-torch.cuda.set_device(3)
+torch.cuda.set_device(1)
 print("Running on GPU: " + str(torch.cuda.current_device()))
 
 # Constants (same for all trials)
@@ -137,7 +135,7 @@ def train_model(
 
 def main():
 
-    dataset_name = 'corrected-wander-full'
+    dataset_name = 'handmade-full'
     model_arch = "RNN"
 
     # Make dirs as needed

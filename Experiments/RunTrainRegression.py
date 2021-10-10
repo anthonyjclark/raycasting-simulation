@@ -16,10 +16,10 @@
 from subprocess import run
 
 compared_models = [
-    "xresnext50",
-    "xresnext18",
     "alexnet",
+    "xresnext18",
     "densenet121",
+    "xresnext50",
 ]
 
 for model in compared_models:
@@ -27,7 +27,7 @@ for model in compared_models:
     run(
         [
             "python",
-            "TrainCmdClassification.py",
+            "TrainRegression.py",
             model,
             "corrected-wander-full",
             "--pretrained",

@@ -40,39 +40,49 @@ colors = [
 
 # assume running from Imitator dir
 def main():
-    num_mazes = int(sys.argv[1]) if len(sys.argv) > 1 else 1
-    model_dir = '/raid/clark/summer2021/datasets/wander-full/models'
+#     if torch.cuda.is_available():
+#         device = torch.device('cuda')
+#         torch.cuda.set_device(3)
+#     else:
+#         device = torch.device('cpu')
+    
+    num_mazes = 20
+    model_dir = '/raid/clark/summer2021/datasets/corrected-wander-full/stacked_models2'
     models = os.listdir(model_dir)
+#     models = list(filter(lambda x: "-notpretrained" in x, models))
     models.sort()
     for i, m in enumerate(models):
-        models[i] = (model_dir + '/' + m, 'c', 'n', 'n')
+        models[i] = (model_dir + '/' + m, 'c', 'y', 'n') #model type, stacked, regression
 
-    maze_dir = "../Mazes/"
+    maze_dir = "../Mazes/validation_mazes8x8"
+    mazes = os.listdir(maze_dir)
+    mazes.sort()
+    mazes = list(filter(lambda x: "maze" in x, mazes))
     now = datetime.now().strftime("%d-%m-%Y_%H-%M")
-    subdir = f"{num_mazes}_mazes_test_{now}"
-    maze_sub_dir = os.path.join(maze_dir, subdir)
-    os.mkdir(maze_sub_dir)
+#     subdir = f"{num_mazes}_mazes_test_{now}"
+#     maze_sub_dir = os.path.join(maze_dir, subdir)
+#     os.mkdir(maze_sub_dir)
     dir_name = f"diagnostics-{now}"
-    print("In AutoWrapper dir name: " + dir_name)
+#     print("In AutoWrapper dir name: " + dir_name)
 
     min_size, max_size = 8, 14
 
     model_names = [Path(m_path).name for m_path, _, _, _ in models]
     data = {model_name: [] for model_name in model_names}
     completion_data = {model_name: [] for model_name in model_names}
-    for i in range(num_mazes):
-        size = 8#random.randint(min_size, max_size)
-        maze_file = os.path.join(maze_sub_dir, f"maze_{i+1}.txt")
-
-        print(f"Creating maze {i+1} with size {size}")
-        os.system(
-            f"python3 ../MazeGen/MazeGen.py --width {size} --height {size} --out > {maze_file}"
-        )
-
+    for maze in mazes:
+        maze_file = "../Mazes/validation_mazes8x8/" + maze
         for j, m in enumerate(models):
+#             print("GPU: " + str(torch.cuda.current_device()))
+#             if (j >= 4 and j < 28) or (j>=32):
+#                 device = torch.device('cuda')
+#                 torch.cuda.set_device(2)                
+#             else:
+#                 device = torch.device('cuda')
+#                 torch.cuda.set_device(1)
             model, model_type, stacked, regression = m
             input_args = [maze_file, model, 17, model_type, stacked, dir_name]
-            print(f"Testing model {j} on maze {i}")
+            print(f"Testing model {j} on {maze}")
             if regression == 'y':
                 num_frames, success, completion_per = RegressionImitator.main(input_args)
                 data[Path(model).name].append(num_frames)
@@ -85,14 +95,20 @@ def main():
     # Generate plots
     
     # Make new directory for plots
-    os.system(dir_name) 
-    save_path = os.path.abspath(dir_name)
+#     os.system(dir_name) 
+#     save_path = os.path.abspath(dir_name)
     
     # Make Bar Plot
-    mazes = [f"maze_{i+1}" for i in range(num_mazes)]
-    clean_names = list(map(get_network_name, model_names))
+#     mazes = [f"maze_{i+1}" for i in range(num_mazes)]
     stepdata = get_df(data, mazes)
     cdata = get_df(completion_data, mazes)
+    
+    stepdata.to_csv(dir_name + "/stacked_step.csv") #
+    cdata.to_csv(dir_name + "/stacked_percentage.csv")
+    
+    clean_names = list(map(get_network_name, model_names))
+#     stepdata = get_df(data, mazes)
+#     cdata = get_df(completion_data, mazes)
     
     # make step bar
     ax = plot_bars(stepdata, "Steps", clean_names)

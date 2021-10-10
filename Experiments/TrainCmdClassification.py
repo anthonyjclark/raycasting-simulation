@@ -31,15 +31,18 @@ print("Running on GPU: " + str(torch.cuda.current_device()))
 
 # Constants (same for all trials)
 VALID_PCT = 0.05
-NUM_REPLICATES = 1
-NUM_EPOCHS = 1
+NUM_REPLICATES = 4
+NUM_EPOCHS = 8
 DATASET_DIR = Path("/raid/clark/summer2021/datasets")
 MODEL_PATH_REL_TO_DATASET = Path("cmd_models")
 DATA_PATH_REL_TO_DATASET = Path("cmd_data")
 VALID_MAZE_DIR = Path("../Mazes/validation_mazes8x8/")
 
 compared_models = {
-    "resnet18": resnet18
+    "xresnext50": xresnext50,
+    "xresnext18": xresnext18,
+    "alexnet": alexnet,
+    "densenet121": densenet121,
 }
 
 
@@ -116,7 +119,7 @@ class cmd_model(nn.Module):
         super(cmd_model, self).__init__()
         self.cnn = arch(pretrained=pretrained)
         
-        self.fc1 = nn.Linear(self.cnn.fc.out_features + 1, 512)
+        self.fc1 = nn.Linear(1000 + 1, 512)
         self.r1 = nn.ReLU(inplace=True)
         self.fc2 = nn.Linear(512, 3)
         
@@ -167,9 +170,6 @@ def prepare_dataloaders(dataset_name: str, prefix: str) -> DataLoaders:
     dls = DataLoaders.from_dsets(train_data, val_data)
     dls = dls.cuda()
 
-    #dls.show_batch()  # type: ignore
-    plt.savefig(get_fig_filename(prefix, "batch", "pdf", 0))
-
     return dls  # type: ignore
 
 
@@ -209,7 +209,7 @@ def main():
         "model_arch", help="Model architecture (see code for options)"
     )
     arg_parser.add_argument(
-        "dataset_name", help="Name of dataset to use (corrected-wander-full)"
+        "dataset_name", help="Name of dataset to use (handmade-full | corrected-wander-full)"
     )
     arg_parser.add_argument(
         "--pretrained", action="store_true", help="Use pretrained model"
